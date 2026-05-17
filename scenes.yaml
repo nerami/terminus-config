@@ -1,0 +1,504 @@
+- id: '1771077746684'
+  name: 'MB: Bluish'
+  entities:
+    light.mb_led_one:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led One'
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 216
+      - 100
+      rgb_color:
+      - 0
+      - 102
+      - 255
+      xy_color:
+      - 0.139
+      - 0.104
+      state: 'on'
+    light.mb_led_two:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led Two'
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 216
+      - 100
+      rgb_color:
+      - 0
+      - 102
+      - 255
+      xy_color:
+      - 0.139
+      - 0.104
+      state: 'on'
+  metadata:
+    light.mb_led_one:
+      entity_only: true
+    light.mb_led_two:
+      entity_only: true
+  icon: mdi:shield-moon
+- id: '1771077823140'
+  name: 'MB: Redish'
+  entities:
+    light.mb_led_one:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led One'
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 9
+      - 100
+      rgb_color:
+      - 255
+      - 38
+      - 0
+      xy_color:
+      - 0.691
+      - 0.307
+      state: 'on'
+    light.mb_led_two:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led Two'
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 10
+      - 100
+      rgb_color:
+      - 255
+      - 42
+      - 0
+      xy_color:
+      - 0.689
+      - 0.309
+      state: 'on'
+  metadata:
+    light.mb_led_one:
+      entity_only: true
+    light.mb_led_two:
+      entity_only: true
+  icon: mdi:fire-circle
+- id: '1771077904382'
+  name: 'LR: Redish'
+  entities:
+    light.living:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: Living
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 9
+      - 100
+      rgb_color:
+      - 255
+      - 38
+      - 0
+      xy_color:
+      - 0.691
+      - 0.307
+      state: 'on'
+    light.dining:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: Dining
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 9
+      - 100
+      rgb_color:
+      - 255
+      - 38
+      - 0
+      xy_color:
+      - 0.691
+      - 0.307
+      state: 'on'
+  metadata:
+    light.living:
+      entity_only: true
+    light.dining:
+      entity_only: true
+  icon: mdi:fire-circle
+- id: '1771077995810'
+  name: 'LR: Bluish'
+  entities:
+    light.dining:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: Dining
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 217
+      - 100
+      rgb_color:
+      - 0
+      - 98
+      - 255
+      xy_color:
+      - 0.139
+      - 0.099
+      state: 'on'
+    light.living:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: Living
+      supported_features: 0
+      color_mode: hs
+      brightness: 255
+      color_temp_kelvin:
+      color_temp:
+      hs_color:
+      - 217
+      - 100
+      rgb_color:
+      - 0
+      - 98
+      - 255
+      xy_color:
+      - 0.139
+      - 0.099
+      state: 'on'
+  metadata:
+    light.dining:
+      entity_only: true
+    light.living:
+      entity_only: true
+  icon: mdi:shield-moon
+- id: '1771078321508'
+  name: 'MB: Day Light'
+  entities:
+    light.mb_led_one:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led One'
+      supported_features: 0
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      color_temp: 153
+      hs_color:
+      - 54.768
+      - 1.6
+      rgb_color:
+      - 255
+      - 255
+      - 251
+      xy_color:
+      - 0.325
+      - 0.333
+      state: 'on'
+    light.mb_led_two:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led Two'
+      supported_features: 0
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      color_temp: 153
+      hs_color:
+      - 54.768
+      - 1.6
+      rgb_color:
+      - 255
+      - 255
+      - 251
+      xy_color:
+      - 0.325
+      - 0.333
+      state: 'on'
+  metadata:
+    light.mb_led_one:
+      entity_only: true
+    light.mb_led_two:
+      entity_only: true
+  icon: mdi:shield-sun
+- id: '1771078366080'
+  name: 'LR: Day Light'
+  entities:
+    light.living:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: Living
+      supported_features: 0
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      color_temp: 153
+      hs_color:
+      - 54.768
+      - 1.6
+      rgb_color:
+      - 255
+      - 255
+      - 251
+      xy_color:
+      - 0.325
+      - 0.333
+      state: 'on'
+    light.dining:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: Dining
+      supported_features: 0
+      color_mode: color_temp
+      brightness: 255
+      color_temp_kelvin: 6535
+      color_temp: 153
+      hs_color:
+      - 54.768
+      - 1.6
+      rgb_color:
+      - 255
+      - 255
+      - 251
+      xy_color:
+      - 0.325
+      - 0.333
+      state: 'on'
+  metadata:
+    light.living:
+      entity_only: true
+    light.dining:
+      entity_only: true
+  icon: mdi:shield-sun
+- id: '1771078606159'
+  name: 'MB: Dim'
+  entities:
+    light.mb_led_one:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led One'
+      supported_features: 0
+      color_mode: color_temp
+      brightness: 76
+      color_temp_kelvin: 2000
+      color_temp: 500
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      state: 'on'
+    light.mb_led_two:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      friendly_name: 'MB: Led Two'
+      supported_features: 0
+      color_mode: color_temp
+      brightness: 76
+      color_temp_kelvin: 2000
+      color_temp: 500
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      state: 'on'
+  metadata:
+    light.mb_led_one:
+      entity_only: true
+    light.mb_led_two:
+      entity_only: true
+  icon: mdi:lightbulb-night
+- id: '1771079390602'
+  name: 'LR: Dim'
+  entities:
+    light.dining:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      brightness: 76
+      color_temp_kelvin: 2000
+      color_temp: 500
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: Dining
+      supported_features: 0
+      state: 'on'
+    light.living:
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 500
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      brightness: 76
+      color_temp_kelvin: 2000
+      color_temp: 500
+      hs_color:
+      - 30.601
+      - 94.547
+      rgb_color:
+      - 255
+      - 137
+      - 14
+      xy_color:
+      - 0.598
+      - 0.383
+      friendly_name: Living
+      supported_features: 0
+      state: 'on'
+  metadata:
+    light.dining:
+      entity_only: true
+    light.living:
+      entity_only: true
+  icon: mdi:lightbulb-night
+- id: '1771384085759'
+  name: 'Low Lights: Off'
+  entities:
+    switch.sockets:
+      icon: mdi:power-socket-us
+      friendly_name: Sockets
+      entity_id:
+      - switch.abi_string_lights
+      - switch.lr_lamp
+      - switch.mb_lamp
+      - switch.yard
+      state: 'on'
+  metadata:
+    switch.sockets:
+      entity_only: true
+  icon: mdi:lightbulb-night-outline
+- id: '1771384324468'
+  name: 'Sockets: Off'
+  entities:
+    switch.sockets:
+      icon: mdi:power-socket-us
+      friendly_name: Sockets
+      entity_id:
+      - switch.abi_string_lights
+      - switch.lr_lamp
+      - switch.mb_lamp
+      - switch.yard
+      state: 'off'
+  metadata:
+    switch.sockets:
+      entity_only: true
+  icon: mdi:lamps-outline
