@@ -1,0 +1,35 @@
+# Secrets
+secrets.yaml
+*.key
+*.pem
+*.crt
+
+# HA runtime state
+.storage/
+.cloud/
+.uuid
+.HA_VERSION
+home-assistant.log*
+home-assistant_v2.db*
+OZW_Log.txt
+
+# Caches / deps / generated
+.cache/
+deps/
+tts/
+__pycache__/
+*.pyc
+
+# Backups / blueprints user data
+backups/
+image/
+
+# Editor / OS
+.DS_Store
+.vscode/
+*.swp
+*~
+
+# Claude / local tooling
+.mcp.json
+.claude/settings.local.json
