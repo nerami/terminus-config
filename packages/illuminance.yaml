@@ -13,7 +13,10 @@ automation:
         entity_id: sensor.light_sensor_samsung_illuminance
         above: 49
         id: bright_light
-    conditions: []
+    conditions:
+      - condition: time
+        after: '06:00:00'
+        before: '22:00:00'
     actions:
       - choose:
           - conditions:
