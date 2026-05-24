@@ -1,0 +1,33 @@
+automation:
+  - id: '1771029405189'
+    alias: Turn off lights when leave
+    triggers:
+      - trigger: zone
+        entity_id: device_tracker.normans_iphone
+        zone: zone.home
+        event: leave
+    actions:
+      - action: light.turn_off
+        target:
+          label_id: light
+      - action: switch.turn_off
+        target:
+          label_id: light
+    mode: single
+
+  - id: '1771029768568'
+    alias: Turn on the lights when I get home
+    triggers:
+      - trigger: zone
+        entity_id: device_tracker.normans_iphone
+        zone: zone.home
+        event: enter
+    conditions:
+      - condition: sun
+        after: sunset
+        before: sunrise
+    actions:
+      - action: switch.turn_on
+        target:
+          label_id: lamp
+    mode: single

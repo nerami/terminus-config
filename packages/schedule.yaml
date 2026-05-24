@@ -1,0 +1,43 @@
+automation:
+  - id: '1771035333639'
+    alias: 'ON: Low Light'
+    triggers:
+      - trigger: sun
+        event: sunset
+        offset: 0
+    conditions:
+      - condition: zone
+        entity_id: person.norman_ramirez
+        zone: zone.home
+    actions:
+      - action: switch.turn_on
+        target:
+          label_id: lamp
+      - action: scene.turn_on
+        target:
+          entity_id:
+            - scene.lr_dim
+            - scene.mb_dim
+    mode: single
+
+  - id: '1771035434876'
+    alias: Turn off the lights at 10pm
+    triggers:
+      - trigger: time
+        at: '22:00:00'
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+    actions:
+      - action: light.turn_off
+        target:
+          label_id: light
+      - action: switch.turn_off
+        target:
+          label_id: light
+    mode: single
