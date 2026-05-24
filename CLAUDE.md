@@ -5,6 +5,18 @@ Source of truth for the Home Assistant Green at home. Edits happen here in Claud
 ## Target
 
 - Device: Home Assistant Green
+- Hostname: `terminus.tanuki-mirzam.ts.net` (Tailscale MagicDNS — use as `<ha-green-api>` in all examples).
+- Network access: **Tailscale Funnel** exposes the HA frontend (`https://terminus.tanuki-mirzam.ts.net`, port 443) to the **public internet**. SSH is **not** carried by Funnel — Funnel is HTTPS-only on 443/8443/10000. SSH only works from a device logged into the same Tailnet (peer-to-peer 100.x routing).
+- SSH add-on: **Advanced SSH & Web Terminal** (Frenck). Ships with `jq`, `python3`, `curl`, full Alpine apk repos. Supports key-based auth and command-mode SSH (`ssh root@host 'cmd'`).
+- SSH user: `root`
+- SSH port: `22222` (Advanced SSH default). Requires Tailnet membership — not reachable via Funnel.
+- Long-lived access token: stored in `secrets.yaml` as `ha_long_lived_token` on the device; export locally as `$HA_TOKEN` for REST/WebSocket API calls. Create new tokens at `https://terminus.tanuki-mirzam.ts.net/profile/security`.
+
+### Remote ops decision tree
+
+- **Need device shell / file access (e.g. read `.storage/`)**: SSH via Tailnet only. Won't work from a non-Tailnet machine even with Funnel up.
+- **Need entity state / service calls / template eval / registry dumps**: use REST API over Funnel HTTPS — works from anywhere with the bearer token. Endpoints: `/api/states`, `/api/services/<domain>/<service>`, `/api/template` (POST a Jinja body), `/api/websocket` (for `config/device_registry/list` etc).
+- **Need device_id → entity_id mapping (the current task)**: prefer REST `/api/template` with `device_entities(...)` — bypasses SSH entirely.
 - HA Core version: _TBD — fill in after first sync (see `.HA_VERSION` from device)_
 - Deploy method: _TBD — Git Pull add-on / SSH / GitHub Actions (pick one, document the command here)_
 

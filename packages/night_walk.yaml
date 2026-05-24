@@ -1,0 +1,54 @@
+automation:
+  - id: '1771080002196'
+    alias: Night Walk
+    description: ''
+    triggers:
+      - trigger: state
+        entity_id:
+          - switch.abi_string_lights
+          - switch.mb_lamp
+        to: 'on'
+    conditions:
+      - condition: time
+        after: '00:00:00'
+        before: '05:00:00'
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+          - sun
+    actions:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.lr_lamp
+    mode: single
+
+  - id: '1771080220247'
+    alias: 'Night Walk: Off'
+    description: ''
+    triggers:
+      - trigger: state
+        entity_id:
+          - switch.abi_string_lights
+          - switch.mb_lamp
+        to: 'off'
+    conditions:
+      - condition: time
+        after: '00:00:00'
+        before: '05:00:00'
+        weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
+          - sat
+          - sun
+    actions:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.lr_lamp
+    mode: single

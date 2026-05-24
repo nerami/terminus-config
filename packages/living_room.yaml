@@ -1,0 +1,77 @@
+automation:
+  - id: '1771080638853'
+    alias: 'LR: Auto Daylight'
+    description: ''
+    triggers:
+      - trigger: state
+        entity_id:
+          - light.living
+          - light.dining
+        to: 'on'
+    conditions:
+      - condition: sun
+        before: sunset
+        after: sunrise
+    actions:
+      - action: scene.turn_on
+        target:
+          entity_id:
+            - scene.lr_day_light
+    mode: single
+
+  - id: '1771080699733'
+    alias: 'LR: Auto Dim'
+    description: ''
+    triggers:
+      - trigger: state
+        entity_id:
+          - light.living
+          - light.dining
+        to: 'on'
+    conditions:
+      - condition: sun
+        before: sunrise
+        after: sunset
+    actions:
+      - action: scene.turn_on
+        target:
+          entity_id:
+            - scene.lr_dim
+    mode: single
+
+  - id: '1771090342172'
+    alias: 'LR: Playing TV'
+    description: ''
+    triggers:
+      - trigger: state
+        entity_id: media_player.samsung
+        from: 'off'
+        not_to:
+          - 'unavailable'
+          - 'unknown'
+    conditions:
+      - condition: sun
+        before: sunrise
+        after: sunset
+    actions:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.lr_redish
+    mode: single
+
+  - id: '1771090484563'
+    alias: 'LR: Pausing TV'
+    description: ''
+    triggers:
+      - trigger: state
+        entity_id: media_player.samsung
+        to: 'off'
+    conditions:
+      - condition: sun
+        before: sunrise
+        after: sunset
+    actions:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.lr_dim
+    mode: single
