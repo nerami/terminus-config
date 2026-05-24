@@ -1,0 +1,23 @@
+template:
+  - binary_sensor:
+      - name: 'Is Dark'
+        unique_id: is_dark
+        icon: mdi:weather-night
+        state: >-
+          {% set lux = states('sensor.light_sensor_samsung_illuminance') %}
+          {% if lux in ['unknown', 'unavailable'] %}
+            {{ is_state('sun.sun', 'below_horizon') }}
+          {% else %}
+            {{ lux | float(99) < 25 }}
+          {% endif %}
+
+      - name: 'Is Bright'
+        unique_id: is_bright
+        icon: mdi:weather-sunny
+        state: >-
+          {% set lux = states('sensor.light_sensor_samsung_illuminance') %}
+          {% if lux in ['unknown', 'unavailable'] %}
+            {{ is_state('sun.sun', 'above_horizon') }}
+          {% else %}
+            {{ lux | float(99) >= 25 }}
+          {% endif %}

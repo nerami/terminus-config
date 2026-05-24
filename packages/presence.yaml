@@ -23,9 +23,9 @@ automation:
         zone: zone.home
         event: enter
     conditions:
-      - condition: numeric_state
-        entity_id: sensor.light_sensor_samsung_illuminance
-        below: 25
+      - condition: state
+        entity_id: binary_sensor.is_dark
+        state: 'on'
     actions:
       - action: switch.turn_on
         target:

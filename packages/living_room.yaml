@@ -9,9 +9,9 @@ automation:
           - light.dining
         to: 'on'
     conditions:
-      - condition: numeric_state
-        entity_id: sensor.light_sensor_samsung_illuminance
-        above: 24
+      - condition: state
+        entity_id: binary_sensor.is_bright
+        state: 'on'
     actions:
       - action: scene.turn_on
         target:
@@ -29,9 +29,9 @@ automation:
           - light.dining
         to: 'on'
     conditions:
-      - condition: numeric_state
-        entity_id: sensor.light_sensor_samsung_illuminance
-        below: 25
+      - condition: state
+        entity_id: binary_sensor.is_dark
+        state: 'on'
     actions:
       - action: scene.turn_on
         target:
