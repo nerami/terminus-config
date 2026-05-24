@@ -23,9 +23,9 @@ automation:
         zone: zone.home
         event: enter
     conditions:
-      - condition: sun
-        after: sunset
-        before: sunrise
+      - condition: numeric_state
+        entity_id: sensor.light_sensor_samsung_illuminance
+        below: 25
     actions:
       - action: switch.turn_on
         target:
