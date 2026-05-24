@@ -24,11 +24,11 @@ Source of truth for the Home Assistant Green at home. Edits happen here in Claud
 
 ```
 configuration.yaml         # root; enables packages/, includes, base settings
-automations.yaml           # UI-managed automations (do not hand-edit if HA UI also writes here)
-scripts.yaml
-scenes.yaml
+automations.yaml           # UI write target only; hand-managed automations live in packages/
+scripts.yaml               # UI write target only; hand-managed scripts live in packages/
+scenes.yaml                # UI write target only; hand-managed scenes live in packages/
 secrets.yaml.example       # template only; real secrets.yaml stays on the device
-packages/                  # one file per feature or room (preferred for new work)
+packages/                  # one file per feature or room — source of truth for hand-written work
 blueprints/                # automation/script blueprints
 themes/
 custom_components/         # third-party / custom integrations
@@ -36,7 +36,12 @@ dashboards/                # lovelace yaml-mode dashboards if used
 www/                       # static assets served by HA
 ```
 
-New automations go in `packages/<area>.yaml` rather than appending to `automations.yaml`. Keeps diffs reviewable and lets a feature span automation + script + sensor + template in one file.
+**All hand-written automation / script / scene / template / sensor work lives in `packages/<area>.yaml`** — one file per room or feature. A single package file can declare multiple top-level domains (`automation:`, `scene:`, `script:`, `template:`, `sensor:`, etc.), so a feature can span trigger + scene + helper sensor in one reviewable diff.
+
+`automations.yaml`, `scripts.yaml`, and `scenes.yaml` are kept as empty containers (`[]` or `{}`) so the HA UI editor still has a place to write new entries. **Editing a package-managed entity via the UI will write a duplicate id back into one of those root files** — undefined precedence. Pick one source per entity:
+
+- UI-managed → leave it in the root file.
+- Repo-managed → edit the package YAML directly, do not touch it via the UI.
 
 ## Conventions
 

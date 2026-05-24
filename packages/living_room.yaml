@@ -75,3 +75,56 @@ automation:
         target:
           entity_id: scene.lr_dim
     mode: single
+
+scene:
+  - id: '1771077904382'
+    name: 'LR: Redish'
+    icon: mdi:fire-circle
+    entities:
+      light.living:
+        state: 'on'
+        brightness: 255
+        hs_color: [9, 100]
+      light.dining:
+        state: 'on'
+        brightness: 255
+        hs_color: [9, 100]
+
+  - id: '1771077995810'
+    name: 'LR: Bluish'
+    icon: mdi:shield-moon
+    entities:
+      light.dining:
+        state: 'on'
+        brightness: 255
+        hs_color: [217, 100]
+      light.living:
+        state: 'on'
+        brightness: 255
+        hs_color: [217, 100]
+
+  - id: '1771078366080'
+    name: 'LR: Day Light'
+    icon: mdi:shield-sun
+    entities:
+      light.living:
+        state: 'on'
+        brightness: 255
+        color_temp_kelvin: 6500
+      light.dining:
+        state: 'on'
+        brightness: 255
+        color_temp_kelvin: 6500
+
+  - id: '1771079390602'
+    name: 'LR: Dim'
+    icon: mdi:lightbulb-night
+    entities:
+      light.dining:
+        state: 'on'
+        brightness: 76
+        color_temp_kelvin: 2000
+      light.living:
+        state: 'on'
+        brightness: 76
+        color_temp_kelvin: 2000

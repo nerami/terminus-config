@@ -51,7 +51,7 @@ automation:
     actions:
       - action: scene.turn_on
         target:
-          entity_id: scene.redish
+          entity_id: scene.mb_redish
     mode: single
 
   - id: '1771085107419'
@@ -76,3 +76,56 @@ automation:
         target:
           entity_id: scene.mb_dim
     mode: single
+
+scene:
+  - id: '1771077746684'
+    name: 'MB: Bluish'
+    icon: mdi:shield-moon
+    entities:
+      light.mb_led_one:
+        state: 'on'
+        brightness: 255
+        hs_color: [216, 100]
+      light.mb_led_two:
+        state: 'on'
+        brightness: 255
+        hs_color: [216, 100]
+
+  - id: '1771077823140'
+    name: 'MB: Redish'
+    icon: mdi:fire-circle
+    entities:
+      light.mb_led_one:
+        state: 'on'
+        brightness: 255
+        hs_color: [9, 100]
+      light.mb_led_two:
+        state: 'on'
+        brightness: 255
+        hs_color: [10, 100]
+
+  - id: '1771078321508'
+    name: 'MB: Day Light'
+    icon: mdi:shield-sun
+    entities:
+      light.mb_led_one:
+        state: 'on'
+        brightness: 255
+        color_temp_kelvin: 6535
+      light.mb_led_two:
+        state: 'on'
+        brightness: 255
+        color_temp_kelvin: 6535
+
+  - id: '1771078606159'
+    name: 'MB: Dim'
+    icon: mdi:lightbulb-night
+    entities:
+      light.mb_led_one:
+        state: 'on'
+        brightness: 76
+        color_temp_kelvin: 2000
+      light.mb_led_two:
+        state: 'on'
+        brightness: 76
+        color_temp_kelvin: 2000
