@@ -1,0 +1,33 @@
+automation:
+  - id: sockets_illuminance_control
+    alias: 'Sockets: Illuminance Control'
+    description: >-
+      Turn on Terminus sockets when illuminance drops below 25 lx,
+      turn off when it reaches 50 lx or higher.
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.light_sensor_samsung_illuminance
+        below: 25
+        id: low_light
+      - trigger: numeric_state
+        entity_id: sensor.light_sensor_samsung_illuminance
+        above: 49
+        id: bright_light
+    conditions: []
+    actions:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: low_light
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.sockets
+          - conditions:
+              - condition: trigger
+                id: bright_light
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.sockets
+    mode: single
