@@ -9,9 +9,9 @@ automation:
           - light.dining
         to: 'on'
     conditions:
-      - condition: sun
-        before: sunset
-        after: sunrise
+      - condition: numeric_state
+        entity_id: sensor.light_sensor_samsung_illuminance
+        above: 24
     actions:
       - action: scene.turn_on
         target:
@@ -29,9 +29,9 @@ automation:
           - light.dining
         to: 'on'
     conditions:
-      - condition: sun
-        before: sunrise
-        after: sunset
+      - condition: numeric_state
+        entity_id: sensor.light_sensor_samsung_illuminance
+        below: 25
     actions:
       - action: scene.turn_on
         target:
@@ -44,7 +44,9 @@ automation:
     description: ''
     triggers:
       - trigger: state
-        entity_id: media_player.samsung
+        entity_id:
+          - media_player.samsung
+          - media_player.samsung_cast
         from: 'off'
         not_to:
           - 'unavailable'
@@ -64,7 +66,9 @@ automation:
     description: ''
     triggers:
       - trigger: state
-        entity_id: media_player.samsung
+        entity_id:
+          - media_player.samsung
+          - media_player.samsung_cast
         to: 'off'
         for: '00:00:30'
     conditions:
