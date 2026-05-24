@@ -2,6 +2,16 @@
 
 Source of truth for the Home Assistant Green at home. Edits happen here in Claude Code, get committed to `git@github.com:nerami/home-assistant.git`, then deployed to the device.
 
+## Location
+
+- Country: Costa Rica (UTC-6, no DST)
+- Latitude: ~10°N (near-equator)
+- Sunrise / sunset: ~05:30 / ~17:50 year-round, only ~30 min seasonal swing
+- Twilight: short (~25 min) — full dark arrives quickly after sunset
+- Seasons: wet (May–Nov, cloudy afternoons → low indoor light pre-sunset) / dry (Dec–Apr, bright through evening)
+- **Automation implication**: sun events (`sun: sunset`) are highly stable here, so sun-based triggers don't suffer the seasonal drift they would at higher latitudes. Illuminance-sensor triggers still win during wet season because cloud cover decouples indoor light from sun elevation. No DST means fixed-time schedules don't need seasonal compensation.
+- Confirm `Settings → System → General` on the HA Green has the correct lat/long — every sun-based automation derives from it.
+
 ## Target
 
 - Device: Home Assistant Green
