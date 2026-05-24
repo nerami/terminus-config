@@ -262,12 +262,6 @@
   alias: 'MB: TV Playing'
   description: ''
   triggers:
-  - device_id: ac3bf6036c1ae47513d03d1b3c68458a
-    domain: media_player
-    entity_id: a902415c6b1a0b399051071b6dfb28d6
-    type: playing
-    trigger: device
-    enabled: false
   - device_id: 83186c58b95a22f66a196ef8e678ae49
     domain: media_player
     entity_id: 8c1dde29ae8722b68b2e0cda3ddfffbb
@@ -288,12 +282,6 @@
   alias: 'MB: Idle TV'
   description: ''
   triggers:
-  - device_id: ac3bf6036c1ae47513d03d1b3c68458a
-    domain: media_player
-    entity_id: a902415c6b1a0b399051071b6dfb28d6
-    type: paused
-    trigger: device
-    enabled: false
   - trigger: state
     entity_id:
     - media_player.playstation_4_2

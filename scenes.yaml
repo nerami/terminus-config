@@ -299,52 +299,46 @@
     light.living:
       min_color_temp_kelvin: 2000
       max_color_temp_kelvin: 6500
-      min_mireds: 153
-      max_mireds: 500
       supported_color_modes:
       - color_temp
       - hs
-      friendly_name: Living
-      supported_features: 0
       color_mode: color_temp
       brightness: 255
-      color_temp_kelvin: 6535
-      color_temp: 153
+      color_temp_kelvin: 6500
       hs_color:
-      - 54.768
-      - 1.6
+      - 49.231
+      - 1.944
       rgb_color:
       - 255
-      - 255
-      - 251
+      - 254
+      - 250
       xy_color:
-      - 0.325
+      - 0.326
       - 0.333
+      friendly_name: Living
+      supported_features: 0
       state: 'on'
     light.dining:
       min_color_temp_kelvin: 2000
       max_color_temp_kelvin: 6500
-      min_mireds: 153
-      max_mireds: 500
       supported_color_modes:
       - color_temp
       - hs
-      friendly_name: Dining
-      supported_features: 0
       color_mode: color_temp
       brightness: 255
-      color_temp_kelvin: 6535
-      color_temp: 153
+      color_temp_kelvin: 6500
       hs_color:
-      - 54.768
-      - 1.6
+      - 49.231
+      - 1.944
       rgb_color:
       - 255
-      - 255
-      - 251
+      - 254
+      - 250
       xy_color:
-      - 0.325
+      - 0.326
       - 0.333
+      friendly_name: Dining
+      supported_features: 0
       state: 'on'
   metadata:
     light.living:

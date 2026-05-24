@@ -1,7 +1,5 @@
 {
-  "enabledMcpjsonServers": [
-    "home-assistant"
-  ],
+  "enabledMcpjsonServers": [],
   "enabledPlugins": {
     "github@claude-plugins-official": true
   }

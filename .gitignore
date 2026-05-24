@@ -5,6 +5,7 @@ secrets.yaml
 *.crt
 
 # HA runtime state
+.ha_run.lock
 .storage/
 .cloud/
 .uuid
