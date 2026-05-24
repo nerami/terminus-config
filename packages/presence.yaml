@@ -12,9 +12,7 @@ automation:
           label_id: light
       - action: switch.turn_off
         target:
-          label_id:
-            - lamp
-            - socket
+          label_id: socket
     mode: single
 
   - id: '1771029768568'

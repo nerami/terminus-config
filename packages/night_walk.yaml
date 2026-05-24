@@ -12,14 +12,6 @@ automation:
       - condition: time
         after: '00:00:00'
         before: '05:00:00'
-        weekday:
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-          - sun
     actions:
       - action: switch.turn_on
         target:
@@ -39,14 +31,6 @@ automation:
       - condition: time
         after: '00:00:00'
         before: '05:00:00'
-        weekday:
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
-          - sun
     actions:
       - action: switch.turn_off
         target:

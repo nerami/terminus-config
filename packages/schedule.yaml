@@ -4,21 +4,11 @@ automation:
     triggers:
       - trigger: time
         at: '22:00:00'
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-          - fri
-          - sat
     actions:
       - action: light.turn_off
         target:
           label_id: light
       - action: switch.turn_off
         target:
-          label_id:
-            - light
-            - socket
+          label_id: socket
     mode: single

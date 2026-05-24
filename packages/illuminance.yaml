@@ -31,18 +31,14 @@ automation:
             sequence:
               - action: switch.turn_on
                 target:
-                  entity_id:
-                    - switch.sockets
-                    - switch.yard
+                  entity_id: switch.sockets
           - conditions:
               - condition: trigger
                 id: bright_light
             sequence:
               - action: switch.turn_off
                 target:
-                  entity_id:
-                    - switch.sockets
-                    - switch.yard
+                  entity_id: switch.sockets
     mode: single
 
 scene:
