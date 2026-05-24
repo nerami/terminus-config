@@ -66,6 +66,7 @@ automation:
       - trigger: state
         entity_id: media_player.samsung
         to: 'off'
+        for: '00:00:30'
     conditions:
       - condition: sun
         before: sunrise
