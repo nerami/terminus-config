@@ -20,7 +20,10 @@ automation:
 
   - id: '1771080220247'
     alias: 'Night Walk: Off'
-    description: ''
+    description: >-
+      Turn off the living-room lamp only once both source switches
+      (abi_string_lights and mb_lamp) are off. Prevents lr_lamp going
+      dark while one of the night-walk sources is still active.
     triggers:
       - trigger: state
         entity_id:
@@ -31,6 +34,10 @@ automation:
       - condition: time
         after: '00:00:00'
         before: '05:00:00'
+      - condition: template
+        value_template: >-
+          {{ is_state('switch.abi_string_lights', 'off')
+             and is_state('switch.mb_lamp', 'off') }}
     actions:
       - action: switch.turn_off
         target:
