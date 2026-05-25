@@ -39,12 +39,9 @@ automation:
         event: start
         entity_id: calendar.reminders
     action:
-      # TODO: replace entity_id with real notify.* entity after Telegram Bot
-      # config entry is created via the UI. Find via:
-      #   hass-cli state list | grep '^notify\.telegram'
       - service: notify.send_message
         data:
-          entity_id: notify.telegram_bot
+          entity_id: notify.ha_reminders_norman_r
           title: "⏰ {{ trigger.calendar_event.summary }}"
           message: >-
             {{ trigger.calendar_event.description
