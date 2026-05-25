@@ -117,11 +117,11 @@ scene:
       light.mb_led_one:
         state: 'on'
         brightness: 255
-        color_temp_kelvin: 6535
+        color_temp_kelvin: 6500
       light.mb_led_two:
         state: 'on'
         brightness: 255
-        color_temp_kelvin: 6535
+        color_temp_kelvin: 6500
 
   - id: '1771078606159'
     name: 'MB: Dim'
