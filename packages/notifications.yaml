@@ -1,9 +1,18 @@
 notify_events:
   token: !secret notify_events_token
 
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_bot_token
+    allowed_chat_ids:
+      - !secret telegram_chat_id
+
 notify:
   - name: events
     platform: notify_events
+  - name: telegram
+    platform: telegram
+    chat_id: !secret telegram_chat_id
 
 automation:
   - id: notify_mb_lamp_on
@@ -23,3 +32,21 @@ automation:
           data:
             level: info
             priority: normal
+
+  - id: notify_calendar_reminder
+    alias: "Notify: calendar reminder fires"
+    description: Send Telegram alert when a Reminders event starts.
+    mode: parallel
+    max: 10
+    trigger:
+      - platform: calendar
+        event: start
+        entity_id: calendar.reminders
+    action:
+      - service: notify.telegram
+        data:
+          title: "⏰ {{ trigger.calendar_event.summary }}"
+          message: >-
+            {{ trigger.calendar_event.description
+               if trigger.calendar_event.description
+               else 'Reminder time.' }}
