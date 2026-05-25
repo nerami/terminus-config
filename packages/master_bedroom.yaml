@@ -7,12 +7,14 @@ automation:
         entity_id:
           - light.mb_led_one
           - light.mb_led_two
+        from: 'off'
         to: 'on'
     conditions:
       - condition: state
         entity_id: binary_sensor.is_bright
         state: 'on'
     actions:
+      - delay: '00:00:03'
       - action: scene.turn_on
         target:
           entity_id: scene.mb_day_light
@@ -26,12 +28,14 @@ automation:
         entity_id:
           - light.mb_led_one
           - light.mb_led_two
+        from: 'off'
         to: 'on'
     conditions:
       - condition: state
         entity_id: binary_sensor.is_dark
         state: 'on'
     actions:
+      - delay: '00:00:03'
       - action: scene.turn_on
         target:
           entity_id: scene.mb_dim
