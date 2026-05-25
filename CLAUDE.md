@@ -85,16 +85,24 @@ CI runs the same check on every push (see `.github/workflows/`). A red check blo
 
 ## Deploy
 
-_Fill in once method is chosen._ Sketch:
+The deploy script lives at [`bin/deploy.sh`](bin/deploy.sh) and is executed **on the device** (via the Advanced SSH add-on). It:
+
+1. Snapshots HA (`ha backup new --name pre-deploy-<ts>`) — bails on backup failure before pulling.
+2. `git fetch` + `git pull --ff-only` (refuses merges and dirty trees).
+3. Runs `ha core check`. On failure, prompts to either `git reset --hard` back to the pre-pull SHA (HA stays running with old in-memory config) or restore from the snapshot.
+4. Prompts before `ha core restart` so a passing check doesn't force downtime.
+
+Workflow:
 
 ```bash
-# On the HA Green (via SSH add-on)
-ha backup new --name pre-deploy-$(date +%s)
-cd /config && git pull --ff-only
-ha core check && ha core restart
+# 1. Locally: commit + push
+git push
+
+# 2. On the device (SSH in via Tailnet, port 22222)
+ha-deploy   # zsh function in the SSH add-on's shell — already points at /config/bin/deploy.sh, no sourcing needed
 ```
 
-Always snapshot before pulling. Restart only after `ha core check` passes.
+Do not invoke `git pull` / `ha core restart` ad-hoc on the device — always go through `ha-deploy` so the snapshot + check + rollback path is exercised.
 
 ## Do Not Touch
 
