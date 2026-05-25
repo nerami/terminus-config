@@ -8,7 +8,9 @@ template:
           {% if lux in ['unknown', 'unavailable'] %}
             {{ is_state('sun.sun', 'below_horizon') }}
           {% else %}
-            {{ lux | float(99) < 25 }}
+            {% set lux = lux | float %}
+            {% set was_on = is_state('binary_sensor.is_dark', 'on') %}
+            {{ lux < 30 if was_on else lux < 20 }}
           {% endif %}
 
       - name: 'Is Bright'
@@ -19,5 +21,7 @@ template:
           {% if lux in ['unknown', 'unavailable'] %}
             {{ is_state('sun.sun', 'above_horizon') }}
           {% else %}
-            {{ lux | float(99) >= 25 }}
+            {% set lux = lux | float %}
+            {% set was_on = is_state('binary_sensor.is_bright', 'on') %}
+            {{ lux >= 20 if was_on else lux >= 30 }}
           {% endif %}

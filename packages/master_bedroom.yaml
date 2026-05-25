@@ -9,10 +9,26 @@ automation:
           - light.mb_led_two
         from: 'off'
         to: 'on'
+      - trigger: state
+        entity_id: binary_sensor.is_bright
+        to: 'on'
     conditions:
       - condition: state
         entity_id: binary_sensor.is_bright
         state: 'on'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: light.mb_led_one
+            state: 'on'
+          - condition: state
+            entity_id: light.mb_led_two
+            state: 'on'
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: media_player.playstation_4_2
+            state: 'playing'
     actions:
       - delay: '00:00:03'
       - action: scene.turn_on
@@ -30,10 +46,26 @@ automation:
           - light.mb_led_two
         from: 'off'
         to: 'on'
+      - trigger: state
+        entity_id: binary_sensor.is_dark
+        to: 'on'
     conditions:
       - condition: state
         entity_id: binary_sensor.is_dark
         state: 'on'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: light.mb_led_one
+            state: 'on'
+          - condition: state
+            entity_id: light.mb_led_two
+            state: 'on'
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: media_player.playstation_4_2
+            state: 'playing'
     actions:
       - delay: '00:00:03'
       - action: scene.turn_on

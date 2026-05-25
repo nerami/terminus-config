@@ -9,10 +9,25 @@ automation:
           - light.dining
         from: 'off'
         to: 'on'
+      - trigger: state
+        entity_id: binary_sensor.is_bright
+        to: 'on'
     conditions:
       - condition: state
         entity_id: binary_sensor.is_bright
         state: 'on'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: light.living
+            state: 'on'
+          - condition: state
+            entity_id: light.dining
+            state: 'on'
+      - condition: template
+        value_template: >-
+          {{ not is_state('media_player.samsung', 'playing')
+             and not is_state('media_player.samsung_cast', 'playing') }}
     actions:
       - delay: '00:00:03'
       - action: scene.turn_on
@@ -31,10 +46,25 @@ automation:
           - light.dining
         from: 'off'
         to: 'on'
+      - trigger: state
+        entity_id: binary_sensor.is_dark
+        to: 'on'
     conditions:
       - condition: state
         entity_id: binary_sensor.is_dark
         state: 'on'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: light.living
+            state: 'on'
+          - condition: state
+            entity_id: light.dining
+            state: 'on'
+      - condition: template
+        value_template: >-
+          {{ not is_state('media_player.samsung', 'playing')
+             and not is_state('media_player.samsung_cast', 'playing') }}
     actions:
       - delay: '00:00:03'
       - action: scene.turn_on
