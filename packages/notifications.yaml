@@ -1,11 +1,10 @@
 notify_events:
   token: !secret notify_events_token
 
-telegram_bot:
-  - platform: polling
-    api_key: !secret telegram_bot_token
-    allowed_chat_ids:
-      - !secret telegram_chat_id
+# Telegram bot configured via UI flow (Settings -> Devices & Services -> Add
+# Integration -> Telegram Bot). Polling mode; credentials stored in the
+# config entry, not in this file. Secrets `telegram_bot_token` and
+# `telegram_chat_id` exist on the device only as a paste-source for the UI.
 
 notify:
   - name: events
@@ -40,11 +39,13 @@ automation:
         event: start
         entity_id: calendar.reminders
     action:
-      - service: telegram_bot.send_message
+      # TODO: replace entity_id with real notify.* entity after Telegram Bot
+      # config entry is created via the UI. Find via:
+      #   hass-cli state list | grep '^notify\.telegram'
+      - service: notify.send_message
         data:
-          target: !secret telegram_chat_id
+          entity_id: notify.telegram_bot
           title: "⏰ {{ trigger.calendar_event.summary }}"
-          parse_mode: html
           message: >-
             {{ trigger.calendar_event.description
                if trigger.calendar_event.description
