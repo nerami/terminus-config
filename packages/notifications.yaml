@@ -30,24 +30,25 @@ automation:
             priority: normal
 
   - id: notify_calendar_reminder
-    alias: "Notify: calendar reminder fires"
+    alias: 'Notify: calendar reminder fires'
     description: Send Telegram alert when a Reminders event starts.
+    triggers:
+      - event: start
+        entity_id: calendar.reminders
+        trigger: calendar
+    actions:
+      - data:
+          level: warning
+          message: CAL TRIGGER DUMP keys={{ trigger.keys() | list }} raw={{ trigger |
+            tojson }}
+        action: system_log.write
+      - data:
+          title: Reminder
+          message: "{{ (trigger.calendar_event.description or 'Reminder time.')\n   if
+            trigger is defined\n   and trigger is mapping\n   and trigger.get('calendar_event')\n
+            \  else 'Reminder time.' }}"
+        action: notify.send_message
+        target:
+          entity_id: notify.ha_reminders_norman_r
     mode: parallel
     max: 10
-    trigger:
-      - platform: calendar
-        event: start
-        entity_id: calendar.reminders
-    action:
-      - service: system_log.write
-        data:
-          level: warning
-          message: "CAL TRIGGER DUMP keys={{ trigger.keys() | list }} raw={{ trigger | tojson }}"
-      - service: notify.send_message
-        data:
-          entity_id: notify.ha_reminders_norman_r
-          title: "Reminder"
-          message: >-
-            {{ trigger.calendar_event.summary
-               if trigger is mapping and 'calendar_event' in trigger
-               else 'no calendar_event in trigger' }}
