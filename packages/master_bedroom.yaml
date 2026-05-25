@@ -1,7 +1,10 @@
 automation:
   - id: '1771080380126'
-    alias: 'MB: Auto Daylight'
-    description: ''
+    alias: 'MB: Auto Scene'
+    description: >-
+      Apply Day Light or Dim when a bedroom light turns on or when
+      ambient light crosses the is_dark hysteresis band, unless the
+      PlayStation is playing.
     triggers:
       - trigger: state
         entity_id:
@@ -10,12 +13,8 @@ automation:
         from: 'off'
         to: 'on'
       - trigger: state
-        entity_id: binary_sensor.is_bright
-        to: 'on'
+        entity_id: binary_sensor.is_dark
     conditions:
-      - condition: state
-        entity_id: binary_sensor.is_bright
-        state: 'on'
       - condition: or
         conditions:
           - condition: state
@@ -31,46 +30,23 @@ automation:
             state: 'playing'
     actions:
       - delay: '00:00:03'
-      - action: scene.turn_on
-        target:
-          entity_id: scene.mb_day_light
-    mode: single
-
-  - id: '1771080435893'
-    alias: 'MB: Auto Dim'
-    description: ''
-    triggers:
-      - trigger: state
-        entity_id:
-          - light.mb_led_one
-          - light.mb_led_two
-        from: 'off'
-        to: 'on'
-      - trigger: state
-        entity_id: binary_sensor.is_dark
-        to: 'on'
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.is_dark
-        state: 'on'
-      - condition: or
-        conditions:
-          - condition: state
-            entity_id: light.mb_led_one
-            state: 'on'
-          - condition: state
-            entity_id: light.mb_led_two
-            state: 'on'
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: media_player.playstation_4_2
-            state: 'playing'
-    actions:
-      - delay: '00:00:03'
-      - action: scene.turn_on
-        target:
-          entity_id: scene.mb_dim
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.is_dark
+                state: 'on'
+            sequence:
+              - action: scene.turn_on
+                target:
+                  entity_id: scene.mb_dim
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.is_dark
+                state: 'off'
+            sequence:
+              - action: scene.turn_on
+                target:
+                  entity_id: scene.mb_day_light
     mode: single
 
   - id: '1771085036395'
