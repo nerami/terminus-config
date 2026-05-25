@@ -39,11 +39,15 @@ automation:
         event: start
         entity_id: calendar.reminders
     action:
+      - service: system_log.write
+        data:
+          level: warning
+          message: "CAL TRIGGER DUMP keys={{ trigger.keys() | list }} raw={{ trigger | tojson }}"
       - service: notify.send_message
         data:
           entity_id: notify.ha_reminders_norman_r
-          title: "⏰ {{ trigger.calendar_event.summary }}"
+          title: "Reminder"
           message: >-
-            {{ trigger.calendar_event.description
-               if trigger.calendar_event.description
-               else 'Reminder time.' }}
+            {{ trigger.calendar_event.summary
+               if trigger is mapping and 'calendar_event' in trigger
+               else 'no calendar_event in trigger' }}
