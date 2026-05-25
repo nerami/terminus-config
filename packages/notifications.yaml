@@ -10,9 +10,6 @@ telegram_bot:
 notify:
   - name: events
     platform: notify_events
-  - name: telegram
-    platform: telegram
-    chat_id: !secret telegram_chat_id
 
 automation:
   - id: notify_mb_lamp_on
@@ -43,9 +40,11 @@ automation:
         event: start
         entity_id: calendar.reminders
     action:
-      - service: notify.telegram
+      - service: telegram_bot.send_message
         data:
+          target: !secret telegram_chat_id
           title: "⏰ {{ trigger.calendar_event.summary }}"
+          parse_mode: html
           message: >-
             {{ trigger.calendar_event.description
                if trigger.calendar_event.description
