@@ -49,8 +49,11 @@ automation:
     mode: single
 
   - id: '1771090342172'
-    alias: 'LR: Playing TV'
-    description: ''
+    alias: 'LR: TV Scene'
+    description: >-
+      Apply Redish when the TV powers on, or Dim when it powers off for
+      30s. Only between sunset and sunrise. Dim branch is also gated by
+      time<22:00 so night-walk keeps control after 22:00.
     triggers:
       - trigger: state
         entity_id:
@@ -60,36 +63,36 @@ automation:
         not_to:
           - 'unavailable'
           - 'unknown'
-    conditions:
-      - condition: sun
-        before: sunrise
-        after: sunset
-    actions:
-      - action: scene.turn_on
-        target:
-          entity_id: scene.lr_redish
-    mode: single
-
-  - id: '1771090484563'
-    alias: 'LR: Pausing TV'
-    description: ''
-    triggers:
+        id: tv_on
       - trigger: state
         entity_id:
           - media_player.samsung
           - media_player.samsung_cast
         to: 'off'
         for: '00:00:30'
+        id: tv_off
     conditions:
       - condition: sun
         before: sunrise
         after: sunset
-      - condition: time
-        before: '22:00:00'
     actions:
-      - action: scene.turn_on
-        target:
-          entity_id: scene.lr_dim
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: tv_on
+            sequence:
+              - action: scene.turn_on
+                target:
+                  entity_id: scene.lr_redish
+          - conditions:
+              - condition: trigger
+                id: tv_off
+              - condition: time
+                before: '22:00:00'
+            sequence:
+              - action: scene.turn_on
+                target:
+                  entity_id: scene.lr_dim
     mode: single
 
 scene:
