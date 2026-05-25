@@ -2,19 +2,20 @@ automation:
   - id: sockets_illuminance_control
     alias: 'Sockets: Illuminance Control'
     description: >-
-      Turn on Terminus sockets and yard switch when illuminance is below 25 lx
-      for at least 1 minute; turn off when it is 25 lx or higher for at least
-      1 minute. The 1-minute hold debounces sensor jitter near the threshold.
+      Turn Terminus sockets on when the room is dark and off when bright,
+      gated by binary_sensor.is_dark (20/30 lux hysteresis band + sun
+      fallback when the lux sensor is offline). A 10-second hold debounces
+      brief state flickers.
     triggers:
-      - trigger: numeric_state
-        entity_id: sensor.light_sensor_samsung_illuminance
-        below: 25
-        for: '00:01:00'
+      - trigger: state
+        entity_id: binary_sensor.is_dark
+        to: 'on'
+        for: '00:00:10'
         id: low_light
-      - trigger: numeric_state
-        entity_id: sensor.light_sensor_samsung_illuminance
-        above: 24
-        for: '00:01:00'
+      - trigger: state
+        entity_id: binary_sensor.is_dark
+        to: 'off'
+        for: '00:00:10'
         id: bright_light
     conditions:
       - condition: time
