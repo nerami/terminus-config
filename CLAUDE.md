@@ -20,13 +20,16 @@ Source of truth for the Home Assistant Green at home. Edits happen here in Claud
 - SSH add-on: **Advanced SSH & Web Terminal** (Frenck). Ships with `jq`, `python3`, `curl`, full Alpine apk repos. Supports key-based auth and command-mode SSH (`ssh root@host 'cmd'`).
 - SSH user: `root`
 - SSH port: `22222` (Advanced SSH default). Requires Tailnet membership — not reachable via Funnel.
-- Long-lived access token: stored in `secrets.yaml` as `ha_long_lived_token` on the device; export locally as `$HA_TOKEN` for REST/WebSocket API calls. Create new tokens at `https://terminus.tanuki-mirzam.ts.net/profile/security`.
+- Local env (assume always defined — do not re-verify):
+  - `HASS_SERVER=https://terminus.tanuki-mirzam.ts.net`
+  - `HASS_TOKEN=<long-lived access token>` (same value lives in `secrets.yaml` as `ha_long_lived_token` on the device; create new tokens at `https://terminus.tanuki-mirzam.ts.net/profile/security`)
+- `hass-cli` is installed locally and auto-reads `HASS_SERVER` / `HASS_TOKEN`. Prefer it over raw `curl` for entity lookups, state reads, service calls, and template eval. Examples: `hass-cli state list`, `hass-cli state get <entity_id>`, `hass-cli service call <domain>.<service>`, `hass-cli template '{{ ... }}'`.
 
 ### Remote ops decision tree
 
 - **Need device shell / file access (e.g. read `.storage/`)**: SSH via Tailnet only. Won't work from a non-Tailnet machine even with Funnel up.
-- **Need entity state / service calls / template eval / registry dumps**: use REST API over Funnel HTTPS — works from anywhere with the bearer token. Endpoints: `/api/states`, `/api/services/<domain>/<service>`, `/api/template` (POST a Jinja body), `/api/websocket` (for `config/device_registry/list` etc).
-- **Need device_id → entity_id mapping (the current task)**: prefer REST `/api/template` with `device_entities(...)` — bypasses SSH entirely.
+- **Need entity state / service calls / template eval / registry dumps**: prefer `hass-cli` (already authenticated via `HASS_SERVER`/`HASS_TOKEN`); fall back to REST over Funnel HTTPS when `hass-cli` lacks the verb. Endpoints: `/api/states`, `/api/services/<domain>/<service>`, `/api/template` (POST a Jinja body), `/api/websocket` (for `config/device_registry/list` etc).
+- **Need device_id → entity_id mapping**: `hass-cli template '{{ device_entities("<device_id>") }}'` or REST `/api/template` with `device_entities(...)` — bypasses SSH entirely.
 - HA Core version: _TBD — fill in after first sync (see `.HA_VERSION` from device)_
 - Deploy method: _TBD — Git Pull add-on / SSH / GitHub Actions (pick one, document the command here)_
 
