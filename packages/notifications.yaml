@@ -1,2 +1,18 @@
 notify_events:
   token: !secret notify_events_token
+
+automation:
+  - id: notify_mb_lamp_on
+    alias: "Notify: MB Lamp turned on"
+    description: Smoke test for the Notify.Events channel.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: switch.mb_lamp
+        from: "off"
+        to: "on"
+    action:
+      - service: notify.notify_events
+        data:
+          title: "MB: Lamp on"
+          message: "MB Lamp switched on at {{ now().strftime('%H:%M:%S') }}."
