@@ -1,6 +1,10 @@
 notify_events:
   token: !secret notify_events_token
 
+notify:
+  - name: events
+    platform: notify_events
+
 automation:
   - id: notify_mb_lamp_on
     alias: "Notify: MB Lamp turned on"
@@ -12,7 +16,10 @@ automation:
         from: "off"
         to: "on"
     action:
-      - service: notify.notify_events
+      - service: notify.events
         data:
           title: "MB: Lamp on"
           message: "MB Lamp switched on at {{ now().strftime('%H:%M:%S') }}."
+          data:
+            level: info
+            priority: normal
