@@ -21,9 +21,9 @@ automation:
       - condition: time
         after: '06:00:00'
         before: '22:00:00'
-      - condition: zone
-        entity_id: person.norman_ramirez
-        zone: zone.home
+      - condition: state
+        entity_id: group.family_trackers
+        state: home
     actions:
       - choose:
           - conditions:

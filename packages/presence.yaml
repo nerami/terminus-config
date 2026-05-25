@@ -1,9 +1,16 @@
+group:
+  family_trackers:
+    name: Family Trackers
+    entities:
+      - device_tracker.normans_iphone
+      - device_tracker.nanis_iphone
+
 automation:
   - id: '1771029405189'
-    alias: Turn off lights when leave
+    alias: Turn off lights when everyone leaves
     triggers:
       - trigger: zone
-        entity_id: device_tracker.normans_iphone
+        entity_id: group.family_trackers
         zone: zone.home
         event: leave
     actions:
@@ -16,10 +23,10 @@ automation:
     mode: single
 
   - id: '1771029768568'
-    alias: Turn on the lights when I get home
+    alias: Turn on the lights when someone gets home
     triggers:
       - trigger: zone
-        entity_id: device_tracker.normans_iphone
+        entity_id: group.family_trackers
         zone: zone.home
         event: enter
     conditions:
