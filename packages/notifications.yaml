@@ -57,13 +57,15 @@ automation:
     conditions:
       - condition: template
         value_template: >-
-          {% set sd = trigger.event.data.get('service_data', {}) %}
-          {% set tg = trigger.event.data.get('target', {}) %}
+          {% set evd = trigger.event.data if (trigger is defined and trigger.event is defined) else {} %}
+          {% set sd = evd.get('service_data', {}) %}
+          {% set tg = evd.get('target', {}) %}
           {{ sd.get('entity_id') == 'calendar.reminders'
              or tg.get('entity_id') == 'calendar.reminders' }}
     actions:
       - variables:
-          sd: "{{ trigger.event.data.get('service_data', {}) }}"
+          evd: "{{ trigger.event.data if (trigger is defined and trigger.event is defined) else {} }}"
+          sd: "{{ evd.get('service_data', {}) }}"
           summary: "{{ sd.get('summary') or '(no title)' }}"
           start: "{{ sd.get('dtstart') or '?' }}"
           end: "{{ sd.get('dtend') or '?' }}"
@@ -93,13 +95,15 @@ automation:
     conditions:
       - condition: template
         value_template: >-
-          {% set sd = trigger.event.data.get('service_data', {}) %}
-          {% set tg = trigger.event.data.get('target', {}) %}
+          {% set evd = trigger.event.data if (trigger is defined and trigger.event is defined) else {} %}
+          {% set sd = evd.get('service_data', {}) %}
+          {% set tg = evd.get('target', {}) %}
           {{ sd.get('entity_id') == 'calendar.reminders'
              or tg.get('entity_id') == 'calendar.reminders' }}
     actions:
       - variables:
-          sd: "{{ trigger.event.data.get('service_data', {}) }}"
+          evd: "{{ trigger.event.data if (trigger is defined and trigger.event is defined) else {} }}"
+          sd: "{{ evd.get('service_data', {}) }}"
           ev: "{{ sd.get('event', {}) }}"
           summary: "{{ ev.get('summary') or sd.get('summary') or '(no title)' }}"
           uid: "{{ sd.get('uid') or '?' }}"
@@ -128,13 +132,15 @@ automation:
     conditions:
       - condition: template
         value_template: >-
-          {% set sd = trigger.event.data.get('service_data', {}) %}
-          {% set tg = trigger.event.data.get('target', {}) %}
+          {% set evd = trigger.event.data if (trigger is defined and trigger.event is defined) else {} %}
+          {% set sd = evd.get('service_data', {}) %}
+          {% set tg = evd.get('target', {}) %}
           {{ sd.get('entity_id') == 'calendar.reminders'
              or tg.get('entity_id') == 'calendar.reminders' }}
     actions:
       - variables:
-          sd: "{{ trigger.event.data.get('service_data', {}) }}"
+          evd: "{{ trigger.event.data if (trigger is defined and trigger.event is defined) else {} }}"
+          sd: "{{ evd.get('service_data', {}) }}"
           uid: "{{ sd.get('uid') or '?' }}"
           recurrence_id: "{{ sd.get('recurrence_id') or '' }}"
           recurrence_range: "{{ sd.get('recurrence_range') or '' }}"
