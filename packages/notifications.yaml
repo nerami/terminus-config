@@ -44,3 +44,109 @@ automation:
           notification_id: "cal_{{ uid }}"
     mode: parallel
     max: 10
+
+  - id: notify_calendar_event_created
+    alias: 'Notify: calendar event created'
+    description: Send Telegram alert when a new event is added to calendar.reminders.
+    triggers:
+      - trigger: event
+        event_type: call_service
+        event_data:
+          domain: calendar
+          service: create_event
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set sd = trigger.event.data.get('service_data', {}) %}
+          {% set tg = trigger.event.data.get('target', {}) %}
+          {{ sd.get('entity_id') == 'calendar.reminders'
+             or tg.get('entity_id') == 'calendar.reminders' }}
+    actions:
+      - variables:
+          sd: "{{ trigger.event.data.get('service_data', {}) }}"
+          summary: "{{ sd.get('summary') or '(no title)' }}"
+          start: "{{ sd.get('dtstart') or '?' }}"
+          end: "{{ sd.get('dtend') or '?' }}"
+          notes: "{{ sd.get('description') or '' }}"
+      - action: notify.send_message
+        target:
+          entity_id: notify.notifications_norman_r
+        data:
+          title: "Calendar: new event — {{ summary }}"
+          message: |-
+            {{ start }} → {{ end }}
+            {%- if notes %}
+            {{ notes }}
+            {%- endif %}
+    mode: parallel
+    max: 10
+
+  - id: notify_calendar_event_updated
+    alias: 'Notify: calendar event updated'
+    description: Send Telegram alert when an event in calendar.reminders is edited.
+    triggers:
+      - trigger: event
+        event_type: call_service
+        event_data:
+          domain: calendar
+          service: update_event
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set sd = trigger.event.data.get('service_data', {}) %}
+          {% set tg = trigger.event.data.get('target', {}) %}
+          {{ sd.get('entity_id') == 'calendar.reminders'
+             or tg.get('entity_id') == 'calendar.reminders' }}
+    actions:
+      - variables:
+          sd: "{{ trigger.event.data.get('service_data', {}) }}"
+          ev: "{{ sd.get('event', {}) }}"
+          summary: "{{ ev.get('summary') or sd.get('summary') or '(no title)' }}"
+          uid: "{{ sd.get('uid') or '?' }}"
+          start: "{{ ev.get('dtstart') or sd.get('dtstart') or '?' }}"
+          end: "{{ ev.get('dtend') or sd.get('dtend') or '?' }}"
+      - action: notify.send_message
+        target:
+          entity_id: notify.notifications_norman_r
+        data:
+          title: "Calendar: updated — {{ summary }}"
+          message: |-
+            {{ start }} → {{ end }}
+            uid: {{ uid }}
+    mode: parallel
+    max: 10
+
+  - id: notify_calendar_event_deleted
+    alias: 'Notify: calendar event deleted'
+    description: Send Telegram alert when an event is removed from calendar.reminders.
+    triggers:
+      - trigger: event
+        event_type: call_service
+        event_data:
+          domain: calendar
+          service: delete_event
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set sd = trigger.event.data.get('service_data', {}) %}
+          {% set tg = trigger.event.data.get('target', {}) %}
+          {{ sd.get('entity_id') == 'calendar.reminders'
+             or tg.get('entity_id') == 'calendar.reminders' }}
+    actions:
+      - variables:
+          sd: "{{ trigger.event.data.get('service_data', {}) }}"
+          uid: "{{ sd.get('uid') or '?' }}"
+          recurrence_id: "{{ sd.get('recurrence_id') or '' }}"
+          recurrence_range: "{{ sd.get('recurrence_range') or '' }}"
+      - action: notify.send_message
+        target:
+          entity_id: notify.notifications_norman_r
+        data:
+          title: "Calendar: event deleted"
+          message: |-
+            uid: {{ uid }}
+            {%- if recurrence_id %}
+            recurrence: {{ recurrence_id }} ({{ recurrence_range or 'single' }})
+            {%- endif %}
+    mode: parallel
+    max: 10
