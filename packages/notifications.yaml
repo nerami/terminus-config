@@ -15,15 +15,22 @@ automation:
     alias: 'Notify: calendar reminder fires'
     description: Send Telegram alert when a Reminders event starts.
     triggers:
-      - event: start
-        entity_id: calendar.reminders
-        trigger: calendar
+      - trigger: calendar.event_started
+        target:
+          entity_id: calendar.reminders
+        options:
+          offset:
+            days: 0
+            hours: 0
+            minutes: 0
+            seconds: 0
+          offset_type: after
     actions:
       - data:
           title: Reminder
           message: "{{ trigger.calendar_event.description or 'Reminder time.' }}"
         action: notify.send_message
         target:
-          entity_id: notify.ha_reminders_norman_r
+          entity_id: notify.notifications_norman_r
     mode: parallel
     max: 10
