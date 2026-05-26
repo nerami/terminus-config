@@ -26,16 +26,21 @@ automation:
             seconds: 0
           offset_type: after
     actions:
+      - variables:
+          ev: "{{ trigger.get('calendar_event', {}) if trigger is defined else {} }}"
+          summary: "{{ ev.get('summary') or 'Reminder' }}"
+          body: "{{ ev.get('description') or 'Event ongoing — check calendar for details.' }}"
+          uid: "{{ ev.get('uid') or now().timestamp() | int }}"
       - action: notify.send_message
         target:
           entity_id: notify.notifications_norman_r
         data:
-          title: "Reminder: {{ trigger.calendar_event.summary | default('Reminder') }}"
-          message: "{{ trigger.calendar_event.description or 'Event ongoing — check calendar for details.' }}"
+          title: "Reminder: {{ summary }}"
+          message: "{{ body }}"
       - action: persistent_notification.create
         data:
-          title: "📅 {{ trigger.calendar_event.summary | default('Reminder') }}"
-          message: "{{ trigger.calendar_event.description or 'Event ongoing — check calendar for details.' }}"
-          notification_id: "cal_{{ trigger.calendar_event.uid }}"
+          title: "📅 {{ summary }}"
+          message: "{{ body }}"
+          notification_id: "cal_{{ uid }}"
     mode: parallel
     max: 10
