@@ -11,24 +11,6 @@ notify:
     platform: notify_events
 
 automation:
-  - id: notify_mb_lamp_on
-    alias: "Notify: MB Lamp turned on"
-    description: Smoke test for the Notify.Events channel.
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: switch.mb_lamp
-        from: "off"
-        to: "on"
-    action:
-      - service: notify.events
-        data:
-          title: "MB: Lamp on"
-          message: "MB Lamp switched on at {{ now().strftime('%H:%M:%S') }}."
-          data:
-            level: info
-            priority: normal
-
   - id: notify_calendar_reminder
     alias: 'Notify: calendar reminder fires'
     description: Send Telegram alert when a Reminders event starts.
@@ -38,15 +20,8 @@ automation:
         trigger: calendar
     actions:
       - data:
-          level: warning
-          message: CAL TRIGGER DUMP keys={{ trigger.keys() | list }} raw={{ trigger |
-            tojson }}
-        action: system_log.write
-      - data:
           title: Reminder
-          message: "{{ (trigger.calendar_event.description or 'Reminder time.')\n   if
-            trigger is defined\n   and trigger is mapping\n   and trigger.get('calendar_event')\n
-            \  else 'Reminder time.' }}"
+          message: "{{ trigger.calendar_event.description or 'Reminder time.' }}"
         action: notify.send_message
         target:
           entity_id: notify.ha_reminders_norman_r
