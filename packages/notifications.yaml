@@ -31,11 +31,11 @@ automation:
           entity_id: notify.notifications_norman_r
         data:
           title: "Reminder: {{ trigger.calendar_event.summary | default('Reminder') }}"
-          message: "{{ trigger.calendar_event.description or 'Reminder time.' }}"
+          message: "{{ trigger.calendar_event.description or 'Event ongoing — check calendar for details.' }}"
       - action: persistent_notification.create
         data:
           title: "📅 {{ trigger.calendar_event.summary | default('Reminder') }}"
-          message: "{{ trigger.calendar_event.description or 'Reminder time.' }}"
+          message: "{{ trigger.calendar_event.description or 'Event ongoing — check calendar for details.' }}"
           notification_id: "cal_{{ trigger.calendar_event.uid }}"
     mode: parallel
     max: 10
