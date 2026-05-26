@@ -188,7 +188,7 @@ automation:
         response_variable: reply
       - action: telegram_bot.send_message
         data:
-          target: "{{ chat_id }}"
+          chat_id: "{{ chat_id }}"
           message: "{{ reply.response.speech.plain.speech }}"
     mode: parallel
     max: 5
@@ -206,7 +206,7 @@ automation:
     actions:
       - action: telegram_bot.send_message
         data:
-          target: "{{ trigger.event.data.chat_id }}"
+          chat_id: "{{ trigger.event.data.chat_id }}"
           message: |
             Usage: /remind <plain English>
             Examples:
