@@ -133,24 +133,30 @@ No CI yet — local docker check is the only gate before push.
 
 ## Deploy
 
-Script: [`bin/deploy.sh`](bin/deploy.sh). Runs on device via Advanced SSH. Steps:
+On-device script: [`bin/deploy.sh`](bin/deploy.sh). Runs on terminus via Advanced SSH. Steps:
 
 1. `ha backup new --name pre-deploy-<ts>` — bails if backup fails (no pull).
 2. `git fetch` + `git pull --ff-only` — refuses merges + dirty trees.
 3. `ha core check`. On fail → prompts: `git reset --hard` back to pre-pull SHA (HA keeps running old in-memory config) OR restore snapshot.
 4. Prompts before `ha core restart` — passing check ≠ forced downtime.
 
+Laptop wrapper: [`bin/deploy-ssh.sh`](bin/deploy-ssh.sh). One-shot SSH into terminus and runs `./bin/deploy.sh`. Allocates TTY (`ssh -t`) so prompts/colors work. Defaults `root@terminus.tanuki-mirzam.ts.net:22222`; override via `HA_SSH_HOST` / `HA_SSH_PORT`.
+
 Workflow:
 
 ```bash
 # local
 git push
+bin/deploy-ssh.sh   # SSH in, run deploy.sh, answer prompts live
+```
 
-# device (SSH via Tailnet, port 22222)
+Alt (already on device, e.g. via SSH add-on web shell):
+
+```bash
 ha-deploy   # zsh fn in SSH add-on shell → /config/bin/deploy.sh
 ```
 
-Never ad-hoc `git pull` / `ha core restart` on device — always `ha-deploy` so snapshot+check+rollback fires.
+Never ad-hoc `git pull` / `ha core restart` on device — always go through `deploy.sh` (via wrapper or `ha-deploy`) so snapshot+check+rollback fires.
 
 ## Do Not Touch
 
