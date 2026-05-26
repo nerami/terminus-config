@@ -156,3 +156,60 @@ automation:
             {%- endif %}
     mode: parallel
     max: 10
+
+  - id: telegram_remind_nl
+    alias: 'Telegram: /remind natural language → Claude'
+    description: >-
+      Forward /remind free text to conversation.claude_conversation; agent
+      creates an event on calendar.reminders via Assist tools.
+    triggers:
+      - trigger: event
+        event_type: telegram_command
+        event_data:
+          command: /remind
+    variables:
+      raw: "{{ trigger.event.data.args | join(' ') }}"
+      chat_id: "{{ trigger.event.data.chat_id }}"
+      prompt: >-
+        Create a calendar event on calendar.reminders.
+        Today: {{ now().strftime('%A, %Y-%m-%d') }}, current time {{ now().strftime('%H:%M') }} (UTC-6, Costa Rica, no DST).
+        Default duration: 1 hour if not specified.
+        Household vocabulary: "my daughter", "Nanis", "Abi", and "Abril" all refer to Abril Ramírez.
+        After creating, reply with one short confirmation line: title + local start time.
+        User request: {{ raw }}
+    conditions:
+      - condition: template
+        value_template: "{{ raw | length > 0 }}"
+    actions:
+      - action: conversation.process
+        data:
+          agent_id: conversation.claude_conversation
+          text: "{{ prompt }}"
+        response_variable: reply
+      - action: telegram_bot.send_message
+        data:
+          target: "{{ chat_id }}"
+          message: "{{ reply.response.speech.plain.speech }}"
+    mode: parallel
+    max: 5
+
+  - id: telegram_remind_help
+    alias: 'Telegram: /remind empty input → usage'
+    triggers:
+      - trigger: event
+        event_type: telegram_command
+        event_data:
+          command: /remind
+    conditions:
+      - condition: template
+        value_template: "{{ (trigger.event.data.args | join(' ')) | length == 0 }}"
+    actions:
+      - action: telegram_bot.send_message
+        data:
+          target: "{{ trigger.event.data.chat_id }}"
+          message: |
+            Usage: /remind <plain English>
+            Examples:
+              /remind dentist Friday 9am for 90 min
+              /remind pickup Nanis today 5:30pm
+              /remind block 2 hours Thursday afternoon
