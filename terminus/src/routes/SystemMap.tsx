@@ -1,6 +1,6 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { ReactFlow, Background, Controls, type Edge, type Node } from "@xyflow/react"
-import type { Manifest } from "@/types/manifest"
+import type { GraphNode, Manifest } from "@/types/manifest"
 import { nodeTypes } from "@/components/nodes"
 
 const EDGE_STYLE: Record<string, { stroke: string; strokeDasharray?: string }> = {
@@ -12,7 +12,12 @@ const EDGE_STYLE: Record<string, { stroke: string; strokeDasharray?: string }> =
   template: { stroke: "var(--color-zinc-500)", strokeDasharray: "2 2" },
 }
 
-export function SystemMap({ manifest }: { manifest: Manifest }) {
+type Props = {
+  manifest: Manifest
+  onSelect: (node: GraphNode) => void
+}
+
+export function SystemMap({ manifest, onSelect }: Props) {
   const nodes: Node[] = useMemo(
     () =>
       manifest.nodes.map((n) => {
@@ -49,9 +54,32 @@ export function SystemMap({ manifest }: { manifest: Manifest }) {
     [manifest]
   )
 
+  const byId = useMemo(() => {
+    const m = new Map<string, GraphNode>()
+    for (const n of manifest.nodes) m.set(n.id, n)
+    return m
+  }, [manifest])
+
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, n: Node) => {
+      const graphNode = byId.get(n.id)
+      if (!graphNode) return
+      if (graphNode.kind === "automation") return // drill-in handled by AutomationNode itself
+      onSelect(graphNode)
+    },
+    [byId, onSelect]
+  )
+
   return (
     <div className="h-[calc(100svh-4rem)] w-full">
-      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView proOptions={{ hideAttribution: true }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodeClick={handleNodeClick}
+        fitView
+        proOptions={{ hideAttribution: true }}
+      >
         <Background />
         <Controls />
       </ReactFlow>
