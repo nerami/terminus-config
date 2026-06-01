@@ -16,3 +16,10 @@ http:
   use_x_forwarded_for: true
   trusted_proxies:
     - 127.0.0.1
+
+panel_custom:
+  - name: my-dashboard
+    sidebar_title: My Dashboard
+    sidebar_icon: mdi:view-dashboard
+    url_path: my-dashboard
+    module_url: /local/my-dashboard/index.js
