@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Terminus is the custom Home Assistant frontend panel that visualises the parent repo's automations as a React Flow graph. It is a self-contained subproject inside the HA config repo — the parent `CLAUDE.md` at the repo root covers HA YAML conventions and on-device deploy; this file covers the terminus build only.
 
+Deferred ideas and known follow-ups live in `BACKLOG.md` — check it before proposing new features so you do not re-litigate decisions that are already parked.
+
 ## Commands
 
 **Always use `pnpm`** — `pnpm-lock.yaml` is the lockfile and `pnpm-workspace.yaml` exists. Never `npm` or `yarn`.
