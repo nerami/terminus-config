@@ -12,7 +12,7 @@ export function buildRuntime({ apiKey }: RuntimeOptions): Router {
   const runtime = new CopilotSseRuntime({
     agents: {
       default: new BuiltInAgent({
-        model: "anthropic/claude-sonnet-4",
+        model: "anthropic/claude-haiku-4-5",
         apiKey,
       }),
     },
