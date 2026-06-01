@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { CopilotSidebar } from "@copilotkit/react-ui"
 import "@copilotkit/react-ui/styles.css"
 import { Badge } from "@/components/ui/badge"
@@ -75,17 +75,24 @@ function CopilotWiring({ manifest }: { manifest: Manifest }) {
   const [, force] = useState(0)
   const [token, setToken] = useState<string>("")
   const knownIds = useRegistryEntities()
+  const forceRef = useRef(force)
+  forceRef.current = force
 
   useEffect(() => {
     getAuthToken().then(setToken).catch(() => setToken(""))
   }, [])
 
-  const proposalHandler = controller.handler
-  controller.handler = async (proposal: AutomationProposal) => {
-    const p = proposalHandler(proposal)
-    force((n) => n + 1)
-    return p
-  }
+  useEffect(() => {
+    const original = controller.handler
+    controller.handler = async (proposal: AutomationProposal) => {
+      const result = original(proposal)
+      forceRef.current((n) => n + 1)
+      return result
+    }
+    return () => {
+      controller.handler = original
+    }
+  }, [controller])
 
   return (
     <>
@@ -96,11 +103,11 @@ function CopilotWiring({ manifest }: { manifest: Manifest }) {
           proposal={controller.pending}
           onApprove={() => {
             controller.approve()
-            force((n) => n + 1)
+            forceRef.current((n) => n + 1)
           }}
           onReject={(fb) => {
             controller.reject(fb)
-            force((n) => n + 1)
+            forceRef.current((n) => n + 1)
           }}
         />
       )}
