@@ -1,0 +1,6 @@
+ui_only_script:
+  alias: 'UI only script'
+  sequence:
+    - service: notify.mobile_app_norman_s_iphone
+      data:
+        message: hi
