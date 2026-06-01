@@ -101,17 +101,27 @@ export function ThemeProvider({
     [storageKey]
   )
 
+  // Find a class target reachable from inside our shadow root (if any).
+  // Tailwind's `dark:` variant resolves `.dark *` against the shadow's flat
+  // tree only, so a class on <html> won't reach in. Walk up the composed tree
+  // to the host element of the nearest shadow root and toggle the class there.
+  const themeTargetRef = React.useRef<HTMLElement | null>(null)
+
   const applyTheme = React.useCallback(
     (nextTheme: Theme) => {
-      const root = document.documentElement
       const resolvedTheme =
         nextTheme === "system" ? getSystemTheme() : nextTheme
       const restoreTransitions = disableTransitionOnChange
         ? disableTransitionsTemporarily()
         : null
 
-      root.classList.remove("light", "dark")
-      root.classList.add(resolvedTheme)
+      const targets: HTMLElement[] = []
+      if (themeTargetRef.current) targets.push(themeTargetRef.current)
+      targets.push(document.documentElement)
+      for (const t of targets) {
+        t.classList.remove("light", "dark")
+        t.classList.add(resolvedTheme)
+      }
 
       if (restoreTransitions) {
         restoreTransitions()
@@ -214,7 +224,23 @@ export function ThemeProvider({
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
-      {children}
+      <div
+        ref={(el) => {
+          if (!el) {
+            themeTargetRef.current = null
+            return
+          }
+          // If we're inside a ShadowRoot, prefer the host element so styles
+          // scoped to `.dark *` cascade across all panel content.
+          const rootNode = el.getRootNode()
+          themeTargetRef.current =
+            rootNode instanceof ShadowRoot ? (rootNode.host as HTMLElement) : el
+          applyTheme(theme)
+        }}
+        style={{ display: "contents" }}
+      >
+        {children}
+      </div>
     </ThemeProviderContext.Provider>
   )
 }

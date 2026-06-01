@@ -17,21 +17,39 @@ function render(host: HTMLElement) {
   return root
 }
 
-// HA panel_custom instantiates a <terminus-panel> element and sets `hass` on
-// it. Define the custom element so HA can mount it. The built bundle emits CSS
-// as a sibling style.css — inject a <link> on connect so styles load with JS.
+// HA panel_custom instantiates a <terminus-panel> in the same document as HA's
+// own UI. Tailwind preflight + our @layer base would otherwise cascade into
+// HA's chrome (font, body bg, button reset, *box-sizing). Encapsulate via an
+// open shadow root so all panel styles stay scoped to the panel.
 class TerminusPanel extends HTMLElement {
   private root?: Root
 
   connectedCallback() {
-    if (!document.head.querySelector('link[data-terminus-css]')) {
+    const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" })
+
+    if (!shadow.querySelector('link[data-terminus-css]')) {
       const link = document.createElement("link")
       link.rel = "stylesheet"
       link.href = "/local/terminus/style.css"
       link.dataset.terminusCss = "true"
-      document.head.appendChild(link)
+      shadow.appendChild(link)
     }
-    this.root = render(this)
+
+    let mount = shadow.querySelector<HTMLDivElement>("div[data-terminus-mount]")
+    if (!mount) {
+      mount = document.createElement("div")
+      mount.dataset.terminusMount = "true"
+      mount.style.height = "100%"
+      mount.style.width = "100%"
+      shadow.appendChild(mount)
+    }
+
+    // Host needs to fill its slot in HA's panel container.
+    this.style.display = "block"
+    this.style.height = "100%"
+    this.style.width = "100%"
+
+    this.root = render(mount)
   }
 
   disconnectedCallback() {

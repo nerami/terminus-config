@@ -19177,19 +19177,21 @@ function Yg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		return Gg(e) ? e : t;
 	}), s = _.useCallback((e) => {
 		localStorage.setItem(n, e), o(e);
-	}, [n]), c = _.useCallback((e) => {
-		let t = document.documentElement, n = e === "system" ? Kg() : e, i = r ? qg() : null;
-		t.classList.remove("light", "dark"), t.classList.add(n), i && i();
+	}, [n]), c = _.useRef(null), l = _.useCallback((e) => {
+		let t = e === "system" ? Kg() : e, n = r ? qg() : null, i = [];
+		c.current && i.push(c.current), i.push(document.documentElement);
+		for (let e of i) e.classList.remove("light", "dark"), e.classList.add(t);
+		n && n();
 	}, [r]);
 	_.useEffect(() => {
-		if (c(a), a !== "system") return;
+		if (l(a), a !== "system") return;
 		let e = window.matchMedia(Hg), t = () => {
-			c("system");
+			l("system");
 		};
 		return e.addEventListener("change", t), () => {
 			e.removeEventListener("change", t);
 		};
-	}, [a, c]), _.useEffect(() => {
+	}, [a, l]), _.useEffect(() => {
 		let e = (e) => {
 			e.repeat || e.metaKey || e.ctrlKey || e.altKey || Jg(e.target) || e.key.toLowerCase() === "d" && o((e) => {
 				let t = e === "dark" ? "light" : e === "light" ? "dark" : Kg() === "dark" ? "light" : "dark";
@@ -19213,14 +19215,25 @@ function Yg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 			window.removeEventListener("storage", e);
 		};
 	}, [t, n]);
-	let l = _.useMemo(() => ({
+	let u = _.useMemo(() => ({
 		theme: a,
 		setTheme: s
 	}), [a, s]);
 	return /* @__PURE__ */ (0, G.jsx)(Wg.Provider, {
 		...i,
-		value: l,
-		children: e
+		value: u,
+		children: /* @__PURE__ */ (0, G.jsx)("div", {
+			ref: (e) => {
+				if (!e) {
+					c.current = null;
+					return;
+				}
+				let t = e.getRootNode();
+				c.current = t instanceof ShadowRoot ? t.host : e, l(a);
+			},
+			style: { display: "contents" },
+			children: e
+		})
 	});
 }
 //#endregion
@@ -19232,11 +19245,13 @@ function Xg(e) {
 var Zg = class extends HTMLElement {
 	root;
 	connectedCallback() {
-		if (!document.head.querySelector("link[data-terminus-css]")) {
-			let e = document.createElement("link");
-			e.rel = "stylesheet", e.href = "/local/terminus/style.css", e.dataset.terminusCss = "true", document.head.appendChild(e);
+		let e = this.shadowRoot ?? this.attachShadow({ mode: "open" });
+		if (!e.querySelector("link[data-terminus-css]")) {
+			let t = document.createElement("link");
+			t.rel = "stylesheet", t.href = "/local/terminus/style.css", t.dataset.terminusCss = "true", e.appendChild(t);
 		}
-		this.root = Xg(this);
+		let t = e.querySelector("div[data-terminus-mount]");
+		t || (t = document.createElement("div"), t.dataset.terminusMount = "true", t.style.height = "100%", t.style.width = "100%", e.appendChild(t)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = Xg(t);
 	}
 	disconnectedCallback() {
 		this.root?.unmount(), this.root = void 0;
