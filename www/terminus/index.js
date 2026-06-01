@@ -21328,30 +21328,41 @@ var kb = /* @__PURE__ */ _.forwardRef(function(e, t) {
 		ref: t,
 		props: [{ id: c }, o]
 	});
-});
+}), Ab = (0, _.createContext)(null);
+function jb({ container: e, children: t }) {
+	return /* @__PURE__ */ (0, q.jsx)(Ab.Provider, {
+		value: e,
+		children: t
+	});
+}
+function Mb() {
+	return (0, _.useContext)(Ab);
+}
 //#endregion
 //#region src/components/ui/sheet.tsx
-function Ab({ ...e }) {
+function Nb({ ...e }) {
 	return /* @__PURE__ */ (0, q.jsx)(Ob, {
 		"data-slot": "sheet",
 		...e
 	});
 }
-function jb({ ...e }) {
+function Pb({ container: e, ...t }) {
+	let n = Mb();
 	return /* @__PURE__ */ (0, q.jsx)(db, {
 		"data-slot": "sheet-portal",
-		...e
+		container: e ?? n ?? void 0,
+		...t
 	});
 }
-function Mb({ className: e, ...t }) {
+function Fb({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, q.jsx)(ov, {
 		"data-slot": "sheet-overlay",
 		className: Kt("fixed inset-0 z-50 bg-black/20 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-sm", e),
 		...t
 	});
 }
-function Nb({ className: e, children: t, side: n = "right", showCloseButton: r = !0, ...i }) {
-	return /* @__PURE__ */ (0, q.jsxs)(jb, { children: [/* @__PURE__ */ (0, q.jsx)(Mb, {}), /* @__PURE__ */ (0, q.jsxs)(cb, {
+function Ib({ className: e, children: t, side: n = "right", showCloseButton: r = !0, ...i }) {
+	return /* @__PURE__ */ (0, q.jsxs)(Pb, { children: [/* @__PURE__ */ (0, q.jsx)(Fb, {}), /* @__PURE__ */ (0, q.jsxs)(cb, {
 		"data-slot": "sheet-content",
 		"data-side": n,
 		className: Kt("fixed z-50 flex flex-col bg-popover bg-clip-padding text-sm text-popover-foreground shadow-md transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm", e),
@@ -21370,21 +21381,21 @@ function Nb({ className: e, children: t, side: n = "right", showCloseButton: r =
 		})]
 	})] });
 }
-function Pb({ className: e, ...t }) {
+function Lb({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, q.jsx)("div", {
 		"data-slot": "sheet-header",
 		className: Kt("flex flex-col gap-1.5 p-8", e),
 		...t
 	});
 }
-function Fb({ className: e, ...t }) {
+function Rb({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, q.jsx)(kb, {
 		"data-slot": "sheet-title",
 		className: Kt("font-heading text-lg font-semibold tracking-wider text-foreground uppercase", e),
 		...t
 	});
 }
-function Ib({ className: e, ...t }) {
+function zb({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, q.jsx)(hv, {
 		"data-slot": "sheet-description",
 		className: Kt("mt-0.5 text-sm leading-relaxed text-muted-foreground", e),
@@ -21393,7 +21404,7 @@ function Ib({ className: e, ...t }) {
 }
 //#endregion
 //#region src/components/NodeDetailSheet.tsx
-function Lb(e) {
+function Bb(e) {
 	let t = window.location.origin, n = e.id.split(".")[1] ?? e.id;
 	switch (e.kind) {
 		case "script": return `${t}/config/script/edit/${n}`;
@@ -21401,7 +21412,7 @@ function Lb(e) {
 		default: return `${t}/config/entities/entity/${e.id}`;
 	}
 }
-function Rb({ title: e, children: t }) {
+function Vb({ title: e, children: t }) {
 	return /* @__PURE__ */ (0, q.jsxs)("div", {
 		className: "space-y-1",
 		children: [/* @__PURE__ */ (0, q.jsx)("div", {
@@ -21413,21 +21424,21 @@ function Rb({ title: e, children: t }) {
 		})]
 	});
 }
-function zb({ open: e, onOpenChange: t, node: n }) {
+function Hb({ open: e, onOpenChange: t, node: n }) {
 	let r = xn(), i = Sn(), a = Cn(), o = wn(n && (n.kind === "entity" || n.kind === "template" || n.kind === "scene" || n.kind === "script") ? n.id : void 0), s = hn(n?.id);
 	if (!n) return null;
 	let c = o?.labels ?? [], l = o?.exposure ?? {}, u = Object.keys(l);
-	return /* @__PURE__ */ (0, q.jsx)(Ab, {
+	return /* @__PURE__ */ (0, q.jsx)(Nb, {
 		open: e,
 		onOpenChange: t,
-		children: /* @__PURE__ */ (0, q.jsxs)(Nb, {
+		children: /* @__PURE__ */ (0, q.jsxs)(Ib, {
 			side: "right",
 			className: "w-[360px] sm:w-[400px] overflow-y-auto",
 			children: [
-				/* @__PURE__ */ (0, q.jsxs)(Pb, { children: [/* @__PURE__ */ (0, q.jsx)(Fb, {
+				/* @__PURE__ */ (0, q.jsxs)(Lb, { children: [/* @__PURE__ */ (0, q.jsx)(Rb, {
 					className: "font-mono text-sm",
 					children: n.id
-				}), /* @__PURE__ */ (0, q.jsxs)(Ib, {
+				}), /* @__PURE__ */ (0, q.jsxs)(zb, {
 					className: "flex items-center gap-2",
 					children: [/* @__PURE__ */ (0, q.jsx)(Jt, {
 						variant: "outline",
@@ -21458,11 +21469,11 @@ function zb({ open: e, onOpenChange: t, node: n }) {
 				/* @__PURE__ */ (0, q.jsxs)("div", {
 					className: "mt-4 space-y-4",
 					children: [
-						/* @__PURE__ */ (0, q.jsx)(Rb, {
+						/* @__PURE__ */ (0, q.jsx)(Vb, {
 							title: "Area",
 							children: o?.areaName ?? "—"
 						}),
-						/* @__PURE__ */ (0, q.jsx)(Rb, {
+						/* @__PURE__ */ (0, q.jsx)(Vb, {
 							title: "Status",
 							children: /* @__PURE__ */ (0, q.jsxs)("div", {
 								className: "flex flex-wrap gap-2",
@@ -21475,7 +21486,7 @@ function zb({ open: e, onOpenChange: t, node: n }) {
 								})]
 							})
 						}),
-						/* @__PURE__ */ (0, q.jsx)(Rb, {
+						/* @__PURE__ */ (0, q.jsx)(Vb, {
 							title: "Labels",
 							children: c.length === 0 ? "—" : /* @__PURE__ */ (0, q.jsx)("div", {
 								className: "flex flex-wrap gap-1",
@@ -21485,7 +21496,7 @@ function zb({ open: e, onOpenChange: t, node: n }) {
 								}, e))
 							})
 						}),
-						/* @__PURE__ */ (0, q.jsx)(Rb, {
+						/* @__PURE__ */ (0, q.jsx)(Vb, {
 							title: "Voice exposure",
 							children: u.length === 0 ? "No voice assistant exposure." : /* @__PURE__ */ (0, q.jsx)("ul", {
 								className: "space-y-0.5",
@@ -21495,7 +21506,7 @@ function zb({ open: e, onOpenChange: t, node: n }) {
 								}, e))
 							})
 						}),
-						/* @__PURE__ */ (0, q.jsx)(Rb, {
+						/* @__PURE__ */ (0, q.jsx)(Vb, {
 							title: "Source",
 							children: /* @__PURE__ */ (0, q.jsxs)("span", {
 								className: "font-mono text-xs",
@@ -21507,7 +21518,7 @@ function zb({ open: e, onOpenChange: t, node: n }) {
 							})
 						}),
 						/* @__PURE__ */ (0, q.jsx)("a", {
-							href: Lb(n),
+							href: Bb(n),
 							target: "_top",
 							rel: "noreferrer",
 							className: "inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90",
@@ -21521,17 +21532,17 @@ function zb({ open: e, onOpenChange: t, node: n }) {
 }
 //#endregion
 //#region src/App.tsx
-var Bb = 7, Vb = Date.now();
-function Hb() {
+var Ub = 7, Wb = Date.now();
+function Gb() {
 	let { status: e } = mn();
 	return /* @__PURE__ */ (0, q.jsx)(Jt, {
 		variant: e === "connected" ? "default" : e === "error" ? "destructive" : "secondary",
 		children: e === "connecting" ? "Connecting…" : e === "connected" ? "Connected" : "Error"
 	});
 }
-function Ub({ generatedAt: e }) {
-	let t = Math.floor((Vb - Date.parse(e)) / (1e3 * 60 * 60 * 24));
-	return t < Bb ? null : /* @__PURE__ */ (0, q.jsxs)("div", {
+function Kb({ generatedAt: e }) {
+	let t = Math.floor((Wb - Date.parse(e)) / (1e3 * 60 * 60 * 24));
+	return t < Ub ? null : /* @__PURE__ */ (0, q.jsxs)("div", {
 		className: "border-b bg-amber-100 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200",
 		children: [
 			"Manifest is ",
@@ -21542,7 +21553,7 @@ function Ub({ generatedAt: e }) {
 		]
 	});
 }
-function Wb() {
+function qb() {
 	let [e, t] = (0, _.useState)(null), [n, r] = (0, _.useState)(null), [i, a] = (0, _.useState)(null), [o, s] = (0, _.useState)(!1), c = Mn();
 	return (0, _.useEffect)(() => {
 		En().then(t).catch((e) => r(e instanceof Error ? e.message : String(e)));
@@ -21552,13 +21563,13 @@ function Wb() {
 	}) : e ? /* @__PURE__ */ (0, q.jsxs)("div", {
 		className: "flex h-svh flex-col",
 		children: [
-			/* @__PURE__ */ (0, q.jsx)(Ub, { generatedAt: e.generatedAt }),
+			/* @__PURE__ */ (0, q.jsx)(Kb, { generatedAt: e.generatedAt }),
 			/* @__PURE__ */ (0, q.jsxs)("header", {
 				className: "flex h-16 items-center justify-between border-b px-4",
 				children: [/* @__PURE__ */ (0, q.jsx)("h1", {
 					className: "text-base font-semibold",
 					children: "Terminus"
-				}), /* @__PURE__ */ (0, q.jsx)(Hb, {})]
+				}), /* @__PURE__ */ (0, q.jsx)(Gb, {})]
 			}),
 			/* @__PURE__ */ (0, q.jsx)("main", {
 				className: "flex-1",
@@ -21572,7 +21583,7 @@ function Wb() {
 					autoId: c.id
 				})
 			}),
-			/* @__PURE__ */ (0, q.jsx)(zb, {
+			/* @__PURE__ */ (0, q.jsx)(Hb, {
 				open: o,
 				onOpenChange: s,
 				node: i
@@ -21580,23 +21591,23 @@ function Wb() {
 		]
 	}) : null;
 }
-function Gb() {
-	return /* @__PURE__ */ (0, q.jsx)(pn, { children: /* @__PURE__ */ (0, q.jsx)(yn, { children: /* @__PURE__ */ (0, q.jsx)(Wb, {}) }) });
+function Jb() {
+	return /* @__PURE__ */ (0, q.jsx)(pn, { children: /* @__PURE__ */ (0, q.jsx)(yn, { children: /* @__PURE__ */ (0, q.jsx)(qb, {}) }) });
 }
 //#endregion
 //#region src/components/theme-provider.tsx
-var Kb = "(prefers-color-scheme: dark)", qb = [
+var Yb = "(prefers-color-scheme: dark)", Xb = [
 	"dark",
 	"light",
 	"system"
-], Jb = _.createContext(void 0);
-function Yb(e) {
-	return e === null ? !1 : qb.includes(e);
+], Zb = _.createContext(void 0);
+function Qb(e) {
+	return e === null ? !1 : Xb.includes(e);
 }
-function Xb() {
-	return window.matchMedia(Kb).matches ? "dark" : "light";
+function $b() {
+	return window.matchMedia(Yb).matches ? "dark" : "light";
 }
-function Zb() {
+function ex() {
 	let e = document.createElement("style");
 	return e.appendChild(document.createTextNode("*,*::before,*::after{-webkit-transition:none!important;transition:none!important}")), document.head.appendChild(e), () => {
 		window.getComputedStyle(document.body), requestAnimationFrame(() => {
@@ -21606,24 +21617,24 @@ function Zb() {
 		});
 	};
 }
-function Qb(e) {
+function tx(e) {
 	return e instanceof HTMLElement ? !!(e.isContentEditable || e.closest("input, textarea, select, [contenteditable='true']")) : !1;
 }
-function $b({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
+function nx({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
 	let [a, o] = _.useState(() => {
 		let e = localStorage.getItem(n);
-		return Yb(e) ? e : t;
+		return Qb(e) ? e : t;
 	}), s = _.useCallback((e) => {
 		localStorage.setItem(n, e), o(e);
 	}, [n]), c = _.useRef(null), l = _.useCallback((e) => {
-		let t = e === "system" ? Xb() : e, n = r ? Zb() : null, i = [];
+		let t = e === "system" ? $b() : e, n = r ? ex() : null, i = [];
 		c.current && i.push(c.current), i.push(document.documentElement);
 		for (let e of i) e.classList.remove("light", "dark"), e.classList.add(t);
 		n && n();
 	}, [r]);
 	_.useEffect(() => {
 		if (l(a), a !== "system") return;
-		let e = window.matchMedia(Kb), t = () => {
+		let e = window.matchMedia(Yb), t = () => {
 			l("system");
 		};
 		return e.addEventListener("change", t), () => {
@@ -21631,8 +21642,8 @@ function $b({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		};
 	}, [a, l]), _.useEffect(() => {
 		let e = (e) => {
-			e.repeat || e.metaKey || e.ctrlKey || e.altKey || Qb(e.target) || e.key.toLowerCase() === "d" && o((e) => {
-				let t = e === "dark" ? "light" : e === "light" ? "dark" : Xb() === "dark" ? "light" : "dark";
+			e.repeat || e.metaKey || e.ctrlKey || e.altKey || tx(e.target) || e.key.toLowerCase() === "d" && o((e) => {
+				let t = e === "dark" ? "light" : e === "light" ? "dark" : $b() === "dark" ? "light" : "dark";
 				return localStorage.setItem(n, t), t;
 			});
 		};
@@ -21642,7 +21653,7 @@ function $b({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 	}, [n]), _.useEffect(() => {
 		let e = (e) => {
 			if (e.storageArea === localStorage && e.key === n) {
-				if (Yb(e.newValue)) {
+				if (Qb(e.newValue)) {
 					o(e.newValue);
 					return;
 				}
@@ -21657,7 +21668,7 @@ function $b({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		theme: a,
 		setTheme: s
 	}), [a, s]);
-	return /* @__PURE__ */ (0, q.jsx)(Jb.Provider, {
+	return /* @__PURE__ */ (0, q.jsx)(Zb.Provider, {
 		...i,
 		value: u,
 		children: /* @__PURE__ */ (0, q.jsx)("div", {
@@ -21676,11 +21687,14 @@ function $b({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 }
 //#endregion
 //#region src/main.tsx
-function ex(e) {
-	let t = (0, v.createRoot)(e);
-	return t.render(/* @__PURE__ */ (0, q.jsx)(_.StrictMode, { children: /* @__PURE__ */ (0, q.jsx)($b, { children: /* @__PURE__ */ (0, q.jsx)(Gb, {}) }) })), t;
+function rx(e, t = e) {
+	let n = (0, v.createRoot)(e);
+	return n.render(/* @__PURE__ */ (0, q.jsx)(_.StrictMode, { children: /* @__PURE__ */ (0, q.jsx)(nx, { children: /* @__PURE__ */ (0, q.jsx)(jb, {
+		container: t,
+		children: /* @__PURE__ */ (0, q.jsx)(Jb, {})
+	}) }) })), n;
 }
-var tx = class extends HTMLElement {
+var ix = class extends HTMLElement {
 	root;
 	connectedCallback() {
 		let e = this.shadowRoot ?? this.attachShadow({ mode: "open" });
@@ -21689,13 +21703,15 @@ var tx = class extends HTMLElement {
 			t.rel = "stylesheet", t.href = "/local/terminus/style.css", t.dataset.terminusCss = "true", e.appendChild(t);
 		}
 		let t = e.querySelector("div[data-terminus-mount]");
-		t || (t = document.createElement("div"), t.dataset.terminusMount = "true", t.style.height = "100%", t.style.width = "100%", e.appendChild(t)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = ex(t);
+		t || (t = document.createElement("div"), t.dataset.terminusMount = "true", t.style.height = "100%", t.style.width = "100%", e.appendChild(t));
+		let n = e.querySelector("div[data-terminus-portals]");
+		n || (n = document.createElement("div"), n.dataset.terminusPortals = "true", e.appendChild(n)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = rx(t, n);
 	}
 	disconnectedCallback() {
 		this.root?.unmount(), this.root = void 0;
 	}
 };
-customElements.get("terminus-panel") || customElements.define("terminus-panel", tx);
-var nx = document.getElementById("root");
-nx && ex(nx);
+customElements.get("terminus-panel") || customElements.define("terminus-panel", ix);
+var ax = document.getElementById("root");
+ax && rx(ax);
 //#endregion

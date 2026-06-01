@@ -4,13 +4,16 @@ import { createRoot, type Root } from "react-dom/client"
 import "./index.css"
 import App from "./App.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
+import { PortalContainerProvider } from "@/lib/portalContainer"
 
-function render(host: HTMLElement) {
+function render(host: HTMLElement, portalContainer: HTMLElement | null = host) {
   const root = createRoot(host)
   root.render(
     <StrictMode>
       <ThemeProvider>
-        <App />
+        <PortalContainerProvider container={portalContainer}>
+          <App />
+        </PortalContainerProvider>
       </ThemeProvider>
     </StrictMode>
   )
@@ -44,12 +47,24 @@ class TerminusPanel extends HTMLElement {
       shadow.appendChild(mount)
     }
 
+    // Sibling node for Base UI portals (Sheet, Dialog, etc.). Portals must
+    // mount inside the shadow root so Tailwind class rules from style.css
+    // resolve — anything appended to document.body escapes the encapsulation
+    // and renders unstyled. Kept outside the React mount so React's tree
+    // never reconciles against portal-owned DOM.
+    let portalHost = shadow.querySelector<HTMLDivElement>("div[data-terminus-portals]")
+    if (!portalHost) {
+      portalHost = document.createElement("div")
+      portalHost.dataset.terminusPortals = "true"
+      shadow.appendChild(portalHost)
+    }
+
     // Host needs to fill its slot in HA's panel container.
     this.style.display = "block"
     this.style.height = "100%"
     this.style.width = "100%"
 
-    this.root = render(mount)
+    this.root = render(mount, portalHost)
   }
 
   disconnectedCallback() {
