@@ -14,6 +14,7 @@ export function buildRuntime({ apiKey }: RuntimeOptions): Router {
       default: new BuiltInAgent({
         model: "anthropic/claude-haiku-4-5",
         apiKey,
+        providerOptions: { anthropic: { cacheControl: true } },
       }),
     },
   })
