@@ -23421,9 +23421,9 @@ function ai(e) {
 var oi = class extends HTMLElement {
 	root;
 	connectedCallback() {
-		if (!document.head.querySelector("link[data-my-dashboard-css]")) {
+		if (!document.head.querySelector("link[data-terminus-css]")) {
 			let e = document.createElement("link");
-			e.rel = "stylesheet", e.href = "/local/my-dashboard/style.css", e.dataset.myDashboardCss = "true", document.head.appendChild(e);
+			e.rel = "stylesheet", e.href = "/local/terminus/style.css", e.dataset.terminusCss = "true", document.head.appendChild(e);
 		}
 		this.root = ai(this);
 	}
@@ -23431,7 +23431,7 @@ var oi = class extends HTMLElement {
 		this.root?.unmount(), this.root = void 0;
 	}
 };
-customElements.get("my-dashboard") || customElements.define("my-dashboard", oi);
+customElements.get("terminus-panel") || customElements.define("terminus-panel", oi);
 var si = document.getElementById("root");
 si && ai(si);
 //#endregion
