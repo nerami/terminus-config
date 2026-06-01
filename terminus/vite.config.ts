@@ -12,6 +12,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Lib mode does not inline `process.env.NODE_ENV` the way app builds do, so
+  // React's dev/prod switch (`process.env.NODE_ENV === "production" ? ...`)
+  // throws ReferenceError in the browser. Replace at build time.
+  define: {
+    "process.env.NODE_ENV": JSON.stringify("production"),
+  },
   build: {
     outDir: "../www/terminus",
     emptyOutDir: true,
