@@ -17,18 +17,18 @@ function render(host: HTMLElement) {
   return root
 }
 
-// HA panel_custom instantiates a <my-dashboard> element and sets `hass` on it.
-// Define the custom element so HA can mount it. The built bundle emits CSS as
-// a sibling style.css — inject a <link> on connect so styles load alongside JS.
-class MyDashboardPanel extends HTMLElement {
+// HA panel_custom instantiates a <terminus-panel> element and sets `hass` on
+// it. Define the custom element so HA can mount it. The built bundle emits CSS
+// as a sibling style.css — inject a <link> on connect so styles load with JS.
+class TerminusPanel extends HTMLElement {
   private root?: Root
 
   connectedCallback() {
-    if (!document.head.querySelector('link[data-my-dashboard-css]')) {
+    if (!document.head.querySelector('link[data-terminus-css]')) {
       const link = document.createElement("link")
       link.rel = "stylesheet"
-      link.href = "/local/my-dashboard/style.css"
-      link.dataset.myDashboardCss = "true"
+      link.href = "/local/terminus/style.css"
+      link.dataset.terminusCss = "true"
       document.head.appendChild(link)
     }
     this.root = render(this)
@@ -40,8 +40,8 @@ class MyDashboardPanel extends HTMLElement {
   }
 }
 
-if (!customElements.get("my-dashboard")) {
-  customElements.define("my-dashboard", MyDashboardPanel)
+if (!customElements.get("terminus-panel")) {
+  customElements.define("terminus-panel", TerminusPanel)
 }
 
 // Dev fallback: mount into #root from index.html when running `pnpm dev`.

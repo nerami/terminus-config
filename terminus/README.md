@@ -1,13 +1,13 @@
-# my-dashboard
+# terminus
 
-Custom Home Assistant frontend panel. Vite + React 19 + shadcn/ui + Tailwind v4. Built
-bundle is served from `/local/my-dashboard/` and registered via `panel_custom` in the
-repo-root `configuration.yaml`.
+Custom Home Assistant frontend panel ("Terminus"). Vite + React 19 + shadcn/ui +
+Tailwind v4. Built bundle is served from `/local/terminus/` and registered via
+`panel_custom` in the repo-root `configuration.yaml`.
 
 ## Install
 
 ```bash
-cd dashboard
+cd terminus
 pnpm install
 ```
 
@@ -35,8 +35,8 @@ app falls back to a long-lived token from `.env`:
 pnpm build
 ```
 
-Output goes to `../www/my-dashboard/` (i.e. `<repo>/www/my-dashboard/`) so it lands at
-the HA-served path automatically. Two files are emitted:
+Output goes to `../www/terminus/` (i.e. `<repo>/www/terminus/`) so it lands at the
+HA-served path automatically. Two files are emitted:
 
 - `index.js` — the panel bundle, loaded by HA via `module_url`
 - `style.css` — sibling stylesheet, injected by `index.js` on connect
@@ -51,13 +51,13 @@ registrations are read at startup.
 
 ```yaml
 panel_custom:
-  - name: my-dashboard
-    sidebar_title: My Dashboard
+  - name: terminus-panel
+    sidebar_title: Terminus
     sidebar_icon: mdi:view-dashboard
-    url_path: my-dashboard
-    module_url: /local/my-dashboard/index.js
+    url_path: terminus
+    module_url: /local/terminus/index.js
 ```
 
-The bundle defines a `<my-dashboard>` custom element, which HA instantiates inside its
-frame. React mounts into that element. In production the panel reuses HA's existing
-auth via `window.hassConnection`, so no token is needed in the browser.
+The bundle defines a `<terminus-panel>` custom element, which HA instantiates inside
+its frame. React mounts into that element. In production the panel reuses HA's
+existing auth via `window.hassConnection`, so no token is needed in the browser.

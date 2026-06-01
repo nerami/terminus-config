@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
 // HA serves /config/www at /local. Build emits a library bundle so the
-// panel_custom module_url can load /local/my-dashboard/index.js directly.
+// panel_custom module_url can load /local/terminus/index.js directly.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: "../www/my-dashboard",
+    outDir: "../www/terminus",
     emptyOutDir: true,
     cssCodeSplit: false,
     lib: {
