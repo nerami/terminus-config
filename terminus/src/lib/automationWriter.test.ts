@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { generateAutomationId } from "./automationWriter"
 import { validateAutomation, type AutomationProposal } from "./automationWriter"
 import { commitAutomation, serializeYamlPreview } from "./automationWriter"

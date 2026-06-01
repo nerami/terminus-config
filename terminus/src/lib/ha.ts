@@ -2,6 +2,7 @@ import {
   createConnection,
   createLongLivedTokenAuth,
   subscribeEntities,
+  type Auth,
   type Connection,
   type HassEntities,
 } from "home-assistant-js-websocket"
@@ -42,4 +43,17 @@ export function watchEntities(
   onUpdate: (entities: HassEntities) => void
 ) {
   return subscribeEntities(conn, onUpdate)
+}
+
+export async function getAuthToken(): Promise<string> {
+  if (window.hassConnection) {
+    const { conn } = await window.hassConnection
+    const auth = (conn as unknown as { auth?: Auth }).auth
+    if (auth && typeof auth.accessToken === "string") return auth.accessToken
+  }
+  const token = import.meta.env.VITE_HA_TOKEN
+  if (!token) {
+    throw new Error("No HA auth token — set VITE_HA_TOKEN in .env or run inside HA.")
+  }
+  return token
 }

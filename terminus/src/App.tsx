@@ -1,13 +1,21 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { CopilotSidebar } from "@copilotkit/react-ui"
+import "@copilotkit/react-ui/styles.css"
 import { Badge } from "@/components/ui/badge"
 import { LiveStateProvider, useLiveState } from "@/lib/liveState"
-import { RegistryProvider } from "@/lib/registry"
+import { RegistryProvider, useRegistryEntities } from "@/lib/registry"
+import { CopilotProvider } from "@/lib/copilot"
+import { CopilotCatalog } from "@/copilot/readable"
+import { CopilotActions, createProposeAutomationController } from "@/copilot/actions"
+import { PreviewCard } from "@/copilot/PreviewCard"
 import { loadManifest } from "@/lib/graph"
 import { useRoute } from "@/lib/router"
+import { getAuthToken } from "@/lib/ha"
 import { SystemMap } from "@/routes/SystemMap"
 import { AutomationView } from "@/routes/AutomationView"
 import { EmptyState } from "@/components/EmptyState"
 import { NodeDetailSheet } from "@/components/NodeDetailSheet"
+import type { AutomationProposal } from "@/lib/automationWriter"
 import type { GraphNode, Manifest } from "@/types/manifest"
 
 const STALE_DAYS = 7
@@ -32,28 +40,10 @@ function StalenessBanner({ generatedAt }: { generatedAt: string }) {
   )
 }
 
-function Shell() {
-  const [manifest, setManifest] = useState<Manifest | null>(null)
-  const [error, setError] = useState<string | null>(null)
+function Shell({ manifest }: { manifest: Manifest }) {
   const [selected, setSelected] = useState<GraphNode | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const route = useRoute()
-
-  useEffect(() => {
-    loadManifest()
-      .then(setManifest)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
-  }, [])
-
-  if (error) {
-    return (
-      <EmptyState
-        title="Graph manifest missing"
-        body="Run `pnpm build` in terminus/ to generate `www/terminus/graph.json`."
-      />
-    )
-  }
-  if (!manifest) return null
 
   return (
     <div className="flex h-svh flex-col">
@@ -80,13 +70,80 @@ function Shell() {
   )
 }
 
-export function App() {
+function CopilotWiring({ manifest }: { manifest: Manifest }) {
+  const controller = useMemo(() => createProposeAutomationController(), [])
+  const [, force] = useState(0)
+  const [token, setToken] = useState<string>("")
+  const knownIds = useRegistryEntities()
+
+  useEffect(() => {
+    getAuthToken().then(setToken).catch(() => setToken(""))
+  }, [])
+
+  const proposalHandler = controller.handler
+  controller.handler = async (proposal: AutomationProposal) => {
+    const p = proposalHandler(proposal)
+    force((n) => n + 1)
+    return p
+  }
+
   return (
-    <LiveStateProvider>
-      <RegistryProvider>
-        <Shell />
-      </RegistryProvider>
-    </LiveStateProvider>
+    <>
+      <CopilotCatalog manifest={manifest} />
+      <CopilotActions controller={controller} knownEntityIds={knownIds} token={token} />
+      {controller.pending && (
+        <PreviewCard
+          proposal={controller.pending}
+          onApprove={() => {
+            controller.approve()
+            force((n) => n + 1)
+          }}
+          onReject={(fb) => {
+            controller.reject(fb)
+            force((n) => n + 1)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+export function App() {
+  const [manifest, setManifest] = useState<Manifest | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadManifest()
+      .then(setManifest)
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
+  }, [])
+
+  if (error) {
+    return (
+      <EmptyState
+        title="Graph manifest missing"
+        body="Run `pnpm build` in terminus/ to generate `www/terminus/graph.json`."
+      />
+    )
+  }
+  if (!manifest) return null
+
+  return (
+    <CopilotProvider>
+      <LiveStateProvider>
+        <RegistryProvider>
+          <Shell manifest={manifest} />
+          <CopilotWiring manifest={manifest} />
+          <CopilotSidebar
+            labels={{
+              title: "Terminus Copilot",
+              initial:
+                "Describe an automation. I'll propose YAML, you approve or reject.",
+            }}
+          />
+        </RegistryProvider>
+      </LiveStateProvider>
+    </CopilotProvider>
   )
 }
 

@@ -139,6 +139,12 @@ export function useRegistryRefresh(): () => void {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function useRegistryEntities(): Set<string> {
+  const { entities } = useRegistry()
+  return useMemo(() => new Set(entities.keys()), [entities])
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function useRegistryEntry(entityId: string | undefined): RegistryEntry | null {
   const { entities, areas, labels, exposure } = useRegistry()
   if (!entityId) return null
