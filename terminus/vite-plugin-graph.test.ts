@@ -93,3 +93,25 @@ describe("buildManifest edges", () => {
     }
   })
 })
+
+describe("buildManifest layout + detail", () => {
+  it("assigns finite positions to every node", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    for (const n of manifest.nodes) {
+      expect(Number.isFinite(n.position.x)).toBe(true)
+      expect(Number.isFinite(n.position.y)).toBe(true)
+    }
+  })
+
+  it("emits per-automation flowNodes + flowEdges", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    const detail = manifest.automations["mb_lamp_on_dark"]
+    expect(detail).toBeDefined()
+    // Expect at least: 1 automation root + 1 trigger entity + 1 condition entity + 1 action entity
+    expect(detail.flowNodes.length).toBeGreaterThanOrEqual(4)
+    expect(detail.flowEdges.length).toBeGreaterThan(0)
+    for (const n of detail.flowNodes) {
+      expect(Number.isFinite(n.position.x)).toBe(true)
+    }
+  })
+})

@@ -2,9 +2,34 @@ import path from "node:path"
 import { readFile } from "node:fs/promises"
 import fg from "fast-glob"
 import { parseDocument, type Document } from "yaml"
+// @ts-expect-error — @dagrejs/dagre ships types but they may not resolve in all setups
+import dagre from "@dagrejs/dagre"
 
 import type { AutomationDetail, GraphEdge, GraphNode, Manifest } from "./src/types/manifest"
 import { inferArea } from "./src/lib/area"
+
+function layout(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  opts: { rankdir: "LR" | "TB"; nodeWidth: number; nodeHeight: number }
+): GraphNode[] {
+  const g = new dagre.graphlib.Graph()
+  g.setGraph({ rankdir: opts.rankdir, nodesep: 40, ranksep: 80, marginx: 20, marginy: 20 })
+  g.setDefaultEdgeLabel(() => ({}))
+
+  for (const n of nodes) {
+    g.setNode(n.id, { width: opts.nodeWidth, height: opts.nodeHeight })
+  }
+  for (const e of edges) {
+    g.setEdge(e.source, e.target)
+  }
+  dagre.layout(g)
+
+  return nodes.map((n) => {
+    const out = g.node(n.id)
+    return { ...n, position: { x: out.x - opts.nodeWidth / 2, y: out.y - opts.nodeHeight / 2 } }
+  })
+}
 
 type RawAutomation = {
   id: string
@@ -360,6 +385,45 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
       })
     }
 
+    const flowNodes: GraphNode[] = []
+    const flowEdges: GraphEdge[] = []
+    const rootId = `${autoId}::root`
+    flowNodes.push({
+      id: rootId,
+      kind: "automation",
+      label: a.alias ?? a.id,
+      area: inferArea(a.id),
+      source: { file: a.__sourceFile, line: a.__sourceLine },
+      position: { x: 0, y: 0 },
+    })
+
+    function addFlow(kind: "trigger" | "condition" | "action", ref: Ref, idx: number) {
+      const nid =
+        ref.kind === "entity"
+          ? `${rootId}::${kind}::${ref.id}::${idx}`
+          : `${rootId}::${kind}::tmpl::${idx}`
+      const label = ref.kind === "entity" ? ref.id : "templated"
+      flowNodes.push({
+        id: nid,
+        kind: ref.kind === "template" ? "template" : "entity",
+        label,
+        area: ref.kind === "entity" ? inferArea(ref.id) : "common",
+        source: { file: a.__sourceFile, line: a.__sourceLine },
+        position: { x: 0, y: 0 },
+      })
+      if (kind === "action") {
+        flowEdges.push({ id: `${nid}::edge`, source: rootId, target: nid, kind })
+      } else {
+        flowEdges.push({ id: `${nid}::edge`, source: nid, target: rootId, kind })
+      }
+    }
+
+    triggerRefs.forEach((r, i) => addFlow("trigger", r, i))
+    conditionRefs.forEach((r, i) => addFlow("condition", r, i))
+    actionRefs.forEach((r, i) => addFlow("action", r, i))
+
+    const laidFlow = layout(flowNodes, flowEdges, { rankdir: "TB", nodeWidth: 200, nodeHeight: 56 })
+
     automations[a.id] = {
       id: a.id,
       alias: a.alias ?? a.id,
@@ -367,8 +431,8 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
       triggers: toArr(a.trigger),
       conditions: toArr(a.condition),
       actions: toArr(a.action),
-      flowNodes: [],
-      flowEdges: [],
+      flowNodes: laidFlow,
+      flowEdges,
     }
   }
 
@@ -388,10 +452,11 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
     }
   }
 
+  const laid = layout(nodes, edges, { rankdir: "LR", nodeWidth: 220, nodeHeight: 56 })
   return {
     version: 1,
     generatedAt: new Date().toISOString(),
-    nodes,
+    nodes: laid,
     edges,
     automations,
   }
