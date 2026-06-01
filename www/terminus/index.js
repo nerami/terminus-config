@@ -19093,16 +19093,16 @@ function Fg({ manifest: e, autoId: t }) {
 }
 //#endregion
 //#region src/App.tsx
-var Ig = 7;
-function Lg() {
+var Ig = 7, Lg = Date.now();
+function Rg() {
 	let { status: e } = hn();
 	return /* @__PURE__ */ (0, G.jsx)(Yt, {
 		variant: e === "connected" ? "default" : e === "error" ? "destructive" : "secondary",
 		children: e === "connecting" ? "Connecting…" : e === "connected" ? "Connected" : "Error"
 	});
 }
-function Rg({ generatedAt: e }) {
-	let t = Math.floor((Date.now() - Date.parse(e)) / (1e3 * 60 * 60 * 24));
+function zg({ generatedAt: e }) {
+	let t = Math.floor((Lg - Date.parse(e)) / (1e3 * 60 * 60 * 24));
 	return t < Ig ? null : /* @__PURE__ */ (0, G.jsxs)("div", {
 		className: "border-b bg-amber-100 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200",
 		children: [
@@ -19114,7 +19114,7 @@ function Rg({ generatedAt: e }) {
 		]
 	});
 }
-function zg() {
+function Bg() {
 	let [e, t] = (0, _.useState)(null), [n, r] = (0, _.useState)(null), i = Tn();
 	return (0, _.useEffect)(() => {
 		yn().then(t).catch((e) => r(e instanceof Error ? e.message : String(e)));
@@ -19124,13 +19124,13 @@ function zg() {
 	}) : e ? /* @__PURE__ */ (0, G.jsxs)("div", {
 		className: "flex h-svh flex-col",
 		children: [
-			/* @__PURE__ */ (0, G.jsx)(Rg, { generatedAt: e.generatedAt }),
+			/* @__PURE__ */ (0, G.jsx)(zg, { generatedAt: e.generatedAt }),
 			/* @__PURE__ */ (0, G.jsxs)("header", {
 				className: "flex h-16 items-center justify-between border-b px-4",
 				children: [/* @__PURE__ */ (0, G.jsx)("h1", {
 					className: "text-base font-semibold",
 					children: "Terminus"
-				}), /* @__PURE__ */ (0, G.jsx)(Lg, {})]
+				}), /* @__PURE__ */ (0, G.jsx)(Rg, {})]
 			}),
 			/* @__PURE__ */ (0, G.jsx)("main", {
 				className: "flex-1",
@@ -19142,23 +19142,23 @@ function zg() {
 		]
 	}) : null;
 }
-function Bg() {
-	return /* @__PURE__ */ (0, G.jsx)(mn, { children: /* @__PURE__ */ (0, G.jsx)(zg, {}) });
+function Vg() {
+	return /* @__PURE__ */ (0, G.jsx)(mn, { children: /* @__PURE__ */ (0, G.jsx)(Bg, {}) });
 }
 //#endregion
 //#region src/components/theme-provider.tsx
-var Vg = "(prefers-color-scheme: dark)", Hg = [
+var Hg = "(prefers-color-scheme: dark)", Ug = [
 	"dark",
 	"light",
 	"system"
-], Ug = _.createContext(void 0);
-function Wg(e) {
-	return e === null ? !1 : Hg.includes(e);
-}
-function Gg() {
-	return window.matchMedia(Vg).matches ? "dark" : "light";
+], Wg = _.createContext(void 0);
+function Gg(e) {
+	return e === null ? !1 : Ug.includes(e);
 }
 function Kg() {
+	return window.matchMedia(Hg).matches ? "dark" : "light";
+}
+function qg() {
 	let e = document.createElement("style");
 	return e.appendChild(document.createTextNode("*,*::before,*::after{-webkit-transition:none!important;transition:none!important}")), document.head.appendChild(e), () => {
 		window.getComputedStyle(document.body), requestAnimationFrame(() => {
@@ -19168,22 +19168,22 @@ function Kg() {
 		});
 	};
 }
-function qg(e) {
+function Jg(e) {
 	return e instanceof HTMLElement ? !!(e.isContentEditable || e.closest("input, textarea, select, [contenteditable='true']")) : !1;
 }
-function Jg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
+function Yg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
 	let [a, o] = _.useState(() => {
 		let e = localStorage.getItem(n);
-		return Wg(e) ? e : t;
+		return Gg(e) ? e : t;
 	}), s = _.useCallback((e) => {
 		localStorage.setItem(n, e), o(e);
 	}, [n]), c = _.useCallback((e) => {
-		let t = document.documentElement, n = e === "system" ? Gg() : e, i = r ? Kg() : null;
+		let t = document.documentElement, n = e === "system" ? Kg() : e, i = r ? qg() : null;
 		t.classList.remove("light", "dark"), t.classList.add(n), i && i();
 	}, [r]);
 	_.useEffect(() => {
 		if (c(a), a !== "system") return;
-		let e = window.matchMedia(Vg), t = () => {
+		let e = window.matchMedia(Hg), t = () => {
 			c("system");
 		};
 		return e.addEventListener("change", t), () => {
@@ -19191,8 +19191,8 @@ function Jg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		};
 	}, [a, c]), _.useEffect(() => {
 		let e = (e) => {
-			e.repeat || e.metaKey || e.ctrlKey || e.altKey || qg(e.target) || e.key.toLowerCase() === "d" && o((e) => {
-				let t = e === "dark" ? "light" : e === "light" ? "dark" : Gg() === "dark" ? "light" : "dark";
+			e.repeat || e.metaKey || e.ctrlKey || e.altKey || Jg(e.target) || e.key.toLowerCase() === "d" && o((e) => {
+				let t = e === "dark" ? "light" : e === "light" ? "dark" : Kg() === "dark" ? "light" : "dark";
 				return localStorage.setItem(n, t), t;
 			});
 		};
@@ -19202,7 +19202,7 @@ function Jg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 	}, [n]), _.useEffect(() => {
 		let e = (e) => {
 			if (e.storageArea === localStorage && e.key === n) {
-				if (Wg(e.newValue)) {
+				if (Gg(e.newValue)) {
 					o(e.newValue);
 					return;
 				}
@@ -19217,7 +19217,7 @@ function Jg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		theme: a,
 		setTheme: s
 	}), [a, s]);
-	return /* @__PURE__ */ (0, G.jsx)(Ug.Provider, {
+	return /* @__PURE__ */ (0, G.jsx)(Wg.Provider, {
 		...i,
 		value: l,
 		children: e
@@ -19225,24 +19225,24 @@ function Jg({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 }
 //#endregion
 //#region src/main.tsx
-function Yg(e) {
+function Xg(e) {
 	let t = (0, v.createRoot)(e);
-	return t.render(/* @__PURE__ */ (0, G.jsx)(_.StrictMode, { children: /* @__PURE__ */ (0, G.jsx)(Jg, { children: /* @__PURE__ */ (0, G.jsx)(Bg, {}) }) })), t;
+	return t.render(/* @__PURE__ */ (0, G.jsx)(_.StrictMode, { children: /* @__PURE__ */ (0, G.jsx)(Yg, { children: /* @__PURE__ */ (0, G.jsx)(Vg, {}) }) })), t;
 }
-var Xg = class extends HTMLElement {
+var Zg = class extends HTMLElement {
 	root;
 	connectedCallback() {
 		if (!document.head.querySelector("link[data-terminus-css]")) {
 			let e = document.createElement("link");
 			e.rel = "stylesheet", e.href = "/local/terminus/style.css", e.dataset.terminusCss = "true", document.head.appendChild(e);
 		}
-		this.root = Yg(this);
+		this.root = Xg(this);
 	}
 	disconnectedCallback() {
 		this.root?.unmount(), this.root = void 0;
 	}
 };
-customElements.get("terminus-panel") || customElements.define("terminus-panel", Xg);
-var Zg = document.getElementById("root");
-Zg && Yg(Zg);
+customElements.get("terminus-panel") || customElements.define("terminus-panel", Zg);
+var Qg = document.getElementById("root");
+Qg && Xg(Qg);
 //#endregion

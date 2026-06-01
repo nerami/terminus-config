@@ -49,18 +49,21 @@ export function LiveStateProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLiveState(): LiveState {
   const v = useContext(Ctx)
   if (!v) throw new Error("useLiveState must be used inside <LiveStateProvider>")
   return v
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useEntityState(entityId: string | undefined): string | undefined {
   const { entities } = useLiveState()
   if (!entityId) return undefined
   return entities[entityId]?.state
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAutomationEnabled(autoId: string): boolean {
   const state = useEntityState(`automation.${autoId}`)
   return state === "on"

@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState"
 import type { Manifest } from "@/types/manifest"
 
 const STALE_DAYS = 7
+const NOW_MS = Date.now()
 
 function StatusBadge() {
   const { status } = useLiveState()
@@ -20,7 +21,7 @@ function StatusBadge() {
 }
 
 function StalenessBanner({ generatedAt }: { generatedAt: string }) {
-  const days = Math.floor((Date.now() - Date.parse(generatedAt)) / (1000 * 60 * 60 * 24))
+  const days = Math.floor((NOW_MS - Date.parse(generatedAt)) / (1000 * 60 * 60 * 24))
   if (days < STALE_DAYS) return null
   return (
     <div className="border-b bg-amber-100 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
