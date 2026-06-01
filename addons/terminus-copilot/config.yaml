@@ -13,3 +13,5 @@ options:
   anthropic_api_key: ""
 schema:
   anthropic_api_key: password
+boot: auto
+startup: application
