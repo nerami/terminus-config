@@ -2,11 +2,12 @@ import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
+import { graphManifestPlugin } from "./vite-plugin-graph"
 
 // HA serves /config/www at /local. Build emits a library bundle so the
 // panel_custom module_url can load /local/terminus/index.js directly.
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), graphManifestPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

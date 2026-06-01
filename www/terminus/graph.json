@@ -1,0 +1,773 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-01T04:42:36.790Z",
+  "nodes": [
+    {
+      "id": "auto:sockets_illuminance_control",
+      "kind": "automation",
+      "label": "Sockets: Illuminance Control",
+      "area": "common",
+      "source": {
+        "file": "packages/illuminance.yaml",
+        "line": 2
+      },
+      "position": {
+        "x": 20,
+        "y": 20
+      }
+    },
+    {
+      "id": "auto:1771080638853",
+      "kind": "automation",
+      "label": "LR: Auto Scene",
+      "area": "common",
+      "source": {
+        "file": "packages/living_room.yaml",
+        "line": 2
+      },
+      "position": {
+        "x": 20,
+        "y": 116
+      }
+    },
+    {
+      "id": "auto:1771090342172",
+      "kind": "automation",
+      "label": "LR: TV Scene",
+      "area": "common",
+      "source": {
+        "file": "packages/living_room.yaml",
+        "line": 50
+      },
+      "position": {
+        "x": 20,
+        "y": 212
+      }
+    },
+    {
+      "id": "auto:1771080380126",
+      "kind": "automation",
+      "label": "MB: Auto Scene",
+      "area": "common",
+      "source": {
+        "file": "packages/master_bedroom.yaml",
+        "line": 2
+      },
+      "position": {
+        "x": 20,
+        "y": 308
+      }
+    },
+    {
+      "id": "auto:1771085036395",
+      "kind": "automation",
+      "label": "MB: TV Scene",
+      "area": "common",
+      "source": {
+        "file": "packages/master_bedroom.yaml",
+        "line": 51
+      },
+      "position": {
+        "x": 20,
+        "y": 404
+      }
+    },
+    {
+      "id": "auto:1771080002196",
+      "kind": "automation",
+      "label": "Night Walk",
+      "area": "common",
+      "source": {
+        "file": "packages/night_walk.yaml",
+        "line": 2
+      },
+      "position": {
+        "x": 20,
+        "y": 500
+      }
+    },
+    {
+      "id": "auto:1771080220247",
+      "kind": "automation",
+      "label": "Night Walk: Off",
+      "area": "common",
+      "source": {
+        "file": "packages/night_walk.yaml",
+        "line": 21
+      },
+      "position": {
+        "x": 20,
+        "y": 596
+      }
+    },
+    {
+      "id": "auto:notify_calendar_reminder",
+      "kind": "automation",
+      "label": "Notify: calendar reminder fires",
+      "area": "common",
+      "source": {
+        "file": "packages/notifications.yaml",
+        "line": 14
+      },
+      "position": {
+        "x": 20,
+        "y": 692
+      }
+    },
+    {
+      "id": "auto:notify_calendar_event_created",
+      "kind": "automation",
+      "label": "Notify: calendar event created",
+      "area": "common",
+      "source": {
+        "file": "packages/notifications.yaml",
+        "line": 47
+      },
+      "position": {
+        "x": 20,
+        "y": 788
+      }
+    },
+    {
+      "id": "auto:notify_calendar_event_updated",
+      "kind": "automation",
+      "label": "Notify: calendar event updated",
+      "area": "common",
+      "source": {
+        "file": "packages/notifications.yaml",
+        "line": 85
+      },
+      "position": {
+        "x": 20,
+        "y": 884
+      }
+    },
+    {
+      "id": "auto:notify_calendar_event_deleted",
+      "kind": "automation",
+      "label": "Notify: calendar event deleted",
+      "area": "common",
+      "source": {
+        "file": "packages/notifications.yaml",
+        "line": 123
+      },
+      "position": {
+        "x": 20,
+        "y": 980
+      }
+    },
+    {
+      "id": "auto:telegram_remind_nl",
+      "kind": "automation",
+      "label": "Telegram: /remind natural language → Claude",
+      "area": "common",
+      "source": {
+        "file": "packages/notifications.yaml",
+        "line": 160
+      },
+      "position": {
+        "x": 20,
+        "y": 1076
+      }
+    },
+    {
+      "id": "auto:telegram_remind_help",
+      "kind": "automation",
+      "label": "Telegram: /remind empty input → usage",
+      "area": "common",
+      "source": {
+        "file": "packages/notifications.yaml",
+        "line": 197
+      },
+      "position": {
+        "x": 20,
+        "y": 1172
+      }
+    },
+    {
+      "id": "auto:1771029405189",
+      "kind": "automation",
+      "label": "Turn off lights when everyone leaves",
+      "area": "common",
+      "source": {
+        "file": "packages/presence.yaml",
+        "line": 9
+      },
+      "position": {
+        "x": 20,
+        "y": 1268
+      }
+    },
+    {
+      "id": "auto:1771029768568",
+      "kind": "automation",
+      "label": "Turn on the lights when someone gets home",
+      "area": "common",
+      "source": {
+        "file": "packages/presence.yaml",
+        "line": 25
+      },
+      "position": {
+        "x": 20,
+        "y": 1364
+      }
+    },
+    {
+      "id": "auto:1771035434876",
+      "kind": "automation",
+      "label": "Turn off the lights at 10pm",
+      "area": "common",
+      "source": {
+        "file": "packages/schedule.yaml",
+        "line": 2
+      },
+      "position": {
+        "x": 20,
+        "y": 1460
+      }
+    },
+    {
+      "id": "scene:1771384085759",
+      "kind": "scene",
+      "label": "Low Lights: Off",
+      "area": "common",
+      "source": {
+        "file": "packages/illuminance.yaml",
+        "line": 46
+      },
+      "position": {
+        "x": 20,
+        "y": 1556
+      }
+    },
+    {
+      "id": "scene:1771384324468",
+      "kind": "scene",
+      "label": "Sockets: Off",
+      "area": "common",
+      "source": {
+        "file": "packages/illuminance.yaml",
+        "line": 53
+      },
+      "position": {
+        "x": 20,
+        "y": 1652
+      }
+    },
+    {
+      "id": "scene:1771077904382",
+      "kind": "scene",
+      "label": "LR: Redish",
+      "area": "common",
+      "source": {
+        "file": "packages/living_room.yaml",
+        "line": 98
+      },
+      "position": {
+        "x": 20,
+        "y": 1748
+      }
+    },
+    {
+      "id": "scene:1771077995810",
+      "kind": "scene",
+      "label": "LR: Bluish",
+      "area": "common",
+      "source": {
+        "file": "packages/living_room.yaml",
+        "line": 111
+      },
+      "position": {
+        "x": 20,
+        "y": 1844
+      }
+    },
+    {
+      "id": "scene:1771078366080",
+      "kind": "scene",
+      "label": "LR: Day Light",
+      "area": "common",
+      "source": {
+        "file": "packages/living_room.yaml",
+        "line": 124
+      },
+      "position": {
+        "x": 20,
+        "y": 1940
+      }
+    },
+    {
+      "id": "scene:1771079390602",
+      "kind": "scene",
+      "label": "LR: Dim",
+      "area": "common",
+      "source": {
+        "file": "packages/living_room.yaml",
+        "line": 137
+      },
+      "position": {
+        "x": 20,
+        "y": 2036
+      }
+    },
+    {
+      "id": "scene:1771077746684",
+      "kind": "scene",
+      "label": "MB: Bluish",
+      "area": "common",
+      "source": {
+        "file": "packages/master_bedroom.yaml",
+        "line": 97
+      },
+      "position": {
+        "x": 20,
+        "y": 2132
+      }
+    },
+    {
+      "id": "scene:1771077823140",
+      "kind": "scene",
+      "label": "MB: Redish",
+      "area": "common",
+      "source": {
+        "file": "packages/master_bedroom.yaml",
+        "line": 110
+      },
+      "position": {
+        "x": 20,
+        "y": 2228
+      }
+    },
+    {
+      "id": "scene:1771078321508",
+      "kind": "scene",
+      "label": "MB: Day Light",
+      "area": "common",
+      "source": {
+        "file": "packages/master_bedroom.yaml",
+        "line": 123
+      },
+      "position": {
+        "x": 20,
+        "y": 2324
+      }
+    },
+    {
+      "id": "scene:1771078606159",
+      "kind": "scene",
+      "label": "MB: Dim",
+      "area": "common",
+      "source": {
+        "file": "packages/master_bedroom.yaml",
+        "line": 136
+      },
+      "position": {
+        "x": 20,
+        "y": 2420
+      }
+    }
+  ],
+  "edges": [],
+  "automations": {
+    "sockets_illuminance_control": {
+      "id": "sockets_illuminance_control",
+      "alias": "Sockets: Illuminance Control",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:sockets_illuminance_control::root",
+          "kind": "automation",
+          "label": "Sockets: Illuminance Control",
+          "area": "common",
+          "source": {
+            "file": "packages/illuminance.yaml",
+            "line": 2
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771080638853": {
+      "id": "1771080638853",
+      "alias": "LR: Auto Scene",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771080638853::root",
+          "kind": "automation",
+          "label": "LR: Auto Scene",
+          "area": "common",
+          "source": {
+            "file": "packages/living_room.yaml",
+            "line": 2
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771090342172": {
+      "id": "1771090342172",
+      "alias": "LR: TV Scene",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771090342172::root",
+          "kind": "automation",
+          "label": "LR: TV Scene",
+          "area": "common",
+          "source": {
+            "file": "packages/living_room.yaml",
+            "line": 50
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771080380126": {
+      "id": "1771080380126",
+      "alias": "MB: Auto Scene",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771080380126::root",
+          "kind": "automation",
+          "label": "MB: Auto Scene",
+          "area": "common",
+          "source": {
+            "file": "packages/master_bedroom.yaml",
+            "line": 2
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771085036395": {
+      "id": "1771085036395",
+      "alias": "MB: TV Scene",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771085036395::root",
+          "kind": "automation",
+          "label": "MB: TV Scene",
+          "area": "common",
+          "source": {
+            "file": "packages/master_bedroom.yaml",
+            "line": 51
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771080002196": {
+      "id": "1771080002196",
+      "alias": "Night Walk",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771080002196::root",
+          "kind": "automation",
+          "label": "Night Walk",
+          "area": "common",
+          "source": {
+            "file": "packages/night_walk.yaml",
+            "line": 2
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771080220247": {
+      "id": "1771080220247",
+      "alias": "Night Walk: Off",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771080220247::root",
+          "kind": "automation",
+          "label": "Night Walk: Off",
+          "area": "common",
+          "source": {
+            "file": "packages/night_walk.yaml",
+            "line": 21
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "notify_calendar_reminder": {
+      "id": "notify_calendar_reminder",
+      "alias": "Notify: calendar reminder fires",
+      "mode": "parallel",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:notify_calendar_reminder::root",
+          "kind": "automation",
+          "label": "Notify: calendar reminder fires",
+          "area": "common",
+          "source": {
+            "file": "packages/notifications.yaml",
+            "line": 14
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "notify_calendar_event_created": {
+      "id": "notify_calendar_event_created",
+      "alias": "Notify: calendar event created",
+      "mode": "parallel",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:notify_calendar_event_created::root",
+          "kind": "automation",
+          "label": "Notify: calendar event created",
+          "area": "common",
+          "source": {
+            "file": "packages/notifications.yaml",
+            "line": 47
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "notify_calendar_event_updated": {
+      "id": "notify_calendar_event_updated",
+      "alias": "Notify: calendar event updated",
+      "mode": "parallel",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:notify_calendar_event_updated::root",
+          "kind": "automation",
+          "label": "Notify: calendar event updated",
+          "area": "common",
+          "source": {
+            "file": "packages/notifications.yaml",
+            "line": 85
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "notify_calendar_event_deleted": {
+      "id": "notify_calendar_event_deleted",
+      "alias": "Notify: calendar event deleted",
+      "mode": "parallel",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:notify_calendar_event_deleted::root",
+          "kind": "automation",
+          "label": "Notify: calendar event deleted",
+          "area": "common",
+          "source": {
+            "file": "packages/notifications.yaml",
+            "line": 123
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "telegram_remind_nl": {
+      "id": "telegram_remind_nl",
+      "alias": "Telegram: /remind natural language → Claude",
+      "mode": "parallel",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:telegram_remind_nl::root",
+          "kind": "automation",
+          "label": "Telegram: /remind natural language → Claude",
+          "area": "common",
+          "source": {
+            "file": "packages/notifications.yaml",
+            "line": 160
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "telegram_remind_help": {
+      "id": "telegram_remind_help",
+      "alias": "Telegram: /remind empty input → usage",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:telegram_remind_help::root",
+          "kind": "automation",
+          "label": "Telegram: /remind empty input → usage",
+          "area": "common",
+          "source": {
+            "file": "packages/notifications.yaml",
+            "line": 197
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771029405189": {
+      "id": "1771029405189",
+      "alias": "Turn off lights when everyone leaves",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771029405189::root",
+          "kind": "automation",
+          "label": "Turn off lights when everyone leaves",
+          "area": "common",
+          "source": {
+            "file": "packages/presence.yaml",
+            "line": 9
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771029768568": {
+      "id": "1771029768568",
+      "alias": "Turn on the lights when someone gets home",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771029768568::root",
+          "kind": "automation",
+          "label": "Turn on the lights when someone gets home",
+          "area": "common",
+          "source": {
+            "file": "packages/presence.yaml",
+            "line": 25
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    },
+    "1771035434876": {
+      "id": "1771035434876",
+      "alias": "Turn off the lights at 10pm",
+      "mode": "single",
+      "triggers": [],
+      "conditions": [],
+      "actions": [],
+      "flowNodes": [
+        {
+          "id": "auto:1771035434876::root",
+          "kind": "automation",
+          "label": "Turn off the lights at 10pm",
+          "area": "common",
+          "source": {
+            "file": "packages/schedule.yaml",
+            "line": 2
+          },
+          "position": {
+            "x": 20,
+            "y": 20
+          }
+        }
+      ],
+      "flowEdges": []
+    }
+  }
+}
