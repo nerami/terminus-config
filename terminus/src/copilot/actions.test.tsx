@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { runGetEntityStateHandler } from "./actions"
 import { createProposeAutomationController } from "./actions"
+import { runCommitAutomationHandler } from "./actions"
 import type { AutomationProposal } from "@/lib/automationWriter"
 
 const proposal: AutomationProposal = {
@@ -33,6 +34,20 @@ describe("get_entity_state handler", () => {
       { liveStates }
     )
     expect(res).toEqual({ error: "not_found" })
+  })
+})
+
+describe("commit_automation handler", () => {
+  it("delegates to commitAutomation and returns its result", async () => {
+    const fakeCommit = vi.fn(async () => ({ ok: true as const, id: "lr_test_abc123" }))
+    const res = await runCommitAutomationHandler(proposal, {
+      known: new Set(["switch.lr_lamp"]),
+      token: "t",
+      fetch: vi.fn(),
+      commitImpl: fakeCommit,
+    })
+    expect(res).toEqual({ ok: true, id: "lr_test_abc123" })
+    expect(fakeCommit).toHaveBeenCalledOnce()
   })
 })
 
