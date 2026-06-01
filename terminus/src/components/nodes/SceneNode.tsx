@@ -2,15 +2,18 @@ import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
 import { Sparkles } from "lucide-react"
 import type { AreaId } from "@/types/manifest"
 
-export type SceneNodeData = Node<{ label: string; area: AreaId }, "scene">
+export type SceneNodeData = Node<{ label: string; area: AreaId; direction?: "LR" | "TB" }, "scene">
 
 export function SceneNode({ data }: NodeProps<SceneNodeData>) {
+  const vertical = data.direction === "TB"
+  const targetPos = vertical ? Position.Top : Position.Left
+  const sourcePos = vertical ? Position.Bottom : Position.Right
   return (
     <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm">
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={targetPos} />
       <Sparkles className="size-4" />
       <span>{data.label}</span>
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={sourcePos} />
     </div>
   )
 }

@@ -19,8 +19,8 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
       position: n.position,
       data:
         n.kind === "automation"
-          ? { autoId, label: n.label, area: n.area, mode: detail.mode }
-          : { entityId: n.label, label: n.label, area: n.area },
+          ? { autoId, label: n.label, area: n.area, mode: detail.mode, direction: "TB" as const }
+          : { entityId: n.label, label: n.label, area: n.area, direction: "TB" as const },
     }))
   }, [detail, autoId])
 

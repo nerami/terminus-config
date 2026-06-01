@@ -17875,7 +17875,7 @@ var zm = {
 	system: "border-l-slate-500"
 };
 function Bm({ data: e }) {
-	let t = _n(e.autoId), n = zm[e.area];
+	let t = _n(e.autoId), n = zm[e.area], r = e.direction === "TB", i = r ? J.Top : J.Left, a = r ? J.Bottom : J.Right;
 	return /* @__PURE__ */ (0, G.jsxs)("div", {
 		className: `flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-card-foreground shadow-sm border-l-4 ${n} cursor-pointer hover:bg-accent`,
 		onClick: () => En({
@@ -17885,7 +17885,7 @@ function Bm({ data: e }) {
 		children: [
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "target",
-				position: J.Left
+				position: i
 			}),
 			/* @__PURE__ */ (0, G.jsx)("span", {
 				className: "text-sm font-medium",
@@ -17903,7 +17903,7 @@ function Bm({ data: e }) {
 			}),
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "source",
-				position: J.Right
+				position: a
 			})
 		]
 	});
@@ -17918,13 +17918,13 @@ var Vm = {
 	system: "border-l-slate-500"
 };
 function Hm({ data: e }) {
-	let t = gn(e.entityId);
+	let t = gn(e.entityId), n = e.direction === "TB", r = n ? J.Top : J.Left, i = n ? J.Bottom : J.Right;
 	return /* @__PURE__ */ (0, G.jsxs)("div", {
 		className: `flex items-center gap-2 rounded-md border bg-muted px-2 py-1 text-xs border-l-4 ${Vm[e.area]}`,
 		children: [
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "target",
-				position: J.Left
+				position: r
 			}),
 			/* @__PURE__ */ (0, G.jsx)("span", {
 				className: "font-mono",
@@ -17937,7 +17937,7 @@ function Hm({ data: e }) {
 			}),
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "source",
-				position: J.Right
+				position: i
 			})
 		]
 	});
@@ -18021,18 +18021,19 @@ var Um = (...e) => e.filter((e, t, n) => !!e && e.trim() !== "" && n.indexOf(e) 
 //#endregion
 //#region src/components/nodes/ScriptNode.tsx
 function th({ data: e }) {
+	let t = e.direction === "TB", n = t ? J.Top : J.Left, r = t ? J.Bottom : J.Right;
 	return /* @__PURE__ */ (0, G.jsxs)("div", {
 		className: "flex items-center gap-2 rounded-md border border-dashed bg-card px-3 py-2 text-sm",
 		children: [
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "target",
-				position: J.Left
+				position: n
 			}),
 			/* @__PURE__ */ (0, G.jsx)($m, { className: "size-4" }),
 			/* @__PURE__ */ (0, G.jsx)("span", { children: e.label }),
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "source",
-				position: J.Right
+				position: r
 			})
 		]
 	});
@@ -18040,18 +18041,19 @@ function th({ data: e }) {
 //#endregion
 //#region src/components/nodes/SceneNode.tsx
 function nh({ data: e }) {
+	let t = e.direction === "TB", n = t ? J.Top : J.Left, r = t ? J.Bottom : J.Right;
 	return /* @__PURE__ */ (0, G.jsxs)("div", {
 		className: "flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm",
 		children: [
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "target",
-				position: J.Left
+				position: n
 			}),
 			/* @__PURE__ */ (0, G.jsx)(eh, { className: "size-4" }),
 			/* @__PURE__ */ (0, G.jsx)("span", { children: e.label }),
 			/* @__PURE__ */ (0, G.jsx)(Df, {
 				type: "source",
-				position: J.Right
+				position: r
 			})
 		]
 	});
@@ -19011,11 +19013,13 @@ function Fg({ manifest: e, autoId: t }) {
 			autoId: t,
 			label: e.label,
 			area: e.area,
-			mode: n.mode
+			mode: n.mode,
+			direction: "TB"
 		} : {
 			entityId: e.label,
 			label: e.label,
-			area: e.area
+			area: e.area,
+			direction: "TB"
 		}
 	})) : [], [n, t]), i = (0, _.useMemo)(() => n?.flowEdges.map((e) => ({
 		id: e.id,
