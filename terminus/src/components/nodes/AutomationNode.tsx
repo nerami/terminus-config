@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react"
+import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
 import { Badge } from "@/components/ui/badge"
 import { useAutomationEnabled } from "@/lib/liveState"
 import { navigate } from "@/lib/router"
@@ -12,12 +12,15 @@ const AREA_BORDER: Record<AreaId, string> = {
   system: "border-l-slate-500",
 }
 
-export type AutomationNodeData = {
-  autoId: string
-  label: string
-  area: AreaId
-  mode: "single" | "restart" | "queued" | "parallel"
-}
+export type AutomationNodeData = Node<
+  {
+    autoId: string
+    label: string
+    area: AreaId
+    mode: "single" | "restart" | "queued" | "parallel"
+  },
+  "automation"
+>
 
 export function AutomationNode({ data }: NodeProps<AutomationNodeData>) {
   const enabled = useAutomationEnabled(data.autoId)

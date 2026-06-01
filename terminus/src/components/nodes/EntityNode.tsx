@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react"
+import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
 import { Badge } from "@/components/ui/badge"
 import { useEntityState } from "@/lib/liveState"
 import type { AreaId } from "@/types/manifest"
@@ -11,11 +11,14 @@ const AREA_BORDER: Record<AreaId, string> = {
   system: "border-l-slate-500",
 }
 
-export type EntityNodeData = {
-  entityId: string
-  label: string
-  area: AreaId
-}
+export type EntityNodeData = Node<
+  {
+    entityId: string
+    label: string
+    area: AreaId
+  },
+  "entity"
+>
 
 export function EntityNode({ data }: NodeProps<EntityNodeData>) {
   const state = useEntityState(data.entityId)

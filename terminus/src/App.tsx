@@ -1,105 +1,79 @@
-import { useEffect, useMemo, useState } from "react"
-import type { HassEntities } from "home-assistant-js-websocket"
-import { connectHA, watchEntities, type ConnectionStatus } from "@/lib/ha"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { LiveStateProvider, useLiveState } from "@/lib/liveState"
+import { loadManifest } from "@/lib/graph"
+import { useRoute } from "@/lib/router"
+import { SystemMap } from "@/routes/SystemMap"
+import { AutomationView } from "@/routes/AutomationView"
+import { EmptyState } from "@/components/EmptyState"
+import type { Manifest } from "@/types/manifest"
 
-export function App() {
-  const [status, setStatus] = useState<ConnectionStatus>("connecting")
-  const [error, setError] = useState<string | null>(null)
-  const [entities, setEntities] = useState<HassEntities>({})
+const STALE_DAYS = 7
 
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined
-    let cancelled = false
-
-    connectHA()
-      .then((conn) => {
-        if (cancelled) {
-          conn.close()
-          return
-        }
-        setStatus("connected")
-        unsubscribe = watchEntities(conn, (next) => setEntities({ ...next }))
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        setStatus("error")
-        setError(err instanceof Error ? err.message : String(err))
-      })
-
-    return () => {
-      cancelled = true
-      unsubscribe?.()
-    }
-  }, [])
-
-  const sorted = useMemo(
-    () => Object.values(entities).sort((a, b) => a.entity_id.localeCompare(b.entity_id)),
-    [entities]
-  )
-
-  return (
-    <div className="flex min-h-svh flex-col gap-4 p-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Home Assistant Dashboard</h1>
-        <StatusBadge status={status} />
-      </header>
-
-      {status === "error" ? (
-        <Card className="border-destructive/50">
-          <CardHeader>
-            <CardTitle>Connection failed</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {error ?? "Unknown error connecting to Home Assistant."}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="flex min-h-0 flex-1 flex-col">
-          <CardHeader>
-            <CardTitle>
-              Entities{" "}
-              <span className="text-sm font-normal text-muted-foreground">
-                ({sorted.length})
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="min-h-0 flex-1">
-            <ScrollArea className="h-[60vh] pr-4">
-              <ul className="divide-y divide-border">
-                {sorted.map((e) => (
-                  <li
-                    key={e.entity_id}
-                    className="flex items-center justify-between gap-4 py-2 text-sm"
-                  >
-                    <span className="truncate font-mono">{e.entity_id}</span>
-                    <Badge variant="secondary" className="shrink-0 font-mono">
-                      {e.state}
-                    </Badge>
-                  </li>
-                ))}
-                {sorted.length === 0 && status === "connected" && (
-                  <li className="py-4 text-sm text-muted-foreground">
-                    No entities yet.
-                  </li>
-                )}
-              </ul>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-function StatusBadge({ status }: { status: ConnectionStatus }) {
+function StatusBadge() {
+  const { status } = useLiveState()
   const label =
     status === "connecting" ? "Connecting…" : status === "connected" ? "Connected" : "Error"
   const variant =
     status === "connected" ? "default" : status === "error" ? "destructive" : "secondary"
   return <Badge variant={variant}>{label}</Badge>
+}
+
+function StalenessBanner({ generatedAt }: { generatedAt: string }) {
+  const days = Math.floor((Date.now() - Date.parse(generatedAt)) / (1000 * 60 * 60 * 24))
+  if (days < STALE_DAYS) return null
+  return (
+    <div className="border-b bg-amber-100 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+      Manifest is {days} days old — run <code>bin/deploy-ssh.sh</code> to refresh.
+    </div>
+  )
+}
+
+function Shell() {
+  const [manifest, setManifest] = useState<Manifest | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const route = useRoute()
+
+  useEffect(() => {
+    loadManifest()
+      .then(setManifest)
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
+  }, [])
+
+  if (error) {
+    return (
+      <EmptyState
+        title="Graph manifest missing"
+        body="Run `pnpm build` in terminus/ to generate `www/terminus/graph.json`."
+      />
+    )
+  }
+  if (!manifest) return null
+
+  return (
+    <div className="flex h-svh flex-col">
+      <StalenessBanner generatedAt={manifest.generatedAt} />
+      <header className="flex h-16 items-center justify-between border-b px-4">
+        <h1 className="text-base font-semibold">Terminus</h1>
+        <StatusBadge />
+      </header>
+      <main className="flex-1">
+        {route.name === "map" ? (
+          <SystemMap manifest={manifest} />
+        ) : (
+          <AutomationView manifest={manifest} autoId={route.id} />
+        )}
+      </main>
+    </div>
+  )
+}
+
+export function App() {
+  return (
+    <LiveStateProvider>
+      <Shell />
+    </LiveStateProvider>
+  )
 }
 
 export default App

@@ -1,8 +1,8 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react"
+import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
 import { Sparkles } from "lucide-react"
 import type { AreaId } from "@/types/manifest"
 
-export type SceneNodeData = { label: string; area: AreaId }
+export type SceneNodeData = Node<{ label: string; area: AreaId }, "scene">
 
 export function SceneNode({ data }: NodeProps<SceneNodeData>) {
   return (
