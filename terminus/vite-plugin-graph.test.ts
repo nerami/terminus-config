@@ -36,3 +36,60 @@ describe("buildManifest", () => {
     expect(mbLamp!.source.line).toBeGreaterThan(0)
   })
 })
+
+describe("buildManifest edges", () => {
+  it("emits trigger/condition/action edges in data-flow direction", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    const auto = "auto:mb_lamp_on_dark"
+
+    const triggers = manifest.edges.filter((e) => e.kind === "trigger" && e.target === auto)
+    expect(triggers.map((e) => e.source)).toEqual(["binary_sensor.is_dark"])
+
+    const conditions = manifest.edges.filter(
+      (e) => e.kind === "condition" && e.target === auto
+    )
+    expect(conditions.map((e) => e.source)).toEqual(["person.norman"])
+
+    const actions = manifest.edges.filter((e) => e.kind === "action" && e.source === auto)
+    expect(actions.map((e) => e.target).sort()).toEqual(["light.mb_led_one"])
+  })
+
+  it("emits script_call + scene_call edges", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    const auto = "auto:mb_lamp_on_dark"
+    expect(
+      manifest.edges.some(
+        (e) => e.kind === "script_call" && e.source === auto && e.target === "script:lr_evening"
+      )
+    ).toBe(true)
+    expect(
+      manifest.edges.some(
+        (e) =>
+          e.kind === "scene_call" && e.source === auto && e.target === "scene:scene.mb_bluish"
+      )
+    ).toBe(true)
+  })
+
+  it("emits template edges for jinja-templated targets", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    const tmpls = manifest.edges.filter(
+      (e) => e.kind === "template" && e.source === "auto:lr_dynamic_target"
+    )
+    expect(tmpls).toHaveLength(1)
+    expect(tmpls[0].target).toMatch(/^template:/)
+    expect(manifest.nodes.some((n) => n.id === tmpls[0].target && n.kind === "template")).toBe(true)
+  })
+
+  it("only emits entity nodes that are referenced", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    const referenced = new Set<string>()
+    manifest.edges.forEach((e) => {
+      referenced.add(e.source)
+      referenced.add(e.target)
+    })
+    const entityNodes = manifest.nodes.filter((n) => n.kind === "entity")
+    for (const en of entityNodes) {
+      expect(referenced.has(en.id)).toBe(true)
+    }
+  })
+})
