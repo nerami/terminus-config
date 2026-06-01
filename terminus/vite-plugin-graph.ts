@@ -38,8 +38,18 @@ type RawAutomation = {
   trigger?: unknown
   condition?: unknown
   action?: unknown
+  // HA 2024.10+ plural forms
+  triggers?: unknown
+  conditions?: unknown
+  actions?: unknown
   __sourceFile: string
   __sourceLine: number
+}
+
+function pickAutomationField(a: RawAutomation, kind: "trigger" | "condition" | "action"): unknown {
+  if (kind === "trigger") return a.triggers ?? a.trigger
+  if (kind === "condition") return a.conditions ?? a.condition
+  return a.actions ?? a.action
 }
 
 type RawScript = {
@@ -343,7 +353,7 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
   for (const a of parsed.automations) {
     const autoId = `auto:${a.id}`
 
-    const triggerRefs = dedupeRefs(collectEntityRefs(a.trigger, TRIGGER_KEYS))
+    const triggerRefs = dedupeRefs(collectEntityRefs(pickAutomationField(a, "trigger"), TRIGGER_KEYS))
     for (const r of triggerRefs) {
       if (r.kind === "entity") {
         ensureEntityNode(r.id, a.__sourceFile, a.__sourceLine)
@@ -354,7 +364,7 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
       }
     }
 
-    const conditionRefs = dedupeRefs(collectEntityRefs(a.condition, CONDITION_KEYS))
+    const conditionRefs = dedupeRefs(collectEntityRefs(pickAutomationField(a, "condition"), CONDITION_KEYS))
     for (const r of conditionRefs) {
       if (r.kind === "entity") {
         ensureEntityNode(r.id, a.__sourceFile, a.__sourceLine)
@@ -365,7 +375,7 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
       }
     }
 
-    const actionRefs = dedupeRefs(collectEntityRefs(a.action, ACTION_KEYS))
+    const actionRefs = dedupeRefs(collectEntityRefs(pickAutomationField(a, "action"), ACTION_KEYS))
     for (const r of actionRefs) {
       if (r.kind === "entity") {
         ensureEntityNode(r.id, a.__sourceFile, a.__sourceLine)
@@ -376,7 +386,7 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
       }
     }
 
-    for (const sc of serviceCallsFromAction(a.action)) {
+    for (const sc of serviceCallsFromAction(pickAutomationField(a, "action"))) {
       edges.push({
         id: `${autoId}::${sc.kind}::${sc.targetId}`,
         source: autoId,
@@ -428,9 +438,9 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
       id: a.id,
       alias: a.alias ?? a.id,
       mode: a.mode ?? "single",
-      triggers: toArr(a.trigger),
-      conditions: toArr(a.condition),
-      actions: toArr(a.action),
+      triggers: toArr(pickAutomationField(a, "trigger")),
+      conditions: toArr(pickAutomationField(a, "condition")),
+      actions: toArr(pickAutomationField(a, "action")),
       flowNodes: laidFlow,
       flowEdges,
     }

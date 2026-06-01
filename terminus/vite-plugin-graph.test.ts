@@ -15,6 +15,7 @@ describe("buildManifest", () => {
     expect(autoIds).toEqual([
       "auto:lr_dynamic_target",
       "auto:mb_lamp_on_dark",
+      "auto:mb_plural_test",
       "auto:ui_kitchen_off",
     ])
 
@@ -78,6 +79,17 @@ describe("buildManifest edges", () => {
     expect(tmpls).toHaveLength(1)
     expect(tmpls[0].target).toMatch(/^template:/)
     expect(manifest.nodes.some((n) => n.id === tmpls[0].target && n.kind === "template")).toBe(true)
+  })
+
+  it("accepts HA 2024+ plural keys (triggers/conditions/actions)", async () => {
+    const manifest = await buildManifest(FIXTURE_ROOT)
+    const auto = "auto:mb_plural_test"
+    const triggers = manifest.edges.filter((e) => e.kind === "trigger" && e.target === auto)
+    expect(triggers.map((e) => e.source)).toEqual(["binary_sensor.is_dark"])
+    const conditions = manifest.edges.filter((e) => e.kind === "condition" && e.target === auto)
+    expect(conditions.map((e) => e.source)).toEqual(["person.norman"])
+    const actions = manifest.edges.filter((e) => e.kind === "action" && e.source === auto)
+    expect(actions.map((e) => e.target)).toEqual(["light.mb_led_one"])
   })
 
   it("only emits entity nodes that are referenced", async () => {
