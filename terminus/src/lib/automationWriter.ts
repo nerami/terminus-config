@@ -1,3 +1,5 @@
+import { dump as yamlDump } from "js-yaml"
+
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -78,4 +80,89 @@ export function validateAutomation(
     }
   }
   return { ok: true }
+}
+
+export type CommitOptions = {
+  fetch: typeof fetch
+  token: string
+  baseUrl?: string
+}
+
+export type CommitResult =
+  | { ok: true; id: string }
+  | { ok: false; error: ValidateError }
+
+export async function commitAutomation(
+  proposal: AutomationProposal,
+  knownEntityIds: Set<string>,
+  { fetch, token, baseUrl = "" }: CommitOptions
+): Promise<CommitResult> {
+  const validated = validateAutomation(proposal, knownEntityIds)
+  if (!validated.ok) return validated
+
+  const id = generateAutomationId(proposal.alias)
+  const configPath = `${baseUrl}/api/config/automation/config/${id}`
+  const headers: HeadersInit = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  }
+
+  const existing = await fetch(configPath, { method: "GET", headers })
+  if (existing.status === 200) {
+    return { ok: false, error: { kind: "id_conflict", detail: id } }
+  }
+
+  let body: string
+  try {
+    const yamlObj = {
+      id,
+      alias: proposal.alias,
+      description: proposal.description ?? "",
+      mode: proposal.mode,
+      triggers: proposal.triggers,
+      conditions: proposal.conditions,
+      actions: proposal.actions,
+    }
+    body = JSON.stringify(yamlObj)
+  } catch (e) {
+    return {
+      ok: false,
+      error: { kind: "yaml_parse", detail: e instanceof Error ? e.message : String(e) },
+    }
+  }
+
+  const write = await fetch(configPath, { method: "POST", headers, body })
+  if (write.status >= 300) {
+    return {
+      ok: false,
+      error: { kind: "ha_rest", detail: `POST automation/config: ${write.status}` },
+    }
+  }
+
+  const reload = await fetch(`${baseUrl}/api/services/automation/reload`, {
+    method: "POST",
+    headers,
+    body: "{}",
+  })
+  if (reload.status >= 300) {
+    return {
+      ok: false,
+      error: { kind: "ha_rest", detail: `POST automation/reload: ${reload.status}` },
+    }
+  }
+
+  return { ok: true, id }
+}
+
+export function serializeYamlPreview(proposal: AutomationProposal): string {
+  const obj = {
+    id: generateAutomationId(proposal.alias),
+    alias: proposal.alias,
+    description: proposal.description ?? "",
+    mode: proposal.mode,
+    triggers: proposal.triggers,
+    conditions: proposal.conditions,
+    actions: proposal.actions,
+  }
+  return yamlDump(obj, { lineWidth: 100, noRefs: true })
 }
