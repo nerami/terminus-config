@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { LiveStateProvider, useLiveState } from "@/lib/liveState"
+import { RegistryProvider } from "@/lib/registry"
 import { loadManifest } from "@/lib/graph"
 import { useRoute } from "@/lib/router"
 import { SystemMap } from "@/routes/SystemMap"
 import { AutomationView } from "@/routes/AutomationView"
 import { EmptyState } from "@/components/EmptyState"
-import type { Manifest } from "@/types/manifest"
+import { NodeDetailSheet } from "@/components/NodeDetailSheet"
+import type { GraphNode, Manifest } from "@/types/manifest"
 
 const STALE_DAYS = 7
 const NOW_MS = Date.now()
@@ -33,6 +35,8 @@ function StalenessBanner({ generatedAt }: { generatedAt: string }) {
 function Shell() {
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [selected, setSelected] = useState<GraphNode | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const route = useRoute()
 
   useEffect(() => {
@@ -60,11 +64,18 @@ function Shell() {
       </header>
       <main className="flex-1">
         {route.name === "map" ? (
-          <SystemMap manifest={manifest} />
+          <SystemMap
+            manifest={manifest}
+            onSelect={(node) => {
+              setSelected(node)
+              setSheetOpen(true)
+            }}
+          />
         ) : (
           <AutomationView manifest={manifest} autoId={route.id} />
         )}
       </main>
+      <NodeDetailSheet open={sheetOpen} onOpenChange={setSheetOpen} node={selected} />
     </div>
   )
 }
@@ -72,7 +83,9 @@ function Shell() {
 export function App() {
   return (
     <LiveStateProvider>
-      <Shell />
+      <RegistryProvider>
+        <Shell />
+      </RegistryProvider>
     </LiveStateProvider>
   )
 }
