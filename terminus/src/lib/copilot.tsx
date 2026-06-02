@@ -154,6 +154,7 @@ export function useCopilotHealth(runtimeUrl: string): AgentHealth {
     async function probe() {
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(3000) })
+        if (!res.ok) throw new Error(`health ${res.status}`)
         const body = (await res.json()) as { status?: string; agent?: string }
         if (!cancelled) {
           if (body.status === "degraded") {

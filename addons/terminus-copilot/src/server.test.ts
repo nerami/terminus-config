@@ -53,6 +53,15 @@ describe("createApp", () => {
       )
     })
 
+    it("returns { status: degraded, agent: offline } when terminus-agent returns non-ok status", async () => {
+      process.env.TERMINUS_AGENT_URL = "http://localhost:3001"
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 503 })
+      const app = createApp({ apiKey: "sk-test" })
+      const res = await request(app).get("/health")
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual({ status: "degraded", agent: "offline" })
+    })
+
     it("returns { status: degraded, agent: offline } when terminus-agent is unreachable", async () => {
       process.env.TERMINUS_AGENT_URL = "http://localhost:3001"
       mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"))

@@ -93,6 +93,7 @@ describe("useCopilotHealth", () => {
 
   it("transitions to ok/builtin when health returns { status: ok, agent: builtin }", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ status: "ok", agent: "builtin" }),
     })
     const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
@@ -106,6 +107,7 @@ describe("useCopilotHealth", () => {
 
   it("transitions to degraded/offline when health returns { status: degraded, agent: offline }", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ status: "degraded", agent: "offline" }),
     })
     const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
@@ -119,8 +121,15 @@ describe("useCopilotHealth", () => {
     await waitFor(() => expect(result.current.status).toBe("error"))
   })
 
+  it("transitions to error state when health endpoint returns non-ok status", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 503 })
+    const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
+    await waitFor(() => expect(result.current.status).toBe("error"))
+  })
+
   it("derives health URL by replacing /api/copilotkit with /health", async () => {
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ status: "ok", agent: "external" }),
     })
     renderHook(() => useCopilotHealth("/api/hassio_ingress/TOKEN123/api/copilotkit"))

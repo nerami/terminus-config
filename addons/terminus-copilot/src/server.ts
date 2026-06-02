@@ -20,7 +20,8 @@ export function createApp({ apiKey }: ServerOptions): Express {
       return
     }
     try {
-      await fetch(`${agentUrl}/health`, { signal: AbortSignal.timeout(2000) })
+      const r = await fetch(`${agentUrl}/health`, { signal: AbortSignal.timeout(2000) })
+      if (!r.ok) throw new Error(`agent health ${r.status}`)
       res.json({ status: "ok", agent: "external" })
     } catch {
       res.json({ status: "degraded", agent: "offline" })
