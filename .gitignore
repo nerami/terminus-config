@@ -21,6 +21,9 @@ tts/
 __pycache__/
 *.pyc
 
+# Built panel artifacts (deploy via bin/deploy-www-ssh.sh)
+www/
+
 # Backups / blueprints user data
 backups/
 image/

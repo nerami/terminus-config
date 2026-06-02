@@ -195,10 +195,20 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 | `watcher.sh` | device | inotify loop — auto quick-reload on package YAML change |
 | `watcher-ssh.sh` | laptop | fswatch → rsync YAML to device, triggers quick-reload |
 | `sync-watch.sh` | laptop | continuous rsync watcher (broader scope) |
+| `deploy-www-ssh.sh` | laptop | rsync built www/terminus/ → device after pnpm build |
 
 ### Terminus Panel Build Artifacts
 
-`www/terminus/` holds committed build output (`index.js`, `style.css`, `graph.json`). After editing `terminus/src/`, run `pnpm build` inside `terminus/` and commit both `src/` and `www/terminus/` together — HA serves the bundle from `/local/terminus/` and they must match.
+`www/` is gitignored — build artifacts are not committed. Workflow after editing `terminus/src/`:
+
+```bash
+cd terminus && pnpm build   # outputs to ../www/terminus/
+bin/deploy-www-ssh.sh       # rsync www/terminus/ → /config/www/terminus/ on device
+```
+
+HA serves the bundle from `/local/terminus/` (maps to `/config/www/terminus/` on device).
+
+**Backlog**: build `terminus/` directly on the HA Green after `git pull` — eliminates the laptop build + SSH copy step.
 
 ## Do Not Touch
 
