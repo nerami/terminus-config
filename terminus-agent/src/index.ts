@@ -19,6 +19,10 @@ app.get("/health", (_req, res) => {
 })
 
 app.post("/", (req, res) => {
+  const msg = (req.body?.messages as Array<{ role: string; content?: string }>)?.findLast(
+    (m) => m.role === "user",
+  )
+  console.log(`[${new Date().toISOString()}] user: ${msg?.content?.slice(0, 120) ?? "(no message)"}`)
   handleAgentRequest(graph, req, res)
 })
 

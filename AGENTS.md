@@ -215,7 +215,9 @@ bin/deploy-www-ssh.sh       # rsync www/terminus/ → /config/www/terminus/ on d
 
 HA serves the bundle from `/local/terminus/` (maps to `/config/www/terminus/` on device).
 
-**Backlog**: build `terminus/` directly on the HA Green after `git pull` — eliminates the laptop build + SSH copy step.
+**Backlog**:
+- Build `terminus/` directly on the HA Green after `git pull` — eliminates the laptop build + SSH copy step.
+- Add health-check endpoint in `terminus-copilot` that pings `TERMINUS_AGENT_URL/health` and exposes agent liveness to HA (`binary_sensor` via REST or Supervisor) for dashboards / notifications.
 
 ## Do Not Touch
 
