@@ -131,3 +131,52 @@ export function CopilotProvider({
 }) {
   return <CopilotKit runtimeUrl={url}>{children}</CopilotKit>
 }
+
+export type AgentHealth =
+  | { status: "checking" }
+  | { status: "ok"; agent: "builtin" | "external" }
+  | { status: "degraded"; agent: "offline" }
+  | { status: "error" }
+
+const HEALTH_POLL_MS = 30_000
+
+function healthUrl(runtimeUrl: string): string {
+  return runtimeUrl.replace(/\/api\/copilotkit$/, "/health")
+}
+
+export function useCopilotHealth(runtimeUrl: string): AgentHealth {
+  const [health, setHealth] = useState<AgentHealth>({ status: "checking" })
+
+  useEffect(() => {
+    let cancelled = false
+    const url = healthUrl(runtimeUrl)
+
+    async function probe() {
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(3000) })
+        const body = (await res.json()) as { status?: string; agent?: string }
+        if (!cancelled) {
+          if (body.status === "degraded") {
+            setHealth({ status: "degraded", agent: "offline" })
+          } else {
+            setHealth({
+              status: "ok",
+              agent: (body.agent ?? "builtin") as "builtin" | "external",
+            })
+          }
+        }
+      } catch {
+        if (!cancelled) setHealth({ status: "error" })
+      }
+    }
+
+    void probe()
+    const id = setInterval(() => void probe(), HEALTH_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [runtimeUrl])
+
+  return health
+}

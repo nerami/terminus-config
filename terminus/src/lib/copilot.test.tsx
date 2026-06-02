@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest"
-import { resolveAddonIngressUrl, resolveRuntimeUrl } from "./copilot"
+import { describe, expect, it, vi, afterEach } from "vitest"
+import { renderHook, waitFor } from "@testing-library/react"
+import { resolveAddonIngressUrl, resolveRuntimeUrl, useCopilotHealth } from "./copilot"
+
+// ── resolveRuntimeUrl ────────────────────────────────────────────────────────
 
 describe("resolveRuntimeUrl", () => {
   it("derives ingress prefix from /api/hassio_ingress/<token>/", () => {
@@ -26,6 +29,8 @@ describe("resolveRuntimeUrl", () => {
     )
   })
 })
+
+// ── resolveAddonIngressUrl ───────────────────────────────────────────────────
 
 type WsMsg = { type: string; endpoint: string; method: string }
 
@@ -67,5 +72,62 @@ describe("resolveAddonIngressUrl", () => {
     await expect(
       resolveAddonIngressUrl("terminus_copilot", send)
     ).rejects.toThrow(/no ingress_url/)
+  })
+})
+
+// ── useCopilotHealth ─────────────────────────────────────────────────────────
+
+const mockFetch = vi.fn()
+vi.stubGlobal("fetch", mockFetch)
+
+describe("useCopilotHealth", () => {
+  afterEach(() => {
+    mockFetch.mockReset()
+  })
+
+  it("starts in checking state", () => {
+    mockFetch.mockReturnValue(new Promise(() => {})) // never resolves
+    const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
+    expect(result.current).toEqual({ status: "checking" })
+  })
+
+  it("transitions to ok/builtin when health returns { status: ok, agent: builtin }", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: async () => ({ status: "ok", agent: "builtin" }),
+    })
+    const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
+    await waitFor(() => expect(result.current.status).toBe("ok"))
+    expect(result.current).toEqual({ status: "ok", agent: "builtin" })
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://localhost:3000/health",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    )
+  })
+
+  it("transitions to degraded/offline when health returns { status: degraded, agent: offline }", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: async () => ({ status: "degraded", agent: "offline" }),
+    })
+    const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
+    await waitFor(() => expect(result.current.status).toBe("degraded"))
+    expect(result.current).toEqual({ status: "degraded", agent: "offline" })
+  })
+
+  it("transitions to error state when fetch rejects", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network error"))
+    const { result } = renderHook(() => useCopilotHealth("http://localhost:3000/api/copilotkit"))
+    await waitFor(() => expect(result.current.status).toBe("error"))
+  })
+
+  it("derives health URL by replacing /api/copilotkit with /health", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: async () => ({ status: "ok", agent: "external" }),
+    })
+    renderHook(() => useCopilotHealth("/api/hassio_ingress/TOKEN123/api/copilotkit"))
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled())
+    expect(mockFetch).toHaveBeenCalledWith(
+      "/api/hassio_ingress/TOKEN123/health",
+      expect.any(Object),
+    )
   })
 })
