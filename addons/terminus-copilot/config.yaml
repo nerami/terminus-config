@@ -1,5 +1,5 @@
 name: Terminus Copilot
-version: "0.1.0"
+version: "0.1.1"
 slug: terminus_copilot
 description: CopilotKit runtime for natural-language automation creation in Terminus.
 arch:
@@ -11,9 +11,8 @@ ingress_port: 3000
 panel_icon: mdi:robot
 options:
   anthropic_api_key: ""
-  terminus_agent_url: ""
 schema:
   anthropic_api_key: password
-  terminus_agent_url: url
+  terminus_agent_url: str?
 boot: auto
 startup: application
