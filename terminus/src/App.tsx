@@ -142,6 +142,8 @@ export function App() {
           <Shell manifest={manifest} />
           <CopilotWiring manifest={manifest} />
           <CopilotSidebar
+            clickOutsideToClose={false}
+            hitEscapeToClose={false}
             labels={{
               title: "Terminus Copilot",
               initial:
