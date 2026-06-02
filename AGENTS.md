@@ -193,24 +193,30 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 
 | Script | Runs on | Purpose |
 |---|---|---|
-| `deploy.sh` | device | backup → pull → check → restart |
+| `deploy.sh` | device | backup → pull → check → reload/restart (interactive) |
 | `deploy-ssh.sh` | laptop | SSH -t wrapper for deploy.sh |
-| `deploy-addons.sh` | device | sync addons/ → rebuild changed local add-ons |
-| `deploy-addons-ssh.sh` | laptop | addon-only push without full deploy |
-| `quick-reload.sh` | device | `ha supervisor reload` — YAML-only changes, no restart |
-| `quick-reload-ssh.sh` | laptop | SSH wrapper for quick-reload.sh |
-| `watcher.sh` | device | inotify loop — auto quick-reload on package YAML change |
-| `watcher-ssh.sh` | laptop | fswatch → rsync YAML to device, triggers quick-reload |
-| `sync-watch.sh` | laptop | continuous rsync watcher (broader scope) |
-| `deploy-www-ssh.sh` | laptop | rsync built www/terminus/ → device after pnpm build |
+| `deploy-addons.sh` | device | rsync addons/ → /addons/, supervisor reload + store reload |
+| `deploy-addons-ssh.sh` | laptop | snapshot → pull → addon sync (no full HA restart) |
+| `quick-reload.sh` | device | pull → check → reload_all; auto-rollback on check fail |
+| `quick-reload-ssh.sh` | laptop | SSH wrapper for quick-reload.sh (no TTY needed) |
+| `watcher.sh` | device | polls packages/ YAML, validates + reload_all on change; daemon |
+| `watcher-ssh.sh` | laptop | SSH wrapper to manage watcher.sh (start/stop/status/logs) |
+| `sync-watch.sh` | laptop | fswatch → debounced rsync main/ → device; pairs with watcher.sh |
+| `dev-watch.sh` | laptop | start device watcher + sync-watch.sh together (hot-reload pair) |
+| `deploy-www-ssh.sh` | laptop | rsync built www/terminus/ → /config/www/terminus/ on device |
+| `build-deploy-terminus-ssh.sh` | laptop | pnpm build in terminus/ then deploy-www-ssh.sh in one step |
+| `status.sh` | device | show HA core info, addon states, last deploy SHA, watcher status |
+| `status-ssh.sh` | laptop | SSH wrapper for status.sh |
 
 ### Terminus Panel Build Artifacts
 
 `www/` is gitignored — build artifacts are not committed. Workflow after editing `terminus/src/`:
 
 ```bash
-cd terminus && pnpm build   # outputs to ../www/terminus/
-bin/deploy-www-ssh.sh       # rsync www/terminus/ → /config/www/terminus/ on device
+bin/build-deploy-terminus-ssh.sh   # build + rsync in one step
+# or manually:
+cd terminus && pnpm build          # outputs to ../www/terminus/
+bin/deploy-www-ssh.sh              # rsync www/terminus/ → /config/www/terminus/ on device
 ```
 
 HA serves the bundle from `/local/terminus/` (maps to `/config/www/terminus/` on device).

@@ -12,4 +12,4 @@ set -euo pipefail
 HA_SSH_HOST="${HA_SSH_HOST:-root@terminus.tanuki-mirzam.ts.net}"
 HA_SSH_PORT="${HA_SSH_PORT:-22222}"
 
-exec ssh -t -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'cd /config && ./bin/quick-reload.sh'
+exec ssh -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'cd /config && ./bin/quick-reload.sh'
