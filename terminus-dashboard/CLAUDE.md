@@ -13,7 +13,7 @@ Deferred ideas and known follow-ups live in `BACKLOG.md` — check it before pro
 ```bash
 pnpm install          # first time / after dep changes
 pnpm dev              # vite dev server (mounts into #root from index.html)
-pnpm build            # tsc -b && vite build → ../www/terminus/{index.js,style.css,graph.json}
+pnpm build            # tsc -b && vite build → ../www/terminus-dashboard/{index.js,style.css,graph.json}
 pnpm typecheck        # tsc --noEmit
 pnpm lint             # eslint .
 pnpm test             # vitest watch
@@ -22,7 +22,7 @@ pnpm test:run path/to/file.test.ts            # single file
 pnpm test:run -t "substring of test name"      # filter by name
 ```
 
-After `pnpm build`, run `../bin/deploy-www-ssh.sh` to rsync `../www/terminus/` to the device — `www/` and `public/graph.json` are gitignored (build artifacts). Commit only `src/` changes.
+After `pnpm build`, run `../bin/deploy-www-ssh.sh` to rsync `../www/terminus-dashboard/` to the device — `www/` and `public/graph.json` are gitignored (build artifacts). Commit only `src/` changes.
 
 ## Architecture
 
@@ -35,7 +35,7 @@ After `pnpm build`, run `../bin/deploy-www-ssh.sh` to rsync `../www/terminus/` t
 3. Builds two graph layouts via `@dagrejs/dagre`:
    - **System map** (rankdir `LR`): all automations + entities + scripts + scenes, written to `manifest.nodes` / `manifest.edges`.
    - **Per-automation flow** (rankdir `TB`): one focused DAG per automation, written to `manifest.automations[id].flowNodes` / `flowEdges`.
-4. Writes the merged `Manifest` to `public/graph.json`. Vite then copies it into the bundle at `../www/terminus/graph.json`.
+4. Writes the merged `Manifest` to `public/graph.json`. Vite then copies it into the bundle at `../www/terminus-dashboard/graph.json`.
 
 The dev server watches the YAML sources and triggers a full reload on change. **There is no runtime YAML parsing in the browser** — the manifest is frozen at build time. After editing automations, rebuild to refresh the graph.
 
@@ -43,7 +43,7 @@ The dev server watches the YAML sources and triggers a full reload on change. **
 
 `src/main.tsx` defines a `<terminus-panel>` custom element. HA's `panel_custom` integration instantiates it inside HA's chrome (declared in repo-root `configuration.yaml`).
 
-**Shadow DOM is mandatory.** Tailwind v4 preflight (`@layer base`) cascades into HA's body/font/button styles otherwise. The custom element opens a shadow root, injects `<link rel="stylesheet" href="/local/terminus/style.css">`, then mounts React into a host `<div>` inside the shadow. Any change that touches Tailwind layers, CSS injection, or the panel mount path needs manual verification inside HA — vitest does not catch the bleed-through.
+**Shadow DOM is mandatory.** Tailwind v4 preflight (`@layer base`) cascades into HA's body/font/button styles otherwise. The custom element opens a shadow root, injects `<link rel="stylesheet" href="/local/terminus-dashboard/style.css">`, then mounts React into a host `<div>` inside the shadow. Any change that touches Tailwind layers, CSS injection, or the panel mount path needs manual verification inside HA — vitest does not catch the bleed-through.
 
 Production reuses HA's existing auth: `window.hassConnection` (a `Promise<{ conn }>` exposed on the parent window) is awaited in `src/lib/ha.ts`. `pnpm dev` runs outside HA so it falls back to long-lived token from `.env` (`VITE_HA_URL`, `VITE_HA_TOKEN`). `.env` is gitignored.
 
@@ -71,5 +71,5 @@ Each node component (`AutomationNode`, `EntityNode`, `ScriptNode`, `SceneNode`) 
 - Path alias `@/*` → `src/*` (configured in `vite.config.ts` and `tsconfig.app.json`).
 - shadcn/ui components live in `src/components/ui/` and follow shadcn conventions. `components.json` is the shadcn config.
 - Tests use vitest + `@testing-library/react` + happy-dom. Test files sit next to source (`*.test.ts(x)`).
-- Bundle output path (`../www/terminus`) is load-bearing — HA serves `/local/` from `<repo>/www/`, and `panel_custom`'s `module_url: /local/terminus/index.js` depends on it. Don't change `build.outDir` without updating `configuration.yaml`.
+- Bundle output path (`../www/terminus`) is load-bearing — HA serves `/local/` from `<repo>/www/`, and `panel_custom`'s `module_url: /local/terminus-dashboard/index.js` depends on it. Don't change `build.outDir` without updating `configuration.yaml`.
 - Vite lib mode does NOT inline `process.env.NODE_ENV`. The `define` in `vite.config.ts` replaces it manually so React's dev/prod switch does not throw `ReferenceError` in the browser. Keep that define when touching build config.

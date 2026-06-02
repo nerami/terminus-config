@@ -1,6 +1,6 @@
 #!/bin/bash
 # Laptop wrapper: rsync built Terminus panel artifacts to device.
-# Run after `pnpm build` in terminus/ — pushes www/terminus/ → /config/www/terminus/.
+# Run after `pnpm build` in terminus-dashboard/ — pushes www/terminus-dashboard/ → /config/www/terminus-dashboard/.
 #
 #   bin/deploy-www-ssh.sh
 #
@@ -12,15 +12,15 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HA_SSH_HOST="${HA_SSH_HOST:-root@terminus.tanuki-mirzam.ts.net}"
 HA_SSH_PORT="${HA_SSH_PORT:-22222}"
-SRC="$REPO_ROOT/www/terminus/"
-DEST="$HA_SSH_HOST:/config/www/terminus/"
+SRC="$REPO_ROOT/www/terminus-dashboard/"
+DEST="$HA_SSH_HOST:/config/www/terminus-dashboard/"
 
 if [ ! -d "$SRC" ]; then
-  echo "ERROR: $SRC not found — run 'pnpm build' in terminus/ first" >&2
+  echo "ERROR: $SRC not found — run 'pnpm build' in terminus-dashboard/ first" >&2
   exit 1
 fi
 
-ssh -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'mkdir -p /config/www/terminus'
+ssh -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'mkdir -p /config/www/terminus-dashboard'
 echo "syncing $SRC → $DEST"
 rsync -az --delete \
   -e "ssh -p $HA_SSH_PORT" \

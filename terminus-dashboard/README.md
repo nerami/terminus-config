@@ -1,13 +1,13 @@
-# terminus
+# terminus-dashboard
 
 Custom Home Assistant frontend panel ("Terminus"). Vite + React 19 + shadcn/ui +
-Tailwind v4. Built bundle is served from `/local/terminus/` and registered via
+Tailwind v4. Built bundle is served from `/local/terminus-dashboard/` and registered via
 `panel_custom` in the repo-root `configuration.yaml`.
 
 ## Install
 
 ```bash
-cd terminus
+cd terminus-dashboard
 pnpm install
 ```
 
@@ -35,7 +35,7 @@ app falls back to a long-lived token from `.env`:
 pnpm build
 ```
 
-Output goes to `../www/terminus/` (i.e. `<repo>/www/terminus/`) so it lands at the
+Output goes to `../www/terminus-dashboard/` (i.e. `<repo>/www/terminus/`) so it lands at the
 HA-served path automatically. Two files are emitted:
 
 - `index.js` — the panel bundle, loaded by HA via `module_url`
@@ -54,8 +54,8 @@ panel_custom:
   - name: terminus-panel
     sidebar_title: Terminus
     sidebar_icon: mdi:view-dashboard
-    url_path: terminus
-    module_url: /local/terminus/index.js
+    url_path: terminus-dashboard
+    module_url: /local/terminus-dashboard/index.js
 ```
 
 The bundle defines a `<terminus-panel>` custom element, which HA instantiates inside

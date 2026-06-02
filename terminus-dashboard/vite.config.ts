@@ -5,7 +5,7 @@ import { defineConfig } from "vite"
 import { graphManifestPlugin } from "./vite-plugin-graph"
 
 // HA serves /config/www at /local. Build emits a library bundle so the
-// panel_custom module_url can load /local/terminus/index.js directly.
+// panel_custom module_url can load /local/terminus-dashboard/index.js directly.
 export default defineConfig({
   plugins: [react(), tailwindcss(), graphManifestPlugin()],
   resolve: {
@@ -20,7 +20,7 @@ export default defineConfig({
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
   build: {
-    outDir: "../www/terminus",
+    outDir: "../www/terminus-dashboard",
     emptyOutDir: true,
     cssCodeSplit: false,
     lib: {

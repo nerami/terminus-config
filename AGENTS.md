@@ -110,9 +110,9 @@ secrets.yaml.example       # schema only; real secrets.yaml lives on device
 packages/                  # source-of-truth for hand-written work
 blueprints/                # automation/script blueprints
 addons/                    # local Supervisor add-ons (synced to /addons/)
-terminus/                  # custom HA panel — own CLAUDE.md
+terminus-dashboard/        # custom HA panel — own CLAUDE.md
 bin/                       # deploy + reload + watcher scripts (see bin/ inventory below)
-www/terminus/              # built Terminus panel artifacts (index.js, style.css, graph.json)
+www/terminus-dashboard/    # built Terminus panel artifacts (index.js, style.css, graph.json)
 # themes/, custom_components/, dashboards/ — absent, create when needed
 ```
 
@@ -203,26 +203,26 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 | `watcher-ssh.sh` | laptop | SSH wrapper to manage watcher.sh (start/stop/status/logs) |
 | `sync-watch.sh` | laptop | fswatch → debounced rsync main/ → device; pairs with watcher.sh |
 | `dev-watch.sh` | laptop | start device watcher + sync-watch.sh together (hot-reload pair) |
-| `deploy-www-ssh.sh` | laptop | rsync built www/terminus/ → /config/www/terminus/ on device |
-| `build-deploy-terminus-ssh.sh` | laptop | pnpm build in terminus/ then deploy-www-ssh.sh in one step |
+| `deploy-www-ssh.sh` | laptop | rsync built www/terminus-dashboard/ → /config/www/terminus-dashboard/ on device |
+| `build-deploy-terminus-ssh.sh` | laptop | pnpm build in terminus-dashboard/ then deploy-www-ssh.sh in one step |
 | `status.sh` | device | show HA core info, addon states, last deploy SHA, watcher status |
 | `status-ssh.sh` | laptop | SSH wrapper for status.sh |
 
 ### Terminus Panel Build Artifacts
 
-`www/` is gitignored — build artifacts are not committed. Workflow after editing `terminus/src/`:
+`www/` is gitignored — build artifacts are not committed. Workflow after editing `terminus-dashboard/src/`:
 
 ```bash
-bin/build-deploy-terminus-ssh.sh   # build + rsync in one step
+bin/build-deploy-terminus-ssh.sh          # build + rsync in one step
 # or manually:
-cd terminus && pnpm build          # outputs to ../www/terminus/
-bin/deploy-www-ssh.sh              # rsync www/terminus/ → /config/www/terminus/ on device
+cd terminus-dashboard && pnpm build       # outputs to ../www/terminus-dashboard/
+bin/deploy-www-ssh.sh                     # rsync www/terminus-dashboard/ → /config/www/terminus-dashboard/ on device
 ```
 
-HA serves the bundle from `/local/terminus/` (maps to `/config/www/terminus/` on device).
+HA serves the bundle from `/local/terminus-dashboard/` (maps to `/config/www/terminus-dashboard/` on device).
 
 **Backlog**:
-- Build `terminus/` directly on the HA Green after `git pull` — eliminates the laptop build + SSH copy step.
+- Build `terminus-dashboard/` directly on the HA Green after `git pull` — eliminates the laptop build + SSH copy step.
 - Add health-check endpoint in `terminus-copilot` that pings `TERMINUS_AGENT_URL/health` and exposes agent liveness to HA (`binary_sensor` via REST or Supervisor) for dashboards / notifications.
 
 ## Do Not Touch
