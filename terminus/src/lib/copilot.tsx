@@ -1,6 +1,6 @@
 import { CopilotKit } from "@copilotkit/react-core/v2"
 import { useEffect, useState, type ReactNode } from "react"
-import { getAuthToken, getHassObject } from "@/lib/ha"
+import { connectHA } from "@/lib/ha"
 
 const DEFAULT_DEV_URL = "http://localhost:3000/api/copilotkit"
 const INGRESS_RE = /^(\/api\/hassio_ingress\/[^/]+)\//
@@ -22,56 +22,58 @@ export type RuntimeUrlState =
   | { status: "ready"; url: string }
   | { status: "error"; error: string }
 
-type IngressInfoEnvelope = {
-  data?: { ingress_url?: string }
-  ingress_url?: string
-}
+type AddonInfo = { ingress_url?: string | null }
+
+// The HTTP proxy at /api/hassio/* whitelists only admin-utility paths
+// (backups/logs/icon/etc) — ingress/session and addons/<slug>/info are
+// not in PATHS_ADMIN and return 401 regardless of bearer token. HA's own
+// frontend uses the `supervisor/api` websocket command, which has its
+// own non-admin allowlist (WS_NO_ADMIN_ENDPOINTS) covering exactly the
+// endpoints we need.
+type SupervisorCaller = <T>(message: {
+  type: "supervisor/api"
+  endpoint: string
+  method: "GET" | "POST"
+}) => Promise<T>
 
 export async function resolveAddonIngressUrl(
   slug: string,
-  token: string,
-  fetchImpl: typeof fetch = fetch
+  sendSupervisor: SupervisorCaller
 ): Promise<string> {
-  // Prefer HA's own callApi when available — it handles auth + supervisor
-  // quirks the same way HA's frontend does (which our raw fetch cannot
-  // always replicate). Fall back to raw fetch for dev/tests.
-  const hass = getHassObject()
-  if (hass?.callApi) {
-    try {
-      await hass.callApi("POST", "hassio/ingress/session")
-      const info = await hass.callApi<IngressInfoEnvelope>(
-        "GET",
-        `hassio/addons/${slug}/info`
-      )
-      const ingress = info?.data?.ingress_url ?? info?.ingress_url
-      if (!ingress) {
-        throw new Error(`add-on ${slug} has no ingress_url (started?)`)
-      }
-      return ingress.replace(/\/$/, "") + "/api/copilotkit"
-    } catch (e) {
-      console.warn("[terminus] hass.callApi ingress lookup failed:", e)
-    }
+  try {
+    await sendSupervisor({
+      type: "supervisor/api",
+      endpoint: "/ingress/session",
+      method: "POST",
+    })
+  } catch (e) {
+    throw new Error(`ingress/session failed: ${describeWsError(e)}`, { cause: e })
   }
 
-  const sessionRes = await fetchImpl("/api/hassio/ingress/session", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!sessionRes.ok) {
-    throw new Error(`hassio/ingress/session ${sessionRes.status}`)
+  let info: AddonInfo
+  try {
+    info = await sendSupervisor<AddonInfo>({
+      type: "supervisor/api",
+      endpoint: `/addons/${slug}/info`,
+      method: "GET",
+    })
+  } catch (e) {
+    throw new Error(`addons/${slug}/info failed: ${describeWsError(e)}`, { cause: e })
   }
-  const infoRes = await fetchImpl(`/api/hassio/addons/${slug}/info`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!infoRes.ok) {
-    throw new Error(`hassio/addons/${slug}/info ${infoRes.status}`)
-  }
-  const json = (await infoRes.json()) as IngressInfoEnvelope
-  const ingress = json.data?.ingress_url ?? json.ingress_url
+
+  const ingress = info?.ingress_url
   if (!ingress) {
     throw new Error(`add-on ${slug} has no ingress_url (started?)`)
   }
   return ingress.replace(/\/$/, "") + "/api/copilotkit"
+}
+
+function describeWsError(e: unknown): string {
+  if (e && typeof e === "object" && "code" in e) {
+    const { code, message } = e as { code?: string; message?: string }
+    return `${code ?? "unknown"}${message ? `: ${message}` : ""}`
+  }
+  return e instanceof Error ? e.message : String(e)
 }
 
 function syncRuntimeUrl(): string | null {
@@ -97,9 +99,10 @@ export function useCopilotRuntimeUrl(): RuntimeUrlState {
     void (async () => {
       try {
         console.info("[terminus] resolving copilot runtime url…")
-        const token = await getAuthToken()
-        console.info("[terminus] got HA auth token, length=", token.length)
-        const url = await resolveAddonIngressUrl(ADDON_SLUG, token)
+        const conn = await connectHA()
+        const url = await resolveAddonIngressUrl(ADDON_SLUG, (msg) =>
+          conn.sendMessagePromise(msg)
+        )
         console.info("[terminus] copilot runtime url =", url)
         if (!cancelled) setState({ status: "ready", url })
       } catch (e) {

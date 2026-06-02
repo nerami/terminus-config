@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { resolveAddonIngressUrl, resolveRuntimeUrl } from "./copilot"
 
 describe("resolveRuntimeUrl", () => {
@@ -27,52 +27,45 @@ describe("resolveRuntimeUrl", () => {
   })
 })
 
+type WsMsg = { type: string; endpoint: string; method: string }
+
 describe("resolveAddonIngressUrl", () => {
-  it("POSTs session, GETs info, returns ingress_url + /api/copilotkit", async () => {
-    const calls: Array<{ url: string; method: string }> = []
-    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === "string" ? input : input.toString()
-      const method = (init?.method ?? "GET").toUpperCase()
-      calls.push({ url, method })
-      if (url.includes("/api/hassio/ingress/session")) {
-        return new Response(JSON.stringify({ data: { session: "S1" } }), { status: 200 })
+  it("calls supervisor/api for session + info via websocket, returns ingress URL", async () => {
+    const calls: WsMsg[] = []
+    const send = async <T,>(msg: WsMsg): Promise<T> => {
+      calls.push(msg)
+      if (msg.endpoint === "/ingress/session") return {} as T
+      if (msg.endpoint === "/addons/terminus_copilot/info") {
+        return { ingress_url: "/api/hassio_ingress/TOK/" } as T
       }
-      if (url.includes("/api/hassio/addons/terminus_copilot/info")) {
-        return new Response(
-          JSON.stringify({ data: { ingress_url: "/api/hassio_ingress/TOK/" } }),
-          { status: 200 }
-        )
-      }
-      return new Response("not mocked", { status: 500 })
-    }) as unknown as typeof fetch
+      throw new Error(`unexpected endpoint ${msg.endpoint}`)
+    }
 
-    const url = await resolveAddonIngressUrl("terminus_copilot", "t", fetchImpl)
+    const url = await resolveAddonIngressUrl("terminus_copilot", send)
     expect(url).toBe("/api/hassio_ingress/TOK/api/copilotkit")
-    expect(calls.some((c) => c.method === "POST" && c.url.includes("/ingress/session"))).toBe(
-      true
-    )
-    expect(calls.some((c) => c.method === "GET" && c.url.includes("/addons/terminus_copilot/info"))).toBe(
-      true
-    )
+    expect(calls).toEqual([
+      { type: "supervisor/api", endpoint: "/ingress/session", method: "POST" },
+      {
+        type: "supervisor/api",
+        endpoint: "/addons/terminus_copilot/info",
+        method: "GET",
+      },
+    ])
   })
 
-  it("throws when session POST fails", async () => {
-    const fetchImpl = vi.fn(async () => new Response("nope", { status: 401 })) as unknown as typeof fetch
-    await expect(resolveAddonIngressUrl("terminus_copilot", "t", fetchImpl)).rejects.toThrow(
-      /ingress\/session 401/
-    )
+  it("throws when ingress/session command rejects", async () => {
+    const send = async <T,>(_msg: WsMsg): Promise<T> => {
+      throw { code: "unauthorized", message: "nope" }
+    }
+    await expect(
+      resolveAddonIngressUrl("terminus_copilot", send)
+    ).rejects.toThrow(/ingress\/session failed: unauthorized: nope/)
   })
 
-  it("throws when info response lacks ingress_url", async () => {
-    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : input.toString()
-      if (url.includes("/ingress/session")) {
-        return new Response("{}", { status: 200 })
-      }
-      return new Response(JSON.stringify({ data: {} }), { status: 200 })
-    }) as unknown as typeof fetch
-    await expect(resolveAddonIngressUrl("terminus_copilot", "t", fetchImpl)).rejects.toThrow(
-      /no ingress_url/
-    )
+  it("throws when info result lacks ingress_url", async () => {
+    const send = async <T,>(_msg: WsMsg): Promise<T> => ({} as T)
+    await expect(
+      resolveAddonIngressUrl("terminus_copilot", send)
+    ).rejects.toThrow(/no ingress_url/)
   })
 })
