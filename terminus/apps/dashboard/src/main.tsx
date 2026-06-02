@@ -33,7 +33,7 @@ class TerminusPanel extends HTMLElement {
     if (!shadow.querySelector('link[data-terminus-css]')) {
       const link = document.createElement("link")
       link.rel = "stylesheet"
-      link.href = "/local/terminus/style.css"
+      link.href = "/local/terminus-dashboard/style.css"
       link.dataset.terminusCss = "true"
       shadow.appendChild(link)
     }
