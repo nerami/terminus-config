@@ -13,8 +13,18 @@ export function createApp({ apiKey }: ServerOptions): Express {
   const app = express()
   app.use(express.json({ limit: "1mb" }))
 
-  app.get("/health", (_req, res) => {
-    res.json({ ok: true })
+  app.get("/health", async (_req, res) => {
+    const agentUrl = process.env.TERMINUS_AGENT_URL
+    if (!agentUrl) {
+      res.json({ status: "ok", agent: "builtin" })
+      return
+    }
+    try {
+      await fetch(`${agentUrl}/health`, { signal: AbortSignal.timeout(2000) })
+      res.json({ status: "ok", agent: "external" })
+    } catch {
+      res.json({ status: "degraded", agent: "offline" })
+    }
   })
 
   app.use("/api/copilotkit", buildRuntime({ apiKey }))
