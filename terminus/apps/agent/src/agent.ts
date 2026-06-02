@@ -101,6 +101,11 @@ export async function handleAgentRequest(graph: any, req: Request, res: Response
 
   sse(res, { type: EventType.RUN_STARTED, threadId, runId })
 
+  let errored = false
+  const keepAlive = setInterval(() => {
+    try { res.write(": keep-alive\n\n") } catch { clearInterval(keepAlive) }
+  }, 15_000)
+
   try {
     const messageId = uuidv4()
     let textOpen = false
@@ -158,19 +163,32 @@ export async function handleAgentRequest(graph: any, req: Request, res: Response
       } else if (event === "on_tool_end") {
         const toolCallId = openToolCalls.get(name) ?? uuidv4()
         openToolCalls.delete(name)
+        const output = data.output
         const content =
-          typeof data.output?.content === "string"
-            ? data.output.content
-            : JSON.stringify(data.output ?? "")
+          typeof output === "string"
+            ? output
+            : typeof output?.content === "string"
+              ? output.content
+              : JSON.stringify(output ?? "")
         sse(res, { type: EventType.TOOL_CALL_RESULT, toolCallId, content })
+      } else if (event === "on_tool_error") {
+        const toolCallId = openToolCalls.get(name) ?? uuidv4()
+        openToolCalls.delete(name)
+        const errMsg = data.error instanceof Error ? data.error.message : String(data.error ?? "tool error")
+        sse(res, { type: EventType.TOOL_CALL_RESULT, toolCallId, content: JSON.stringify({ error: errMsg }) })
       }
     }
   } catch (err) {
+    errored = true
     const message = err instanceof Error ? err.message : String(err)
     console.error("agent error:", err)
     sse(res, { type: EventType.RUN_ERROR, message, code: "AGENT_ERROR" })
   } finally {
-    sse(res, { type: EventType.RUN_FINISHED, threadId, runId })
+    clearInterval(keepAlive)
+    // RUN_ERROR is terminal — verifyEvents forbids any event after it
+    if (!errored) {
+      sse(res, { type: EventType.RUN_FINISHED, threadId, runId })
+    }
     res.end()
   }
 }

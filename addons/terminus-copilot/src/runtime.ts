@@ -1,7 +1,7 @@
 import { BuiltInAgent, CopilotSseRuntime } from "@copilotkit/runtime/v2"
 import { createCopilotExpressHandler } from "@copilotkit/runtime/v2/express"
 import { LangGraphHttpAgent } from "@copilotkit/runtime/langgraph"
-import { catchError } from "rxjs"
+import { catchError, tap, throwError } from "rxjs"
 import type { Router } from "express"
 
 export type RuntimeOptions = {
@@ -18,8 +18,17 @@ export class SafeHttpAgent extends LangGraphHttpAgent {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   override run(input: any): any {
+    let runStarted = false
     return super.run(input).pipe(
+      tap((event: any) => {
+        if (event?.type === "RUN_STARTED") runStarted = true
+      }),
       catchError((err: Error) => {
+        if (runStarted) {
+          // Primary already opened a run — switching agents would cause a
+          // protocol violation (double RUN_STARTED). Let the error propagate.
+          return throwError(() => err)
+        }
         console.error("terminus-agent unreachable, falling back to built-in:", err.message)
         return this.fallback.run(input)
       }),
