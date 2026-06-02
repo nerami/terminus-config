@@ -32,7 +32,7 @@ export function createGraph(apiKey: string) {
     model: "claude-sonnet-4-6",
     apiKey,
     streaming: true,
-    topP: 1,
+    topP: null as unknown as number,
   })
 
   const tools = [...haApiTools, ...haConfigTools, ...haGitTools]
