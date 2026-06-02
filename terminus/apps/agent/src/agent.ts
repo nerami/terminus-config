@@ -80,7 +80,11 @@ function aguiToLangchain(messages: AguiMessage[]): BaseMessage[] {
 }
 
 function sse(res: Response, event: Record<string, unknown>) {
-  res.write(`data: ${JSON.stringify(event)}\n\n`)
+  try {
+    res.write(`data: ${JSON.stringify(event)}\n\n`)
+  } catch {
+    // connection already closed — best effort
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,8 +169,8 @@ export async function handleAgentRequest(graph: any, req: Request, res: Response
     const message = err instanceof Error ? err.message : String(err)
     console.error("agent error:", err)
     sse(res, { type: EventType.RUN_ERROR, message, code: "AGENT_ERROR" })
+  } finally {
+    sse(res, { type: EventType.RUN_FINISHED, threadId, runId })
+    res.end()
   }
-
-  sse(res, { type: EventType.RUN_FINISHED, threadId, runId })
-  res.end()
 }
