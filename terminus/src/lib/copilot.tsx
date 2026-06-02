@@ -4,7 +4,10 @@ import { connectHA } from "@/lib/ha"
 
 const DEFAULT_DEV_URL = "http://localhost:3000/api/copilotkit"
 const INGRESS_RE = /^(\/api\/hassio_ingress\/[^/]+)\//
-const ADDON_SLUG = "terminus_copilot"
+// Supervisor prefixes locally-installed add-ons with `local_` — the
+// add-on lives in /addons/terminus-copilot/ on the device (synced from
+// repo by bin/deploy-addons.sh), declared slug `terminus_copilot`.
+const ADDON_SLUG = "local_terminus_copilot"
 
 type ResolveOpts = { pathname: string; fallback?: string }
 

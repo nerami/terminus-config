@@ -27989,7 +27989,7 @@ function vk(e) {
 }
 //#endregion
 //#region src/lib/copilot.tsx
-var yk = "http://localhost:3000/api/copilotkit", bk = /^(\/api\/hassio_ingress\/[^/]+)\//, xk = "terminus_copilot";
+var yk = "http://localhost:3000/api/copilotkit", bk = /^(\/api\/hassio_ingress\/[^/]+)\//, xk = "local_terminus_copilot";
 function Sk({ pathname: e, fallback: t = yk }) {
 	let n = e.match(bk);
 	return n ? `${n[1]}/api/copilotkit` : t;
