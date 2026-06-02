@@ -170,12 +170,12 @@ export async function handleAgentRequest(graph: any, req: Request, res: Response
             : typeof output?.content === "string"
               ? output.content
               : JSON.stringify(output ?? "")
-        sse(res, { type: EventType.TOOL_CALL_RESULT, toolCallId, content })
+        sse(res, { type: EventType.TOOL_CALL_RESULT, messageId: `${toolCallId}-result`, toolCallId, content })
       } else if (event === "on_tool_error") {
         const toolCallId = openToolCalls.get(name) ?? uuidv4()
         openToolCalls.delete(name)
         const errMsg = data.error instanceof Error ? data.error.message : String(data.error ?? "tool error")
-        sse(res, { type: EventType.TOOL_CALL_RESULT, toolCallId, content: JSON.stringify({ error: errMsg }) })
+        sse(res, { type: EventType.TOOL_CALL_RESULT, messageId: `${toolCallId}-result`, toolCallId, content: JSON.stringify({ error: errMsg }) })
       }
     }
   } catch (err) {
