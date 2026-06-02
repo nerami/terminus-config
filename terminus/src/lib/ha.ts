@@ -45,19 +45,23 @@ export function watchEntities(
   return subscribeEntities(conn, onUpdate)
 }
 
-type HassPanel = {
-  hass?: {
-    auth?: {
-      accessToken?: string
-      data?: { access_token?: string }
-    }
+type HassObj = {
+  auth?: {
+    accessToken?: string
+    data?: { access_token?: string }
   }
+  callApi?: <T>(method: string, path: string, body?: unknown) => Promise<T>
+}
+
+type HassEl = { hass?: HassObj }
+
+export function getHassObject(): HassObj | null {
+  const el = document.querySelector("home-assistant") as HassEl | null
+  return el?.hass ?? null
 }
 
 function readTokenFromHomeAssistantEl(): string | null {
-  // HA passes the auth-bearing `hass` object as a property on <home-assistant>.
-  const el = document.querySelector("home-assistant") as HassPanel | null
-  const a = el?.hass?.auth
+  const a = getHassObject()?.auth
   if (!a) return null
   if (typeof a.accessToken === "string" && a.accessToken) return a.accessToken
   if (typeof a.data?.access_token === "string" && a.data.access_token) {

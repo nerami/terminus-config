@@ -1,6 +1,6 @@
 import { CopilotKit } from "@copilotkit/react-core/v2"
 import { useEffect, useState, type ReactNode } from "react"
-import { getAuthToken } from "@/lib/ha"
+import { getAuthToken, getHassObject } from "@/lib/ha"
 
 const DEFAULT_DEV_URL = "http://localhost:3000/api/copilotkit"
 const INGRESS_RE = /^(\/api\/hassio_ingress\/[^/]+)\//
@@ -22,11 +22,37 @@ export type RuntimeUrlState =
   | { status: "ready"; url: string }
   | { status: "error"; error: string }
 
+type IngressInfoEnvelope = {
+  data?: { ingress_url?: string }
+  ingress_url?: string
+}
+
 export async function resolveAddonIngressUrl(
   slug: string,
   token: string,
   fetchImpl: typeof fetch = fetch
 ): Promise<string> {
+  // Prefer HA's own callApi when available — it handles auth + supervisor
+  // quirks the same way HA's frontend does (which our raw fetch cannot
+  // always replicate). Fall back to raw fetch for dev/tests.
+  const hass = getHassObject()
+  if (hass?.callApi) {
+    try {
+      await hass.callApi("POST", "hassio/ingress/session")
+      const info = await hass.callApi<IngressInfoEnvelope>(
+        "GET",
+        `hassio/addons/${slug}/info`
+      )
+      const ingress = info?.data?.ingress_url ?? info?.ingress_url
+      if (!ingress) {
+        throw new Error(`add-on ${slug} has no ingress_url (started?)`)
+      }
+      return ingress.replace(/\/$/, "") + "/api/copilotkit"
+    } catch (e) {
+      console.warn("[terminus] hass.callApi ingress lookup failed:", e)
+    }
+  }
+
   const sessionRes = await fetchImpl("/api/hassio/ingress/session", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -40,8 +66,8 @@ export async function resolveAddonIngressUrl(
   if (!infoRes.ok) {
     throw new Error(`hassio/addons/${slug}/info ${infoRes.status}`)
   }
-  const json = (await infoRes.json()) as { data?: { ingress_url?: string } }
-  const ingress = json.data?.ingress_url
+  const json = (await infoRes.json()) as IngressInfoEnvelope
+  const ingress = json.data?.ingress_url ?? json.ingress_url
   if (!ingress) {
     throw new Error(`add-on ${slug} has no ingress_url (started?)`)
   }
