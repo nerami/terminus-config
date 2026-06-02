@@ -4,7 +4,7 @@ import "@copilotkit/react-ui/v2/styles.css"
 import { Badge } from "@/components/ui/badge"
 import { LiveStateProvider, useLiveState } from "@/lib/liveState"
 import { RegistryProvider, useRegistryEntities } from "@/lib/registry"
-import { CopilotProvider, useCopilotRuntimeUrl } from "@/lib/copilot"
+import { CopilotProvider, useCopilotRuntimeUrl, useCopilotHealth } from "@/lib/copilot"
 import { CopilotCatalog } from "@/copilot/readable"
 import { CopilotActions, createProposeAutomationController } from "@/copilot/actions"
 import { PreviewCard } from "@/copilot/PreviewCard"
@@ -123,6 +123,16 @@ function CopilotStatusBadge({ children }: { children: string }) {
   )
 }
 
+function CopilotAgentStatus({ runtimeUrl }: { runtimeUrl: string }) {
+  const health = useCopilotHealth(runtimeUrl)
+  if (health.status !== "degraded") return null
+  return (
+    <CopilotStatusBadge>
+      Terminus Agent offline — using fallback model
+    </CopilotStatusBadge>
+  )
+}
+
 function CopilotIsland({ manifest }: { manifest: Manifest }) {
   const runtime = useCopilotRuntimeUrl()
   if (runtime.status === "loading") {
@@ -133,6 +143,7 @@ function CopilotIsland({ manifest }: { manifest: Manifest }) {
   }
   return (
     <CopilotProvider url={runtime.url}>
+      <CopilotAgentStatus runtimeUrl={runtime.url} />
       <CopilotWiring manifest={manifest} />
       <CopilotSidebar
         defaultOpen
