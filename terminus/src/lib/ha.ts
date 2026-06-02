@@ -45,12 +45,53 @@ export function watchEntities(
   return subscribeEntities(conn, onUpdate)
 }
 
-export async function getAuthToken(): Promise<string> {
-  if (window.hassConnection) {
-    const { conn } = await window.hassConnection
-    const auth = (conn as unknown as { auth?: Auth }).auth
-    if (auth && typeof auth.accessToken === "string") return auth.accessToken
+type HassPanel = {
+  hass?: {
+    auth?: {
+      accessToken?: string
+      data?: { access_token?: string }
+    }
   }
+}
+
+function readTokenFromHomeAssistantEl(): string | null {
+  // HA passes the auth-bearing `hass` object as a property on <home-assistant>.
+  const el = document.querySelector("home-assistant") as HassPanel | null
+  const a = el?.hass?.auth
+  if (!a) return null
+  if (typeof a.accessToken === "string" && a.accessToken) return a.accessToken
+  if (typeof a.data?.access_token === "string" && a.data.access_token) {
+    return a.data.access_token
+  }
+  return null
+}
+
+export async function getAuthToken(): Promise<string> {
+  // 1. Try window.hassConnection (panel_custom context).
+  if (window.hassConnection) {
+    try {
+      const { conn } = await window.hassConnection
+      const auth = (conn as unknown as { auth?: Auth & { data?: { access_token?: string } } }).auth
+      console.info("[terminus] hassConnection.auth keys:", auth ? Object.keys(auth) : null)
+      if (auth) {
+        if (typeof auth.accessToken === "string" && auth.accessToken) return auth.accessToken
+        if (typeof auth.data?.access_token === "string" && auth.data.access_token) {
+          return auth.data.access_token
+        }
+      }
+    } catch (e) {
+      console.warn("[terminus] hassConnection token read failed:", e)
+    }
+  } else {
+    console.info("[terminus] window.hassConnection is undefined")
+  }
+
+  // 2. Try the <home-assistant> root element (HA frontend convention).
+  const elToken = readTokenFromHomeAssistantEl()
+  if (elToken) return elToken
+  console.info("[terminus] <home-assistant>.hass.auth.accessToken unavailable")
+
+  // 3. Dev fallback.
   const token = import.meta.env.VITE_HA_TOKEN
   if (!token) {
     throw new Error("No HA auth token — set VITE_HA_TOKEN in .env or run inside HA.")
