@@ -16,6 +16,7 @@ Source-of-truth for HA Green at home. Edit here → commit `git@github.com:neram
 - **Network split**:
   - Tailscale Funnel exposes frontend `:443` to public internet (HTTPS only, 443/8443/10000).
   - SSH NOT on Funnel. Tailnet-only, peer-to-peer 100.x.
+  - **SSH add-on uses Docker bridge networking** — outbound connections from inside the SSH add-on shell cannot reach Tailscale peers (100.x.x.x). Use LAN IPs for device→laptop connections (e.g. `terminus_agent_url`). `tailscale` binary is also not available in the SSH add-on PATH.
 - SSH: `root@terminus.tanuki-mirzam.ts.net -p 22222`. Add-on: **Advanced SSH & Web Terminal** (Frenck). Has `jq`, `python3`, `curl`, full Alpine apk. Key-auth + command-mode (`ssh root@host 'cmd'`).
 - Local env (assume defined, do not re-verify):
   - `HASS_SERVER=https://terminus.tanuki-mirzam.ts.net`
