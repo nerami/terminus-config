@@ -1,22 +1,19 @@
 #!/bin/bash
-# Local-laptop wrapper: SSH into the HA Green and run deploy-addons.sh.
-# Use when you only want to push add-on changes without a full HA config
-# deploy (no git pull, no ha core check, no restart prompt).
+# Local-laptop wrapper: pull latest on device then sync add-ons.
+# Run after `git push`. Skips full HA config check and core restart.
 #
 #   bin/deploy-addons-ssh.sh
 #
-# Override host/port via env if needed:
-#   HA_SSH_HOST=root@other.ts.net HA_SSH_PORT=22 bin/deploy-addons-ssh.sh
+# After this completes, run the appropriate ha command on device:
+#   version bumped → ha apps update local_<slug>
+#   same version   → ha apps rebuild local_<slug>
 #
-# Note: this runs deploy-addons.sh against whatever is currently checked
-# out on the device under /config/addons/. To ship laptop-side edits,
-# `git push` first then run `bin/deploy-ssh.sh` (full deploy includes
-# the addon sync step) — or `ssh ... 'cd /config && git pull --ff-only
-# && ./bin/deploy-addons.sh'` for addon-only.
+# Override host/port via env:
+#   HA_SSH_HOST=root@other.ts.net HA_SSH_PORT=22 bin/deploy-addons-ssh.sh
 
 set -euo pipefail
 
 HA_SSH_HOST="${HA_SSH_HOST:-root@terminus.tanuki-mirzam.ts.net}"
 HA_SSH_PORT="${HA_SSH_PORT:-22222}"
 
-exec ssh -t -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'cd /config && ./bin/deploy-addons.sh'
+exec ssh -t -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'cd /config && git pull --ff-only && ./bin/deploy-addons.sh'

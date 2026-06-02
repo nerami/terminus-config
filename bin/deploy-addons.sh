@@ -7,9 +7,9 @@
 # Target: /addons/<dir>/          (Supervisor's local-addon repository)
 #
 # After sync + reload, Supervisor sees changes:
-#   - New add-on  → install with:  ha app install local_<slug>
-#   - Existing    → rebuild with:  ha app rebuild local_<slug>
-#                   then restart:  ha app restart local_<slug>
+#   - New add-on     → ha apps install local_<slug> && ha apps start local_<slug>
+#   - Version bumped → ha apps update  local_<slug>
+#   - Same version   → ha apps rebuild local_<slug>
 #
 # Intentionally NO --delete: never nuke a manually-installed local add-on
 # that lives outside the repo. Remove stale dirs manually if needed.
