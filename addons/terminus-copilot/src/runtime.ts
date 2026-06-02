@@ -19,5 +19,13 @@ export function buildRuntime({ apiKey }: RuntimeOptions): Router {
     },
   })
 
-  return createCopilotExpressHandler({ runtime, basePath: "/" })
+  // single-route: CopilotKit client POSTs a JSON envelope {method,...} to
+  // the base URL. Default multi-route mode expects per-operation paths
+  // (GET /info, POST /agent/<id>/run, etc); the v2 react client speaks
+  // single-route only — multi-route here means every call 404s.
+  return createCopilotExpressHandler({
+    runtime,
+    basePath: "/",
+    mode: "single-route",
+  })
 }
