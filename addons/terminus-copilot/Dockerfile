@@ -5,7 +5,7 @@ FROM node:22-alpine AS builder
 RUN npm install -g pnpm@11.1.1
 WORKDIR /app
 COPY package.json pnpm-lock.yaml tsconfig.json ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY src ./src
 RUN pnpm build \
  && pnpm prune --prod
