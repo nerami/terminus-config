@@ -27979,8 +27979,7 @@ function bk({ pathname: e, fallback: t = _k }) {
 	let n = e.match(vk);
 	return n ? `${n[1]}/api/copilotkit` : t;
 }
-var xk = (0, q.createContext)({ status: "loading" });
-async function Sk(e, t, n = fetch) {
+async function xk(e, t, n = fetch) {
 	let r = await n("/api/hassio/ingress/session", {
 		method: "POST",
 		headers: { Authorization: `Bearer ${t}` }
@@ -27992,47 +27991,45 @@ async function Sk(e, t, n = fetch) {
 	if (!a) throw Error(`add-on ${e} has no ingress_url (started?)`);
 	return a.replace(/\/$/, "") + "/api/copilotkit";
 }
-function Ck() {
+function Sk() {
 	return bk({
 		pathname: window.location.pathname,
 		fallback: ""
 	}) || null;
 }
-function wk({ children: e }) {
-	let [t, n] = (0, q.useState)(() => {
-		let e = Ck();
+function Ck() {
+	let [e, t] = (0, q.useState)(() => {
+		let e = Sk();
 		return e ? {
 			status: "ready",
 			url: e
 		} : { status: "loading" };
 	});
-	(0, q.useEffect)(() => {
-		if (t.status !== "loading") return;
-		let e = !1;
+	return (0, q.useEffect)(() => {
+		if (e.status !== "loading") return;
+		let n = !1;
 		return (async () => {
 			try {
-				let t = await Sk(yk, await nk());
-				e || n({
+				let e = await xk(yk, await nk());
+				n || t({
 					status: "ready",
-					url: t
+					url: e
 				});
-			} catch (t) {
-				e || n({
+			} catch (e) {
+				n || t({
 					status: "error",
-					error: t instanceof Error ? t.message : String(t)
+					error: e instanceof Error ? e.message : String(e)
 				});
 			}
 		})(), () => {
-			e = !0;
+			n = !0;
 		};
-	}, [t.status]);
-	let r = t.status === "ready" ? t.url : _k;
-	return /* @__PURE__ */ (0, J.jsx)(xk.Provider, {
-		value: t,
-		children: /* @__PURE__ */ (0, J.jsx)(WD, {
-			runtimeUrl: r,
-			children: e
-		})
+	}, [e.status]), e;
+}
+function wk({ url: e, children: t }) {
+	return /* @__PURE__ */ (0, J.jsx)(WD, {
+		runtimeUrl: e,
+		children: t
 	});
 }
 //#endregion
@@ -38361,39 +38358,42 @@ function dK({ manifest: e }) {
 		})
 	] });
 }
-function fK() {
+function fK({ manifest: e }) {
+	let t = Ck();
+	return t.status === "ready" ? /* @__PURE__ */ (0, J.jsxs)(wk, {
+		url: t.url,
+		children: [/* @__PURE__ */ (0, J.jsx)(dK, { manifest: e }), /* @__PURE__ */ (0, J.jsx)(FE, {
+			defaultOpen: !0,
+			labels: {
+				modalHeaderTitle: "Terminus Copilot",
+				welcomeMessageText: "Describe an automation. I'll propose YAML, you approve or reject."
+			}
+		})]
+	}) : null;
+}
+function pK() {
 	let [e, t] = (0, q.useState)(null), [n, r] = (0, q.useState)(null);
 	return (0, q.useEffect)(() => {
 		qN().then(t).catch((e) => r(e instanceof Error ? e.message : String(e)));
 	}, []), n ? /* @__PURE__ */ (0, J.jsx)(sU, {
 		title: "Graph manifest missing",
 		body: "Run `pnpm build` in terminus/ to generate `www/terminus/graph.json`."
-	}) : e ? /* @__PURE__ */ (0, J.jsx)(wk, { children: /* @__PURE__ */ (0, J.jsx)(ik, { children: /* @__PURE__ */ (0, J.jsxs)(uk, { children: [
-		/* @__PURE__ */ (0, J.jsx)(uK, { manifest: e }),
-		/* @__PURE__ */ (0, J.jsx)(dK, { manifest: e }),
-		/* @__PURE__ */ (0, J.jsx)(FE, {
-			defaultOpen: !0,
-			labels: {
-				modalHeaderTitle: "Terminus Copilot",
-				welcomeMessageText: "Describe an automation. I'll propose YAML, you approve or reject."
-			}
-		})
-	] }) }) }) : null;
+	}) : e ? /* @__PURE__ */ (0, J.jsx)(ik, { children: /* @__PURE__ */ (0, J.jsxs)(uk, { children: [/* @__PURE__ */ (0, J.jsx)(uK, { manifest: e }), /* @__PURE__ */ (0, J.jsx)(fK, { manifest: e })] }) }) : null;
 }
 //#endregion
 //#region src/components/theme-provider.tsx
-var pK = "(prefers-color-scheme: dark)", mK = [
+var mK = "(prefers-color-scheme: dark)", hK = [
 	"dark",
 	"light",
 	"system"
-], hK = q.createContext(void 0);
-function gK(e) {
-	return e === null ? !1 : mK.includes(e);
-}
-function _K() {
-	return window.matchMedia(pK).matches ? "dark" : "light";
+], gK = q.createContext(void 0);
+function _K(e) {
+	return e === null ? !1 : hK.includes(e);
 }
 function vK() {
+	return window.matchMedia(mK).matches ? "dark" : "light";
+}
+function yK() {
 	let e = document.createElement("style");
 	return e.appendChild(document.createTextNode("*,*::before,*::after{-webkit-transition:none!important;transition:none!important}")), document.head.appendChild(e), () => {
 		window.getComputedStyle(document.body), requestAnimationFrame(() => {
@@ -38403,24 +38403,24 @@ function vK() {
 		});
 	};
 }
-function yK(e) {
+function bK(e) {
 	return e instanceof HTMLElement ? !!(e.isContentEditable || e.closest("input, textarea, select, [contenteditable='true']")) : !1;
 }
-function bK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
+function xK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
 	let [a, o] = q.useState(() => {
 		let e = localStorage.getItem(n);
-		return gK(e) ? e : t;
+		return _K(e) ? e : t;
 	}), s = q.useCallback((e) => {
 		localStorage.setItem(n, e), o(e);
 	}, [n]), c = q.useRef(null), l = q.useCallback((e) => {
-		let t = e === "system" ? _K() : e, n = r ? vK() : null, i = [];
+		let t = e === "system" ? vK() : e, n = r ? yK() : null, i = [];
 		c.current && i.push(c.current), i.push(document.documentElement);
 		for (let e of i) e.classList.remove("light", "dark"), e.classList.add(t);
 		n && n();
 	}, [r]);
 	q.useEffect(() => {
 		if (l(a), a !== "system") return;
-		let e = window.matchMedia(pK), t = () => {
+		let e = window.matchMedia(mK), t = () => {
 			l("system");
 		};
 		return e.addEventListener("change", t), () => {
@@ -38428,8 +38428,8 @@ function bK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		};
 	}, [a, l]), q.useEffect(() => {
 		let e = (e) => {
-			e.repeat || e.metaKey || e.ctrlKey || e.altKey || yK(e.target) || e.key.toLowerCase() === "d" && o((e) => {
-				let t = e === "dark" ? "light" : e === "light" ? "dark" : _K() === "dark" ? "light" : "dark";
+			e.repeat || e.metaKey || e.ctrlKey || e.altKey || bK(e.target) || e.key.toLowerCase() === "d" && o((e) => {
+				let t = e === "dark" ? "light" : e === "light" ? "dark" : vK() === "dark" ? "light" : "dark";
 				return localStorage.setItem(n, t), t;
 			});
 		};
@@ -38439,7 +38439,7 @@ function bK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 	}, [n]), q.useEffect(() => {
 		let e = (e) => {
 			if (e.storageArea === localStorage && e.key === n) {
-				if (gK(e.newValue)) {
+				if (_K(e.newValue)) {
 					o(e.newValue);
 					return;
 				}
@@ -38454,7 +38454,7 @@ function bK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		theme: a,
 		setTheme: s
 	}), [a, s]);
-	return /* @__PURE__ */ (0, J.jsx)(hK.Provider, {
+	return /* @__PURE__ */ (0, J.jsx)(gK.Provider, {
 		...i,
 		value: u,
 		children: /* @__PURE__ */ (0, J.jsx)("div", {
@@ -38473,14 +38473,14 @@ function bK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 }
 //#endregion
 //#region src/main.tsx
-function xK(e, t = e) {
+function SK(e, t = e) {
 	let n = (0, Re.createRoot)(e);
-	return n.render(/* @__PURE__ */ (0, J.jsx)(q.StrictMode, { children: /* @__PURE__ */ (0, J.jsx)(bK, { children: /* @__PURE__ */ (0, J.jsx)(JG, {
+	return n.render(/* @__PURE__ */ (0, J.jsx)(q.StrictMode, { children: /* @__PURE__ */ (0, J.jsx)(xK, { children: /* @__PURE__ */ (0, J.jsx)(JG, {
 		container: t,
-		children: /* @__PURE__ */ (0, J.jsx)(fK, {})
+		children: /* @__PURE__ */ (0, J.jsx)(pK, {})
 	}) }) })), n;
 }
-var SK = class extends HTMLElement {
+var CK = class extends HTMLElement {
 	root;
 	connectedCallback() {
 		let e = this.shadowRoot ?? this.attachShadow({ mode: "open" });
@@ -38491,13 +38491,13 @@ var SK = class extends HTMLElement {
 		let t = e.querySelector("div[data-terminus-mount]");
 		t || (t = document.createElement("div"), t.dataset.terminusMount = "true", t.style.height = "100%", t.style.width = "100%", e.appendChild(t));
 		let n = e.querySelector("div[data-terminus-portals]");
-		n || (n = document.createElement("div"), n.dataset.terminusPortals = "true", e.appendChild(n)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = xK(t, n);
+		n || (n = document.createElement("div"), n.dataset.terminusPortals = "true", e.appendChild(n)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = SK(t, n);
 	}
 	disconnectedCallback() {
 		this.root?.unmount(), this.root = void 0;
 	}
 };
-customElements.get("terminus-panel") || customElements.define("terminus-panel", SK);
-var CK = document.getElementById("root");
-CK && xK(CK);
+customElements.get("terminus-panel") || customElements.define("terminus-panel", CK);
+var wK = document.getElementById("root");
+wK && SK(wK);
 //#endregion

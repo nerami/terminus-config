@@ -4,7 +4,7 @@ import "@copilotkit/react-ui/v2/styles.css"
 import { Badge } from "@/components/ui/badge"
 import { LiveStateProvider, useLiveState } from "@/lib/liveState"
 import { RegistryProvider, useRegistryEntities } from "@/lib/registry"
-import { CopilotProvider } from "@/lib/copilot"
+import { CopilotProvider, useCopilotRuntimeUrl } from "@/lib/copilot"
 import { CopilotCatalog } from "@/copilot/readable"
 import { CopilotActions, createProposeAutomationController } from "@/copilot/actions"
 import { PreviewCard } from "@/copilot/PreviewCard"
@@ -115,6 +115,24 @@ function CopilotWiring({ manifest }: { manifest: Manifest }) {
   )
 }
 
+function CopilotIsland({ manifest }: { manifest: Manifest }) {
+  const runtime = useCopilotRuntimeUrl()
+  if (runtime.status !== "ready") return null
+  return (
+    <CopilotProvider url={runtime.url}>
+      <CopilotWiring manifest={manifest} />
+      <CopilotSidebar
+        defaultOpen
+        labels={{
+          modalHeaderTitle: "Terminus Copilot",
+          welcomeMessageText:
+            "Describe an automation. I'll propose YAML, you approve or reject.",
+        }}
+      />
+    </CopilotProvider>
+  )
+}
+
 export function App() {
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -136,22 +154,12 @@ export function App() {
   if (!manifest) return null
 
   return (
-    <CopilotProvider>
-      <LiveStateProvider>
-        <RegistryProvider>
-          <Shell manifest={manifest} />
-          <CopilotWiring manifest={manifest} />
-          <CopilotSidebar
-            defaultOpen
-            labels={{
-              modalHeaderTitle: "Terminus Copilot",
-              welcomeMessageText:
-                "Describe an automation. I'll propose YAML, you approve or reject.",
-            }}
-          />
-        </RegistryProvider>
-      </LiveStateProvider>
-    </CopilotProvider>
+    <LiveStateProvider>
+      <RegistryProvider>
+        <Shell manifest={manifest} />
+        <CopilotIsland manifest={manifest} />
+      </RegistryProvider>
+    </LiveStateProvider>
   )
 }
 

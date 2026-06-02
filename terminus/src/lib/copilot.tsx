@@ -1,11 +1,5 @@
 import { CopilotKit } from "@copilotkit/react-core/v2"
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { getAuthToken } from "@/lib/ha"
 
 const DEFAULT_DEV_URL = "http://localhost:3000/api/copilotkit"
@@ -27,13 +21,6 @@ export type RuntimeUrlState =
   | { status: "loading" }
   | { status: "ready"; url: string }
   | { status: "error"; error: string }
-
-const RuntimeCtx = createContext<RuntimeUrlState>({ status: "loading" })
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useCopilotRuntimeStatus(): RuntimeUrlState {
-  return useContext(RuntimeCtx)
-}
 
 export async function resolveAddonIngressUrl(
   slug: string,
@@ -71,7 +58,8 @@ function syncRuntimeUrl(): string | null {
   return dev || null
 }
 
-export function CopilotProvider({ children }: { children: ReactNode }) {
+// eslint-disable-next-line react-refresh/only-export-components
+export function useCopilotRuntimeUrl(): RuntimeUrlState {
   const [state, setState] = useState<RuntimeUrlState>(() => {
     const sync = syncRuntimeUrl()
     return sync ? { status: "ready", url: sync } : { status: "loading" }
@@ -99,11 +87,15 @@ export function CopilotProvider({ children }: { children: ReactNode }) {
     }
   }, [state.status])
 
-  const runtimeUrl = state.status === "ready" ? state.url : DEFAULT_DEV_URL
+  return state
+}
 
-  return (
-    <RuntimeCtx.Provider value={state}>
-      <CopilotKit runtimeUrl={runtimeUrl}>{children}</CopilotKit>
-    </RuntimeCtx.Provider>
-  )
+export function CopilotProvider({
+  url,
+  children,
+}: {
+  url: string
+  children: ReactNode
+}) {
+  return <CopilotKit runtimeUrl={url}>{children}</CopilotKit>
 }
