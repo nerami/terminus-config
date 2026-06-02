@@ -11,7 +11,9 @@ ingress_port: 3000
 panel_icon: mdi:robot
 options:
   anthropic_api_key: ""
+  terminus_agent_url: ""
 schema:
   anthropic_api_key: password
+  terminus_agent_url: url
 boot: auto
 startup: application

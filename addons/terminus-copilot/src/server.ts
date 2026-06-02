@@ -22,13 +22,17 @@ export function createApp({ apiKey }: ServerOptions): Express {
   return app
 }
 
-function readOptionsApiKey(): string {
+type AddonOptions = {
+  anthropic_api_key?: string
+  terminus_agent_url?: string
+}
+
+function readAddonOptions(): AddonOptions {
   try {
     const raw = readFileSync("/data/options.json", "utf-8")
-    const opts = JSON.parse(raw) as { anthropic_api_key?: string }
-    return opts.anthropic_api_key ?? ""
+    return JSON.parse(raw) as AddonOptions
   } catch {
-    return ""
+    return {}
   }
 }
 
@@ -36,11 +40,16 @@ const isMainEntry =
   import.meta.url === pathToFileURL(process.argv[1] ?? "").href
 
 if (isMainEntry) {
-  const apiKey = process.env.ANTHROPIC_API_KEY || readOptionsApiKey()
+  const opts = readAddonOptions()
+  const apiKey = process.env.ANTHROPIC_API_KEY || opts.anthropic_api_key || ""
   if (!apiKey) {
     console.error("Missing ANTHROPIC_API_KEY (env or /data/options.json).")
     process.exit(1)
   }
+
+  const agentUrl = process.env.TERMINUS_AGENT_URL || opts.terminus_agent_url || ""
+  if (agentUrl) process.env.TERMINUS_AGENT_URL = agentUrl
+
   const port = Number(process.env.PORT ?? 3000)
   createApp({ apiKey }).listen(port, () => {
     console.log(`terminus-copilot listening on :${port}`)
