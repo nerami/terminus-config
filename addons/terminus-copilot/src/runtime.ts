@@ -9,11 +9,11 @@ export type RuntimeOptions = {
 }
 
 export class SafeHttpAgent extends LangGraphHttpAgent {
-  constructor(
-    opts: { url: string },
-    private fallback: BuiltInAgent,
-  ) {
+  fallback: BuiltInAgent
+
+  constructor(opts: { url: string }, fallback: BuiltInAgent) {
     super(opts)
+    this.fallback = fallback
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,6 +24,14 @@ export class SafeHttpAgent extends LangGraphHttpAgent {
         return this.fallback.run(input)
       }),
     )
+  }
+
+  // AbstractAgent.clone() uses Object.create(proto) — copies prototype but not own
+  // properties. fallback is an own property so we must copy it explicitly.
+  override clone(): this {
+    const cloned = super.clone() as SafeHttpAgent
+    cloned.fallback = this.fallback
+    return cloned as this
   }
 }
 

@@ -19,10 +19,15 @@ vi.mock("@copilotkit/runtime/v2", () => ({
 }))
 
 vi.mock("@copilotkit/runtime/langgraph", () => ({
-  LangGraphHttpAgent: class {
+  LangGraphHttpAgent: class MockLangGraph {
     constructor(public opts: { url: string }) {}
     run(_input: unknown) {
       return throwError(() => new Error("connect ECONNREFUSED 127.0.0.1:3001"))
+    }
+    clone() {
+      const c = Object.create(Object.getPrototypeOf(this)) as this
+      c.opts = this.opts
+      return c
     }
   },
 }))
@@ -48,10 +53,27 @@ describe("SafeHttpAgent", () => {
     const agent = new SafeHttpAgent({ url: "http://localhost:3001" }, fallback)
     const input = { threadId: "t1", runId: "r1" }
 
-    // collect emitted values
     const results: unknown[] = []
     await new Promise<void>((resolve) => {
       agent.run(input).subscribe({
+        next: (v: unknown) => results.push(v),
+        complete: resolve,
+      })
+    })
+
+    expect(mockFallbackRun).toHaveBeenCalledWith(input)
+    expect(results).toEqual([{ type: "RUN_FINISHED" }])
+  })
+
+  it("clone() preserves fallback so cloned agent also delegates", async () => {
+    const fallback = { run: mockFallbackRun } as unknown as BuiltInAgent
+    const agent = new SafeHttpAgent({ url: "http://localhost:3001" }, fallback)
+    const cloned = agent.clone()
+    const input = { threadId: "t2", runId: "r2" }
+
+    const results: unknown[] = []
+    await new Promise<void>((resolve) => {
+      cloned.run(input).subscribe({
         next: (v: unknown) => results.push(v),
         complete: resolve,
       })
