@@ -1,5 +1,6 @@
 import { BuiltInAgent, CopilotSseRuntime } from "@copilotkit/runtime/v2"
 import { createCopilotExpressHandler } from "@copilotkit/runtime/v2/express"
+import { LangGraphHttpAgent } from "@copilotkit/runtime/langgraph"
 import type { Router } from "express"
 
 export type RuntimeOptions = {
@@ -9,17 +10,23 @@ export type RuntimeOptions = {
 export function buildRuntime({ apiKey }: RuntimeOptions): Router {
   if (!apiKey) throw new Error("buildRuntime: anthropic api key is required")
 
-  const runtime = new CopilotSseRuntime({
-    agents: {
-      default: new BuiltInAgent({
+  const agentUrl = process.env.TERMINUS_AGENT_URL
+
+  const defaultAgent = agentUrl
+    ? new LangGraphHttpAgent({ url: agentUrl })
+    : new BuiltInAgent({
         model: "anthropic/claude-haiku-4-5",
         apiKey,
         providerOptions: {
           anthropic: { cacheControl: { type: "ephemeral" } },
         },
-      }),
-    },
-  })
+      })
+
+  if (agentUrl) {
+    console.log(`terminus-copilot: routing to external agent at ${agentUrl}`)
+  }
+
+  const runtime = new CopilotSseRuntime({ agents: { default: defaultAgent } })
 
   // single-route: CopilotKit client POSTs a JSON envelope {method,...} to
   // the base URL. Default multi-route mode expects per-operation paths
