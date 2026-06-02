@@ -67,14 +67,29 @@ if ! ha core check; then
   esac
 fi
 
-read -r -p $'\nConfig valid. Restart HA Core now? [y/N] ' ans
+printf '\nConfig valid. Apply changes:\n'
+printf '  [l] reload  — fast, no downtime (automations/scripts/scenes/templates/helpers)\n'
+printf '  [r] restart — full restart (new integrations, configuration.yaml structure changes)\n'
+printf '  [N] skip    — apply manually later\n'
+read -r -p $'Choice [l/r/N]: ' ans
 case "$ans" in
-  [yY]|[yY][eE][sS]) : ;;
-  *) log "Restart skipped. Run 'ha core restart' manually when ready. Backup: $BACKUP_NAME"; exit 0 ;;
+  [lL])
+    log "Reloading (homeassistant.reload_all)"
+    curl -fsSL -X POST "http://supervisor/core/api/services/homeassistant/reload_all" \
+      -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d '{}' || fail "reload_all failed. Backup: $BACKUP_NAME"
+    log "Reload OK. Backup kept: $BACKUP_NAME"
+    ;;
+  [rR])
+    log "Restarting HA Core"
+    ha core restart || fail "ha core restart failed. Backup: $BACKUP_NAME"
+    log "Deploy OK. Backup kept: $BACKUP_NAME"
+    ;;
+  *)
+    log "Skipped. Run 'ha core restart' or 'homeassistant.reload_all' manually. Backup: $BACKUP_NAME"
+    exit 0
+    ;;
 esac
 
-log "Restarting HA Core"
-ha core restart || fail "ha core restart failed. Backup: $BACKUP_NAME"
-
-log "Deploy OK. Backup kept: $BACKUP_NAME"
 log "Verify: ha core logs  (or Settings → System → Logs)"
