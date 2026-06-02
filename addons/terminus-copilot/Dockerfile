@@ -2,7 +2,7 @@ ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 
 # ---- builder ----
 FROM node:22-alpine AS builder
-RUN npm install -g pnpm@11
+RUN npm install -g pnpm@11.1.1
 WORKDIR /app
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 RUN pnpm install --frozen-lockfile
