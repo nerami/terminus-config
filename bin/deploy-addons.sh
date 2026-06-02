@@ -7,9 +7,9 @@
 # Target: /addons/<dir>/          (Supervisor's local-addon repository)
 #
 # After sync + reload, Supervisor sees changes:
-#   - New add-on  → install with:  ha addons install local_<slug>
-#   - Existing    → rebuild with:  ha addons rebuild local_<slug>
-#                   then restart:  ha addons restart local_<slug>
+#   - New add-on  → install with:  ha app install local_<slug>
+#   - Existing    → rebuild with:  ha app rebuild local_<slug>
+#                   then restart:  ha app restart local_<slug>
 #
 # Intentionally NO --delete: never nuke a manually-installed local add-on
 # that lives outside the repo. Remove stale dirs manually if needed.
@@ -47,17 +47,17 @@ rsync -a \
   --exclude '*.log' \
   "$SRC/" "$DST/" || fail "rsync failed."
 
-log "Reloading Supervisor add-on index"
-ha addons reload || fail "ha addons reload failed."
+log "Reloading Supervisor (picks up new local add-ons)"
+ha supervisor reload || fail "ha supervisor reload failed."
 
-log "Sync OK. Installed local add-ons:"
-ha addons 2>/dev/null | awk '/^- /{flag=0} /slug: local_/{print "  " $2; flag=1}' || true
+log "Sync OK. Local add-on dirs in /addons/:"
+ls /addons/ 2>/dev/null || true
 
 cat <<'EOF'
 
 Next steps (manual — depends on what changed):
-  New add-on:        ha addons install  local_<slug>
-                     ha addons start    local_<slug>
-  Config changed:    ha addons restart  local_<slug>
-  Dockerfile/src:    ha addons rebuild  local_<slug>   # slow
+  New add-on:        ha apps install  local_<slug>
+                     ha apps start    local_<slug>
+  Config changed:    ha apps restart  local_<slug>
+  Dockerfile/src:    ha apps rebuild  local_<slug>   # slow
 EOF
