@@ -32,8 +32,12 @@ export function createGraph(apiKey: string) {
     model: "claude-sonnet-4-6",
     apiKey,
     streaming: true,
-    topP: null as unknown as number,
   })
+  // @langchain/anthropic@0.3.34 defaults topP to -1 and only handles null→undefined
+  // for sonnet-4-5/opus-4-1/haiku-4-5 model strings. For sonnet-4-6 the null guard
+  // never fires and ?? falls through to -1. Set undefined post-construction so
+  // invocationParams() emits top_p: undefined, which JSON.stringify strips entirely.
+  ;(llm as any).topP = undefined
 
   const tools = [...haApiTools, ...haConfigTools, ...haGitTools]
 
