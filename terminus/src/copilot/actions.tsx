@@ -1,8 +1,9 @@
 import { commitAutomation, type CommitResult } from "@/lib/automationWriter"
 import type { AutomationProposal } from "@/lib/automationWriter"
-import { useCopilotAction } from "@copilotkit/react-core"
+import { useFrontendTool } from "@copilotkit/react-core/v2"
 import { useLiveState } from "@/lib/liveState"
 import { useMemo } from "react"
+import { z } from "zod"
 
 export type LiveStateSnapshot = {
   state: string
@@ -78,6 +79,19 @@ export function runCommitAutomationHandler(
   return impl(proposal, deps.known, { fetch: deps.fetch, token: deps.token })
 }
 
+const proposalSchema = z.object({
+  alias: z.string(),
+  description: z.string().optional(),
+  mode: z.enum(["single", "restart", "queued", "parallel"]),
+  triggers: z.array(z.record(z.string(), z.unknown())),
+  conditions: z.array(z.record(z.string(), z.unknown())),
+  actions: z.array(z.record(z.string(), z.unknown())),
+})
+
+const entityStateSchema = z.object({
+  entity_id: z.string(),
+})
+
 export function CopilotActions({
   controller,
   knownEntityIds,
@@ -96,57 +110,31 @@ export function CopilotActions({
     return m
   }, [entities])
 
-  useCopilotAction({
+  useFrontendTool({
     name: "get_entity_state",
     description: "Read current state and attributes of a Home Assistant entity.",
-    parameters: [
-      { name: "entity_id", type: "string", required: true },
-    ],
-    handler: async ({ entity_id }: { entity_id: string }) =>
+    parameters: entityStateSchema,
+    handler: async ({ entity_id }) =>
       runGetEntityStateHandler({ entity_id }, { liveStates: liveMap }),
   })
 
-  useCopilotAction({
+  useFrontendTool({
     name: "propose_automation",
     description:
       "Propose a new automation. The user sees a YAML preview and approves or rejects. " +
       "Always call this before commit_automation.",
-    parameters: [
-      { name: "alias", type: "string", required: true },
-      { name: "description", type: "string", required: false },
-      {
-        name: "mode",
-        type: "string",
-        enum: ["single", "restart", "queued", "parallel"],
-        required: true,
-      },
-      { name: "triggers", type: "object[]", required: true },
-      { name: "conditions", type: "object[]", required: true },
-      { name: "actions", type: "object[]", required: true },
-    ],
-    handler: (proposal: AutomationProposal) => controller.handler(proposal),
+    parameters: proposalSchema,
+    handler: async (proposal) => controller.handler(proposal as AutomationProposal),
   })
 
-  useCopilotAction({
+  useFrontendTool({
     name: "commit_automation",
     description:
       "Write the approved automation to Home Assistant. Only call after propose_automation " +
       "returned {approved:true}.",
-    parameters: [
-      { name: "alias", type: "string", required: true },
-      { name: "description", type: "string", required: false },
-      {
-        name: "mode",
-        type: "string",
-        enum: ["single", "restart", "queued", "parallel"],
-        required: true,
-      },
-      { name: "triggers", type: "object[]", required: true },
-      { name: "conditions", type: "object[]", required: true },
-      { name: "actions", type: "object[]", required: true },
-    ],
-    handler: (proposal: AutomationProposal) =>
-      runCommitAutomationHandler(proposal, {
+    parameters: proposalSchema,
+    handler: async (proposal) =>
+      runCommitAutomationHandler(proposal as AutomationProposal, {
         known: knownEntityIds,
         token,
         fetch: window.fetch.bind(window),

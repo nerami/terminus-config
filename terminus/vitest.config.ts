@@ -12,5 +12,12 @@ export default defineConfig({
     globals: false,
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "vite-plugin-graph.test.ts"],
     passWithNoTests: true,
+    // Stub CSS imports that come in transitively from @copilotkit/react-core/v2
+    css: true,
+    server: {
+      deps: {
+        inline: ["@copilotkit/react-core"],
+      },
+    },
   },
 })

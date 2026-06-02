@@ -1,4 +1,4 @@
-import { useCopilotReadable } from "@copilotkit/react-core"
+import { useAgentContext } from "@copilotkit/react-core/v2"
 import type { Manifest, GraphNode } from "@/types/manifest"
 
 export type Catalog = {
@@ -54,7 +54,7 @@ export function buildCatalog({
 
 export function CopilotCatalog({ manifest }: { manifest: Manifest }) {
   const catalog = buildCatalog({ manifest, now: new Date() })
-  useCopilotReadable({
+  useAgentContext({
     description:
       "Home Assistant entity catalog. Use the exact entity_id strings here. " +
       "Areas map short prefixes (mb/lr/abi) to friendly names.",

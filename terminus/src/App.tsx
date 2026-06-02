@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CopilotSidebar } from "@copilotkit/react-ui"
-import "@copilotkit/react-ui/styles.css"
+import { CopilotSidebar } from "@copilotkit/react-core/v2"
+import "@copilotkit/react-ui/v2/styles.css"
 import { Badge } from "@/components/ui/badge"
 import { LiveStateProvider, useLiveState } from "@/lib/liveState"
 import { RegistryProvider, useRegistryEntities } from "@/lib/registry"
@@ -142,11 +142,10 @@ export function App() {
           <Shell manifest={manifest} />
           <CopilotWiring manifest={manifest} />
           <CopilotSidebar
-            clickOutsideToClose={false}
-            hitEscapeToClose={false}
+            defaultOpen
             labels={{
-              title: "Terminus Copilot",
-              initial:
+              modalHeaderTitle: "Terminus Copilot",
+              welcomeMessageText:
                 "Describe an automation. I'll propose YAML, you approve or reject.",
             }}
           />

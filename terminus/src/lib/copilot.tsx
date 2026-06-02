@@ -1,4 +1,4 @@
-import { CopilotKit } from "@copilotkit/react-core"
+import { CopilotKit } from "@copilotkit/react-core/v2"
 import type { ReactNode } from "react"
 
 const DEFAULT_DEV_URL = "http://localhost:3000/api/copilotkit"
