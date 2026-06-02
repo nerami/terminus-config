@@ -1,0 +1,11 @@
+{
+  "name": "terminus",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter terminus-dashboard build",
+    "dev:dashboard": "pnpm --filter terminus-dashboard dev",
+    "dev:agent": "pnpm --filter terminus-agent dev",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
