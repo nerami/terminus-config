@@ -115,9 +115,22 @@ function CopilotWiring({ manifest }: { manifest: Manifest }) {
   )
 }
 
+function CopilotStatusBadge({ children }: { children: string }) {
+  return (
+    <div className="fixed right-4 bottom-4 z-50 max-w-sm rounded-md border bg-amber-100 px-3 py-2 text-xs text-amber-900 shadow-md dark:bg-amber-950 dark:text-amber-200">
+      Copilot: {children}
+    </div>
+  )
+}
+
 function CopilotIsland({ manifest }: { manifest: Manifest }) {
   const runtime = useCopilotRuntimeUrl()
-  if (runtime.status !== "ready") return null
+  if (runtime.status === "loading") {
+    return <CopilotStatusBadge>resolving runtime URL…</CopilotStatusBadge>
+  }
+  if (runtime.status === "error") {
+    return <CopilotStatusBadge>{`error — ${runtime.error}`}</CopilotStatusBadge>
+  }
   return (
     <CopilotProvider url={runtime.url}>
       <CopilotWiring manifest={manifest} />

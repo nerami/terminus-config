@@ -70,16 +70,16 @@ export function useCopilotRuntimeUrl(): RuntimeUrlState {
     let cancelled = false
     void (async () => {
       try {
+        console.info("[terminus] resolving copilot runtime url…")
         const token = await getAuthToken()
+        console.info("[terminus] got HA auth token, length=", token.length)
         const url = await resolveAddonIngressUrl(ADDON_SLUG, token)
+        console.info("[terminus] copilot runtime url =", url)
         if (!cancelled) setState({ status: "ready", url })
       } catch (e) {
-        if (!cancelled) {
-          setState({
-            status: "error",
-            error: e instanceof Error ? e.message : String(e),
-          })
-        }
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error("[terminus] copilot runtime url resolution failed:", msg)
+        if (!cancelled) setState({ status: "error", error: msg })
       }
     })()
     return () => {
