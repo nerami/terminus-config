@@ -54,7 +54,7 @@ panel_custom:
   - name: terminus-panel
     sidebar_title: Terminus
     sidebar_icon: mdi:view-dashboard
-    url_path: terminus-dashboard
+    url_path: terminus
     module_url: /local/terminus-dashboard/index.js
 ```
 
