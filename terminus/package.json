@@ -6,6 +6,6 @@
     "dev:dashboard": "pnpm --filter @terminus/dashboard dev",
     "dev:agent": "pnpm --filter @terminus/agent dev",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm --filter @terminus/manifest build && pnpm -r typecheck"
   }
 }
