@@ -22,7 +22,7 @@ pnpm test:run path/to/file.test.ts            # single file
 pnpm test:run -t "substring of test name"      # filter by name
 ```
 
-After `pnpm build`, commit both `../www/terminus/*` artifacts AND any edited `src/` so HA serves the matching bundle. Deploy is the parent repo's `bin/deploy-ssh.sh` — there is no terminus-specific deploy step.
+After `pnpm build`, run `../bin/deploy-www-ssh.sh` to rsync `../www/terminus/` to the device — `www/` and `public/graph.json` are gitignored (build artifacts). Commit only `src/` changes.
 
 ## Architecture
 

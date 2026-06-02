@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Generated at build time by vite-plugin-graph.ts
+public/graph.json

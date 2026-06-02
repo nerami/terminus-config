@@ -23,7 +23,6 @@ __pycache__/
 
 # Built panel artifacts (deploy via bin/deploy-www-ssh.sh)
 www/
-terminus/public/graph.json
 
 # Backups / blueprints user data
 backups/
