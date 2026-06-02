@@ -1,3 +1,5 @@
+@terminus/AGENTS.md
+
 # HA Config Repo
 
 Source-of-truth for HA Green at home. Edit here → commit `git@github.com:nerami/home-assistant.git` → deploy on device.
