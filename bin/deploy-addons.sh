@@ -50,14 +50,20 @@ rsync -a \
 log "Reloading Supervisor (picks up new local add-ons)"
 ha supervisor reload || fail "ha supervisor reload failed."
 
+log "Reloading add-on store (picks up version changes in config.yaml)"
+ha store reload || fail "ha store reload failed."
+
 log "Sync OK. Local add-on dirs in /addons/:"
 ls /addons/ 2>/dev/null || true
 
 cat <<'EOF'
 
 Next steps (manual — depends on what changed):
-  New add-on:        ha apps install  local_<slug>
-                     ha apps start    local_<slug>
-  Config changed:    ha apps restart  local_<slug>
-  Dockerfile/src:    ha apps rebuild  local_<slug>   # slow
+  New add-on:              ha apps install  local_<slug>
+                           ha apps start    local_<slug>
+  Config/schema/options:   ha apps update   local_<slug>   # version bumped
+  Dockerfile/src only:     ha apps rebuild  local_<slug>   # same version, slow
+
+NOTE: if version in config.yaml changed, use 'update' not 'rebuild'.
+      'rebuild' fails when local != store version.
 EOF

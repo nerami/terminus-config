@@ -24,7 +24,13 @@ Source-of-truth for HA Green at home. Edit here → commit `git@github.com:neram
 - HA Core: **2026.5.4** (`ssh root@... 'cat /config/.HA_VERSION'`).
 - Deploy: `ha-deploy` on device (see [Deploy](#deploy)).
 - **Two CLIs — do not confuse**: `hass-cli` = local laptop, REST via `HASS_TOKEN`. `ha` = on-device, Supervisor token, for add-ons/backups/OS, SSH only.
-- **`ha` CLI — use current subcommands** (HA OS 2026.x): canonical is `ha apps` (plural). Aliases `app/addon/addons` still work but noisy. Subcommands: `install|start|stop|restart|rebuild|uninstall|info|logs <slug>`. No `list`/`reload` on `ha apps` — use `ha supervisor reload` to refresh after syncing local add-ons.
+- **`ha` CLI — use current subcommands** (HA OS 2026.x): canonical is `ha apps` (plural). Aliases `app/addon/addons` still work but noisy. Subcommands: `install|start|stop|restart|rebuild|uninstall|update|info|logs <slug>`. No `list`/`reload` on `ha apps`.
+- **Local add-on deploy sequence** (after syncing source to `/addons/`):
+  1. `ha supervisor reload` — re-scans add-on dirs
+  2. `ha store reload` — re-reads `config.yaml` versions (**required** or version bump is invisible)
+  3. `ha apps update local_<slug>` — when `config.yaml` version bumped (fails if you use `rebuild` instead)
+  4. `ha apps rebuild local_<slug>` — only when version is unchanged (Dockerfile/src only)
+  - `rebuild` fails with _"Local and store versions differ, use Update"_ if version was bumped without `ha store reload` first.
 
 ### Remote ops decision tree
 
