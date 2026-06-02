@@ -74,6 +74,18 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_ssh | Advanced SSH & Web Terminal | 23.0.9 |
 | local_terminus_copilot | Terminus Copilot | 0.1.0 |
 
+### Terminus Copilot Internals
+
+`addons/terminus-copilot/` (slug `local_terminus_copilot`): Node/TypeScript, pnpm, Dockerized.
+
+- **`src/server.ts`** — Hono HTTP server, Supervisor ingress entrypoint.
+- **`src/runtime.ts`** — CopilotKit runtime. Two required config values (wrong shape = startup error):
+  - `mode: "single-route"` — must be explicit
+  - `cacheControl: { type: "ephemeral" }` — must be object, not string
+- **HA auth**: `supervisor/api` WebSocket command — not REST `/api/hassio/*` (those 401 on non-admin paths).
+- **API key**: set via add-on options UI (`ANTHROPIC_API_KEY`), not `.env`.
+- After source changes: sync via `bin/deploy-addons-ssh.sh`, then `ha apps rebuild local_terminus_copilot` on device.
+
 Local add-ons live in `addons/<dir>/` in this repo. Sync to `/addons/`
 on device via `bin/deploy-addons.sh` (called by `bin/deploy.sh` when
 the pull diff touches `addons/`; or directly via `bin/deploy-addons-ssh.sh`
@@ -92,8 +104,9 @@ packages/                  # source-of-truth for hand-written work
 blueprints/                # automation/script blueprints
 addons/                    # local Supervisor add-ons (synced to /addons/)
 terminus/                  # custom HA panel — own CLAUDE.md
-bin/                       # deploy.sh, deploy-ssh.sh, deploy-addons*.sh
-# themes/, custom_components/, dashboards/, www/ — absent, create when needed
+bin/                       # deploy + reload + watcher scripts (see bin/ inventory below)
+www/terminus/              # built Terminus panel artifacts (index.js, style.css, graph.json)
+# themes/, custom_components/, dashboards/ — absent, create when needed
 ```
 
 **All hand-written automation / script / scene / template / sensor work → `packages/<area>.yaml`.** One file per room/feature. One package can declare any mix of top-level domains (`automation:`, `scene:`, `script:`, `template:`, `sensor:`) — single reviewable diff per feature.
@@ -169,12 +182,31 @@ ha-deploy   # zsh fn in SSH add-on shell → /config/bin/deploy.sh
 
 Never ad-hoc `git pull` / `ha core restart` on device — always go through `deploy.sh` (via wrapper or `ha-deploy`) so snapshot+check+rollback fires.
 
+### bin/ Inventory
+
+| Script | Runs on | Purpose |
+|---|---|---|
+| `deploy.sh` | device | backup → pull → check → restart |
+| `deploy-ssh.sh` | laptop | SSH -t wrapper for deploy.sh |
+| `deploy-addons.sh` | device | sync addons/ → rebuild changed local add-ons |
+| `deploy-addons-ssh.sh` | laptop | addon-only push without full deploy |
+| `quick-reload.sh` | device | `ha supervisor reload` — YAML-only changes, no restart |
+| `quick-reload-ssh.sh` | laptop | SSH wrapper for quick-reload.sh |
+| `watcher.sh` | device | inotify loop — auto quick-reload on package YAML change |
+| `watcher-ssh.sh` | laptop | fswatch → rsync YAML to device, triggers quick-reload |
+| `sync-watch.sh` | laptop | continuous rsync watcher (broader scope) |
+
+### Terminus Panel Build Artifacts
+
+`www/terminus/` holds committed build output (`index.js`, `style.css`, `graph.json`). After editing `terminus/src/`, run `pnpm build` inside `terminus/` and commit both `src/` and `www/terminus/` together — HA serves the bundle from `/local/terminus/` and they must match.
+
 ## Do Not Touch
 
 - `.storage/` — internal state. Commit = corruption.
 - `home-assistant_v2.db*`, `*.log*`, `tts/`, `deps/` — runtime artifacts.
 - `.HA_VERSION`, `.uuid` — device-specific.
 - `known_devices.yaml`, `ip_bans.yaml` — runtime-populated, leaks PII.
+- `.ps4-games.*.json` — PlayStation Network runtime artifact, device-specific.
 
 All in `.gitignore`.
 
