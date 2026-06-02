@@ -13,7 +13,7 @@ Deferred ideas and known follow-ups live in `BACKLOG.md` — check it before pro
 ```bash
 pnpm install          # first time / after dep changes
 pnpm dev              # vite dev server (mounts into #root from index.html)
-pnpm build            # tsc -b && vite build → ../www/terminus-dashboard/{index.js,style.css,graph.json}
+pnpm build            # tsc -b && vite build → ../../../www/terminus-dashboard/{index.js,style.css,graph.json}
 pnpm typecheck        # tsc --noEmit
 pnpm lint             # eslint .
 pnpm test             # vitest watch
@@ -22,7 +22,7 @@ pnpm test:run path/to/file.test.ts            # single file
 pnpm test:run -t "substring of test name"      # filter by name
 ```
 
-After `pnpm build`, run `../bin/deploy-www-ssh.sh` to rsync `../www/terminus-dashboard/` to the device — `www/` and `public/graph.json` are gitignored (build artifacts). Commit only `src/` changes.
+After `pnpm build`, run `../../../bin/deploy-www-ssh.sh` to rsync `../../../www/terminus-dashboard/` to the device — `www/` and `public/graph.json` are gitignored (build artifacts). Commit only `src/` changes.
 
 ## Architecture
 
@@ -71,5 +71,5 @@ Each node component (`AutomationNode`, `EntityNode`, `ScriptNode`, `SceneNode`) 
 - Path alias `@/*` → `src/*` (configured in `vite.config.ts` and `tsconfig.app.json`).
 - shadcn/ui components live in `src/components/ui/` and follow shadcn conventions. `components.json` is the shadcn config.
 - Tests use vitest + `@testing-library/react` + happy-dom. Test files sit next to source (`*.test.ts(x)`).
-- Bundle output path (`../www/terminus`) is load-bearing — HA serves `/local/` from `<repo>/www/`, and `panel_custom`'s `module_url: /local/terminus-dashboard/index.js` depends on it. Don't change `build.outDir` without updating `configuration.yaml`.
+- Bundle output path (`../../../www/terminus-dashboard`) is load-bearing — HA serves `/local/` from `<repo>/www/`, and `panel_custom`'s `module_url: /local/terminus-dashboard/index.js` depends on it. Don't change `build.outDir` without updating `configuration.yaml`.
 - Vite lib mode does NOT inline `process.env.NODE_ENV`. The `define` in `vite.config.ts` replaces it manually so React's dev/prod switch does not throw `ReferenceError` in the browser. Keep that define when touching build config.

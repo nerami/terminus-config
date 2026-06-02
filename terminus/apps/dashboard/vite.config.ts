@@ -20,7 +20,7 @@ export default defineConfig({
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
   build: {
-    outDir: "../www/terminus-dashboard",
+    outDir: "../../../www/terminus-dashboard",
     emptyOutDir: true,
     cssCodeSplit: false,
     lib: {

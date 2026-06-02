@@ -473,7 +473,7 @@ export async function buildManifest(repoRoot: string): Promise<Manifest> {
 }
 
 export function graphManifestPlugin(opts?: { repoRoot?: string }): Plugin {
-  const repoRoot = opts?.repoRoot ?? path.resolve(process.cwd(), "..")
+  const repoRoot = opts?.repoRoot ?? path.resolve(process.cwd(), "../../..")
   const publicDir = path.resolve(process.cwd(), "public")
   const target = path.join(publicDir, "graph.json")
 

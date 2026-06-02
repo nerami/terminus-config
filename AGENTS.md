@@ -110,7 +110,9 @@ secrets.yaml.example       # schema only; real secrets.yaml lives on device
 packages/                  # source-of-truth for hand-written work
 blueprints/                # automation/script blueprints
 addons/                    # local Supervisor add-ons (synced to /addons/)
-terminus-dashboard/        # custom HA panel — own CLAUDE.md
+terminus/                  # pnpm workspace — apps/dashboard (panel) + apps/agent (LangGraph)
+  apps/dashboard/          # custom HA panel — own CLAUDE.md
+  apps/agent/              # LangGraph.js agent (laptop-hosted, Tailscale LAN)
 bin/                       # deploy + reload + watcher scripts (see bin/ inventory below)
 www/terminus-dashboard/    # built Terminus panel artifacts (index.js, style.css, graph.json)
 # themes/, custom_components/, dashboards/ — absent, create when needed
@@ -215,7 +217,7 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 ```bash
 bin/build-deploy-terminus-ssh.sh          # build + rsync in one step
 # or manually:
-cd terminus-dashboard && pnpm build       # outputs to ../www/terminus-dashboard/
+cd terminus/apps/dashboard && pnpm build  # outputs to ../../../www/terminus-dashboard/
 bin/deploy-www-ssh.sh                     # rsync www/terminus-dashboard/ → /config/www/terminus-dashboard/ on device
 ```
 
