@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CopilotSidebar } from "@copilotkit/react-core/v2"
-import "@copilotkit/react-ui/v2/styles.css"
+import {
+  CopilotSidebar,
+  CopilotChatConfigurationProvider,
+  useCopilotChatConfiguration,
+} from "@copilotkit/react-core/v2"
+
 import { Badge } from "@/components/ui/badge"
 import { LiveStateProvider, useLiveState } from "@/lib/liveState"
 import { RegistryProvider, useRegistryEntities } from "@/lib/registry"
@@ -135,6 +139,15 @@ function CopilotAgentStatus({ runtimeUrl }: { runtimeUrl: string }) {
 
 const COPILOT_OPEN_KEY = "copilot-open"
 
+function CopilotOpenSync() {
+  const config = useCopilotChatConfiguration()
+  useEffect(() => {
+    if (!config) return
+    sessionStorage.setItem(COPILOT_OPEN_KEY, String(config.isModalOpen))
+  }, [config?.isModalOpen])
+  return null
+}
+
 function CopilotIsland({ manifest }: { manifest: Manifest }) {
   const runtime = useCopilotRuntimeUrl()
   if (runtime.status === "loading") {
@@ -146,17 +159,18 @@ function CopilotIsland({ manifest }: { manifest: Manifest }) {
   const defaultOpen = sessionStorage.getItem(COPILOT_OPEN_KEY) === "true"
   return (
     <CopilotProvider url={runtime.url}>
-      <CopilotAgentStatus runtimeUrl={runtime.url} />
-      <CopilotWiring manifest={manifest} />
-      <CopilotSidebar
-        defaultOpen={defaultOpen}
-        onSetOpen={(open) => sessionStorage.setItem(COPILOT_OPEN_KEY, String(open))}
-        labels={{
-          modalHeaderTitle: "Terminus Copilot",
-          welcomeMessageText:
-            "Describe an automation. I'll propose YAML, you approve or reject.",
-        }}
-      />
+      <CopilotChatConfigurationProvider isModalDefaultOpen={defaultOpen}>
+        <CopilotAgentStatus runtimeUrl={runtime.url} />
+        <CopilotWiring manifest={manifest} />
+        <CopilotOpenSync />
+        <CopilotSidebar
+          labels={{
+            modalHeaderTitle: "Terminus Copilot",
+            welcomeMessageText:
+              "Describe an automation. I'll propose YAML, you approve or reject.",
+          }}
+        />
+      </CopilotChatConfigurationProvider>
     </CopilotProvider>
   )
 }

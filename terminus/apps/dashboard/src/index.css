@@ -1,4 +1,5 @@
 @import "@xyflow/react/dist/style.css";
+@import "@copilotkit/react-ui/v2/styles.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
