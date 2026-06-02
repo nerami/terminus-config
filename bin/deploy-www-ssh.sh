@@ -20,6 +20,7 @@ if [ ! -d "$SRC" ]; then
   exit 1
 fi
 
+ssh -p "$HA_SSH_PORT" "$HA_SSH_HOST" 'mkdir -p /config/www/terminus'
 echo "syncing $SRC → $DEST"
 rsync -az --delete \
   -e "ssh -p $HA_SSH_PORT" \
