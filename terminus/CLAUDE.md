@@ -17,6 +17,7 @@ pnpm build                                # build @terminus/dashboard only
 pnpm --filter @terminus/dashboard <cmd>   # run any script in dashboard
 pnpm --filter @terminus/agent <cmd>       # run any script in agent
 pnpm -r test                              # run tests across all apps
+pnpm --filter @terminus/dashboard test:run  # single app, one-shot
 pnpm -r typecheck                         # typecheck all apps
 ```
 
@@ -95,4 +96,9 @@ Health check: `GET /health` → `{ ok: true }`.
 
 ### Architecture
 
-Entry: `src/index.ts` (Express server). Graph: `src/graph.ts` (LangGraph). Tools: `src/tools/` (ha-api, ha-config, ha-git). Agent logic: `src/agent.ts`.
+Entry: `src/index.ts` (Express server). Graph: `src/graph.ts` (LangGraph state machine). Agent logic: `src/agent.ts`.
+
+Tools (`src/tools/`):
+- `ha-api.ts` — read/write HA entity state + call services via REST
+- `ha-config.ts` — read/write `packages/*.yaml` automation config files
+- `ha-git.ts` — commit and push config changes to the repo
