@@ -1,5 +1,5 @@
 name: Terminus Copilot
-version: "0.1.3"
+version: "0.1.4"
 slug: terminus_copilot
 description: CopilotKit runtime for natural-language automation creation in Terminus.
 arch:
