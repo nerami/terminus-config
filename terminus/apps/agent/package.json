@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@terminus/manifest": "workspace:*",
     "@langchain/anthropic": "^0.3",
     "@langchain/core": "^0.3",
     "@langchain/langgraph": "^0.2",

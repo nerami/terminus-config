@@ -3,10 +3,12 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt"
 import { haApiTools } from "./tools/ha-api.js"
 import { haConfigTools } from "./tools/ha-config.js"
 import { haGitTools } from "./tools/ha-git.js"
+import { haManifestTools } from "./tools/ha-manifest.js"
 
 const SYSTEM_PROMPT = `You are Terminus, a Home Assistant configuration expert and smart home automation agent.
 
 You have access to:
+- Config manifest (ha_read_manifest) — all automations with full YAML, scenes, entities, source file+line
 - Live HA entity state (read/write via REST API)
 - HA configuration files (packages/ YAML — read, create, update, delete)
 - Config validation (docker-based check_config)
@@ -20,10 +22,11 @@ HA config conventions:
 - Validate after any config change before committing
 
 When modifying config:
-1. Read the relevant package file first
-2. Make minimal targeted changes
-3. Validate the config
-4. Commit with a descriptive conventional commit message
+1. Call ha_read_manifest first — it tells you what exists, how it's wired, and exactly which file+line to edit
+2. Read the specific package file identified by the manifest
+3. Make minimal targeted changes
+4. Validate the config
+5. Commit with a descriptive conventional commit message
 
 Be concise and precise. Show diffs or key changes, not full file contents unless asked.`
 
@@ -39,7 +42,7 @@ export function createGraph(apiKey: string) {
   // invocationParams() emits top_p: undefined, which JSON.stringify strips entirely.
   ;(llm as any).topP = undefined
 
-  const tools = [...haApiTools, ...haConfigTools, ...haGitTools]
+  const tools = [...haManifestTools, ...haApiTools, ...haConfigTools, ...haGitTools]
 
   return createReactAgent({
     llm,
