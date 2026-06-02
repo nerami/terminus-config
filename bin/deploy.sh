@@ -39,6 +39,17 @@ fi
 log "Pulling (fast-forward only): $LOCAL → $REMOTE"
 git pull --ff-only || fail "git pull --ff-only failed. Dirty tree or non-FF history — resolve on device first."
 
+# Sync local add-on sources if any changed in the pulled diff. Skipped
+# silently when no addons/ touched — keeps the common case quiet.
+if git diff --name-only "$LOCAL" "$REMOTE" -- addons/ | grep -q .; then
+  log "addons/ touched in pull — syncing to /addons/"
+  if [ -x "$REPO_DIR/bin/deploy-addons.sh" ]; then
+    bash "$REPO_DIR/bin/deploy-addons.sh" || fail "addon sync failed."
+  else
+    log "WARN: $REPO_DIR/bin/deploy-addons.sh not executable — skipping addon sync."
+  fi
+fi
+
 log "Validating config (ha core check)"
 if ! ha core check; then
   printf '\n\033[1;31m!! ha core check FAILED. HA Core NOT restarted.\033[0m\n' >&2
