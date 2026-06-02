@@ -133,6 +133,8 @@ function CopilotAgentStatus({ runtimeUrl }: { runtimeUrl: string }) {
   )
 }
 
+const COPILOT_OPEN_KEY = "copilot-open"
+
 function CopilotIsland({ manifest }: { manifest: Manifest }) {
   const runtime = useCopilotRuntimeUrl()
   if (runtime.status === "loading") {
@@ -141,12 +143,14 @@ function CopilotIsland({ manifest }: { manifest: Manifest }) {
   if (runtime.status === "error") {
     return <CopilotStatusBadge>{`error — ${runtime.error}`}</CopilotStatusBadge>
   }
+  const defaultOpen = sessionStorage.getItem(COPILOT_OPEN_KEY) === "true"
   return (
     <CopilotProvider url={runtime.url}>
       <CopilotAgentStatus runtimeUrl={runtime.url} />
       <CopilotWiring manifest={manifest} />
       <CopilotSidebar
-        defaultOpen
+        defaultOpen={defaultOpen}
+        onSetOpen={(open) => sessionStorage.setItem(COPILOT_OPEN_KEY, String(open))}
         labels={{
           modalHeaderTitle: "Terminus Copilot",
           welcomeMessageText:

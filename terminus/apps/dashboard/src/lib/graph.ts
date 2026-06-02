@@ -4,7 +4,8 @@ let cached: Promise<Manifest> | null = null
 
 export function loadManifest(): Promise<Manifest> {
   if (cached) return cached
-  const url = "/local/terminus-dashboard/graph.json" + (import.meta.env.DEV ? `?t=${Date.now()}` : "")
+  const base = import.meta.env.DEV ? "" : "/local/terminus-dashboard"
+  const url = `${base}/graph.json${import.meta.env.DEV ? `?t=${Date.now()}` : ""}`
   cached = fetch(url).then((r) => {
     if (!r.ok) throw new Error(`graph.json: HTTP ${r.status}`)
     return r.json() as Promise<Manifest>
