@@ -38027,30 +38027,41 @@ var HG = /* @__PURE__ */ q.forwardRef(function(e, t) {
 		ref: t,
 		props: [{ id: c }, o]
 	});
-});
+}), UG = (0, q.createContext)(null);
+function WG({ container: e, children: t }) {
+	return /* @__PURE__ */ (0, J.jsx)(UG.Provider, {
+		value: e,
+		children: t
+	});
+}
+function GG() {
+	return (0, q.useContext)(UG);
+}
 //#endregion
 //#region src/components/ui/sheet.tsx
-function UG({ ...e }) {
+function KG({ ...e }) {
 	return /* @__PURE__ */ (0, J.jsx)(VG, {
 		"data-slot": "sheet",
 		...e
 	});
 }
-function WG({ ...e }) {
+function qG({ container: e, ...t }) {
+	let n = GG();
 	return /* @__PURE__ */ (0, J.jsx)(wG, {
+		container: e ?? n ?? void 0,
 		"data-slot": "sheet-portal",
-		...e
+		...t
 	});
 }
-function GG({ className: e, ...t }) {
+function JG({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, J.jsx)(yU, {
 		"data-slot": "sheet-overlay",
 		className: RO("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed inset-0 z-50 bg-black/10 duration-100 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs", e),
 		...t
 	});
 }
-function KG({ children: e, className: t, showCloseButton: n = !0, side: r = "right", ...i }) {
-	return /* @__PURE__ */ (0, J.jsxs)(WG, { children: [/* @__PURE__ */ (0, J.jsx)(GG, {}), /* @__PURE__ */ (0, J.jsxs)(xG, {
+function YG({ children: e, className: t, showCloseButton: n = !0, side: r = "right", ...i }) {
+	return /* @__PURE__ */ (0, J.jsxs)(qG, { children: [/* @__PURE__ */ (0, J.jsx)(JG, {}), /* @__PURE__ */ (0, J.jsxs)(xG, {
 		"data-slot": "sheet-content",
 		"data-side": r,
 		className: RO("bg-background data-open:animate-in data-closed:animate-out data-[side=right]:data-closed:slide-out-to-right-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=top]:data-closed:slide-out-to-top-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:fade-out-0 data-open:fade-in-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=bottom]:data-open:slide-in-from-bottom-10 fixed z-50 flex flex-col gap-4 bg-clip-padding text-sm shadow-lg transition duration-200 ease-in-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm", t),
@@ -38069,21 +38080,21 @@ function KG({ children: e, className: t, showCloseButton: n = !0, side: r = "rig
 		})]
 	})] });
 }
-function qG({ className: e, ...t }) {
+function XG({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, J.jsx)("div", {
 		"data-slot": "sheet-header",
 		className: RO("flex flex-col gap-1.5 p-4", e),
 		...t
 	});
 }
-function JG({ className: e, ...t }) {
+function ZG({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, J.jsx)(HG, {
 		"data-slot": "sheet-title",
 		className: RO("text-foreground font-medium", e),
 		...t
 	});
 }
-function YG({ className: e, ...t }) {
+function QG({ className: e, ...t }) {
 	return /* @__PURE__ */ (0, J.jsx)(OU, {
 		"data-slot": "sheet-description",
 		className: RO("text-muted-foreground text-sm", e),
@@ -38092,7 +38103,7 @@ function YG({ className: e, ...t }) {
 }
 //#endregion
 //#region src/components/NodeDetailSheet.tsx
-function XG(e) {
+function $G(e) {
 	let t = window.location.origin, n = e.id.split(".")[1] ?? e.id;
 	switch (e.kind) {
 		case "script": return `${t}/config/script/edit/${n}`;
@@ -38100,7 +38111,7 @@ function XG(e) {
 		default: return `${t}/config/entities/entity/${e.id}`;
 	}
 }
-function ZG({ title: e, children: t }) {
+function eK({ title: e, children: t }) {
 	return /* @__PURE__ */ (0, J.jsxs)("div", {
 		className: "space-y-1",
 		children: [/* @__PURE__ */ (0, J.jsx)("div", {
@@ -38112,21 +38123,21 @@ function ZG({ title: e, children: t }) {
 		})]
 	});
 }
-function QG({ open: e, onOpenChange: t, node: n }) {
+function tK({ open: e, onOpenChange: t, node: n }) {
 	let r = fk(), i = pk(), a = mk(), o = gk(n && (n.kind === "entity" || n.kind === "template" || n.kind === "scene" || n.kind === "script") ? n.id : void 0), s = ok(n?.id);
 	if (!n) return null;
 	let c = o?.labels ?? [], l = o?.exposure ?? {}, u = Object.keys(l);
-	return /* @__PURE__ */ (0, J.jsx)(UG, {
+	return /* @__PURE__ */ (0, J.jsx)(KG, {
 		open: e,
 		onOpenChange: t,
-		children: /* @__PURE__ */ (0, J.jsxs)(KG, {
+		children: /* @__PURE__ */ (0, J.jsxs)(YG, {
 			side: "right",
 			className: "w-[360px] sm:w-[400px] overflow-y-auto",
 			children: [
-				/* @__PURE__ */ (0, J.jsxs)(qG, { children: [/* @__PURE__ */ (0, J.jsx)(JG, {
+				/* @__PURE__ */ (0, J.jsxs)(XG, { children: [/* @__PURE__ */ (0, J.jsx)(ZG, {
 					className: "font-mono text-sm",
 					children: n.id
-				}), /* @__PURE__ */ (0, J.jsxs)(YG, {
+				}), /* @__PURE__ */ (0, J.jsxs)(QG, {
 					className: "flex items-center gap-2",
 					children: [/* @__PURE__ */ (0, J.jsx)(BO, {
 						variant: "outline",
@@ -38157,11 +38168,11 @@ function QG({ open: e, onOpenChange: t, node: n }) {
 				/* @__PURE__ */ (0, J.jsxs)("div", {
 					className: "mt-4 space-y-4",
 					children: [
-						/* @__PURE__ */ (0, J.jsx)(ZG, {
+						/* @__PURE__ */ (0, J.jsx)(eK, {
 							title: "Area",
 							children: o?.areaName ?? "—"
 						}),
-						/* @__PURE__ */ (0, J.jsx)(ZG, {
+						/* @__PURE__ */ (0, J.jsx)(eK, {
 							title: "Status",
 							children: /* @__PURE__ */ (0, J.jsxs)("div", {
 								className: "flex flex-wrap gap-2",
@@ -38174,7 +38185,7 @@ function QG({ open: e, onOpenChange: t, node: n }) {
 								})]
 							})
 						}),
-						/* @__PURE__ */ (0, J.jsx)(ZG, {
+						/* @__PURE__ */ (0, J.jsx)(eK, {
 							title: "Labels",
 							children: c.length === 0 ? "—" : /* @__PURE__ */ (0, J.jsx)("div", {
 								className: "flex flex-wrap gap-1",
@@ -38184,7 +38195,7 @@ function QG({ open: e, onOpenChange: t, node: n }) {
 								}, e))
 							})
 						}),
-						/* @__PURE__ */ (0, J.jsx)(ZG, {
+						/* @__PURE__ */ (0, J.jsx)(eK, {
 							title: "Voice exposure",
 							children: u.length === 0 ? "No voice assistant exposure." : /* @__PURE__ */ (0, J.jsx)("ul", {
 								className: "space-y-0.5",
@@ -38194,7 +38205,7 @@ function QG({ open: e, onOpenChange: t, node: n }) {
 								}, e))
 							})
 						}),
-						/* @__PURE__ */ (0, J.jsx)(ZG, {
+						/* @__PURE__ */ (0, J.jsx)(eK, {
 							title: "Source",
 							children: /* @__PURE__ */ (0, J.jsxs)("span", {
 								className: "font-mono text-xs",
@@ -38206,7 +38217,7 @@ function QG({ open: e, onOpenChange: t, node: n }) {
 							})
 						}),
 						/* @__PURE__ */ (0, J.jsx)("a", {
-							href: XG(n),
+							href: $G(n),
 							target: "_top",
 							rel: "noreferrer",
 							className: "inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90",
@@ -38220,17 +38231,17 @@ function QG({ open: e, onOpenChange: t, node: n }) {
 }
 //#endregion
 //#region src/App.tsx
-var $G = 7, eK = Date.now();
-function tK() {
+var nK = 7, rK = Date.now();
+function iK() {
 	let { status: e } = ak();
 	return /* @__PURE__ */ (0, J.jsx)(BO, {
 		variant: e === "connected" ? "default" : e === "error" ? "destructive" : "secondary",
 		children: e === "connecting" ? "Connecting…" : e === "connected" ? "Connected" : "Error"
 	});
 }
-function nK({ generatedAt: e }) {
-	let t = Math.floor((eK - Date.parse(e)) / (1e3 * 60 * 60 * 24));
-	return t < $G ? null : /* @__PURE__ */ (0, J.jsxs)("div", {
+function aK({ generatedAt: e }) {
+	let t = Math.floor((rK - Date.parse(e)) / (1e3 * 60 * 60 * 24));
+	return t < nK ? null : /* @__PURE__ */ (0, J.jsxs)("div", {
 		className: "border-b bg-amber-100 px-4 py-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200",
 		children: [
 			"Manifest is ",
@@ -38241,18 +38252,18 @@ function nK({ generatedAt: e }) {
 		]
 	});
 }
-function rK({ manifest: e }) {
+function oK({ manifest: e }) {
 	let [t, n] = (0, q.useState)(null), [r, i] = (0, q.useState)(!1), a = YN();
 	return /* @__PURE__ */ (0, J.jsxs)("div", {
 		className: "flex h-svh flex-col",
 		children: [
-			/* @__PURE__ */ (0, J.jsx)(nK, { generatedAt: e.generatedAt }),
+			/* @__PURE__ */ (0, J.jsx)(aK, { generatedAt: e.generatedAt }),
 			/* @__PURE__ */ (0, J.jsxs)("header", {
 				className: "flex h-16 items-center justify-between border-b px-4",
 				children: [/* @__PURE__ */ (0, J.jsx)("h1", {
 					className: "text-base font-semibold",
 					children: "Terminus"
-				}), /* @__PURE__ */ (0, J.jsx)(tK, {})]
+				}), /* @__PURE__ */ (0, J.jsx)(iK, {})]
 			}),
 			/* @__PURE__ */ (0, J.jsx)("main", {
 				className: "flex-1",
@@ -38266,7 +38277,7 @@ function rK({ manifest: e }) {
 					autoId: a.id
 				})
 			}),
-			/* @__PURE__ */ (0, J.jsx)(QG, {
+			/* @__PURE__ */ (0, J.jsx)(tK, {
 				open: r,
 				onOpenChange: i,
 				node: t
@@ -38274,7 +38285,7 @@ function rK({ manifest: e }) {
 		]
 	});
 }
-function iK({ manifest: e }) {
+function sK({ manifest: e }) {
 	let t = (0, q.useMemo)(() => bN(), []), [, n] = (0, q.useState)(0), [r, i] = (0, q.useState)(""), a = hk(), o = (0, q.useRef)(n);
 	return o.current = n, (0, q.useEffect)(() => {
 		nk().then(i).catch(() => i(""));
@@ -38304,7 +38315,7 @@ function iK({ manifest: e }) {
 		})
 	] });
 }
-function aK() {
+function cK() {
 	let [e, t] = (0, q.useState)(null), [n, r] = (0, q.useState)(null);
 	return (0, q.useEffect)(() => {
 		UN().then(t).catch((e) => r(e instanceof Error ? e.message : String(e)));
@@ -38312,8 +38323,8 @@ function aK() {
 		title: "Graph manifest missing",
 		body: "Run `pnpm build` in terminus/ to generate `www/terminus/graph.json`."
 	}) : e ? /* @__PURE__ */ (0, J.jsx)(bk, { children: /* @__PURE__ */ (0, J.jsx)(ik, { children: /* @__PURE__ */ (0, J.jsxs)(uk, { children: [
-		/* @__PURE__ */ (0, J.jsx)(rK, { manifest: e }),
-		/* @__PURE__ */ (0, J.jsx)(iK, { manifest: e }),
+		/* @__PURE__ */ (0, J.jsx)(oK, { manifest: e }),
+		/* @__PURE__ */ (0, J.jsx)(sK, { manifest: e }),
 		/* @__PURE__ */ (0, J.jsx)(FE, {
 			defaultOpen: !0,
 			labels: {
@@ -38325,18 +38336,18 @@ function aK() {
 }
 //#endregion
 //#region src/components/theme-provider.tsx
-var oK = "(prefers-color-scheme: dark)", sK = [
+var lK = "(prefers-color-scheme: dark)", uK = [
 	"dark",
 	"light",
 	"system"
-], cK = q.createContext(void 0);
-function lK(e) {
-	return e === null ? !1 : sK.includes(e);
+], dK = q.createContext(void 0);
+function fK(e) {
+	return e === null ? !1 : uK.includes(e);
 }
-function uK() {
-	return window.matchMedia(oK).matches ? "dark" : "light";
+function pK() {
+	return window.matchMedia(lK).matches ? "dark" : "light";
 }
-function dK() {
+function mK() {
 	let e = document.createElement("style");
 	return e.appendChild(document.createTextNode("*,*::before,*::after{-webkit-transition:none!important;transition:none!important}")), document.head.appendChild(e), () => {
 		window.getComputedStyle(document.body), requestAnimationFrame(() => {
@@ -38346,24 +38357,24 @@ function dK() {
 		});
 	};
 }
-function fK(e) {
+function hK(e) {
 	return e instanceof HTMLElement ? !!(e.isContentEditable || e.closest("input, textarea, select, [contenteditable='true']")) : !1;
 }
-function pK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
+function gK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", disableTransitionOnChange: r = !0, ...i }) {
 	let [a, o] = q.useState(() => {
 		let e = localStorage.getItem(n);
-		return lK(e) ? e : t;
+		return fK(e) ? e : t;
 	}), s = q.useCallback((e) => {
 		localStorage.setItem(n, e), o(e);
 	}, [n]), c = q.useRef(null), l = q.useCallback((e) => {
-		let t = e === "system" ? uK() : e, n = r ? dK() : null, i = [];
+		let t = e === "system" ? pK() : e, n = r ? mK() : null, i = [];
 		c.current && i.push(c.current), i.push(document.documentElement);
 		for (let e of i) e.classList.remove("light", "dark"), e.classList.add(t);
 		n && n();
 	}, [r]);
 	q.useEffect(() => {
 		if (l(a), a !== "system") return;
-		let e = window.matchMedia(oK), t = () => {
+		let e = window.matchMedia(lK), t = () => {
 			l("system");
 		};
 		return e.addEventListener("change", t), () => {
@@ -38371,8 +38382,8 @@ function pK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		};
 	}, [a, l]), q.useEffect(() => {
 		let e = (e) => {
-			e.repeat || e.metaKey || e.ctrlKey || e.altKey || fK(e.target) || e.key.toLowerCase() === "d" && o((e) => {
-				let t = e === "dark" ? "light" : e === "light" ? "dark" : uK() === "dark" ? "light" : "dark";
+			e.repeat || e.metaKey || e.ctrlKey || e.altKey || hK(e.target) || e.key.toLowerCase() === "d" && o((e) => {
+				let t = e === "dark" ? "light" : e === "light" ? "dark" : pK() === "dark" ? "light" : "dark";
 				return localStorage.setItem(n, t), t;
 			});
 		};
@@ -38382,7 +38393,7 @@ function pK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 	}, [n]), q.useEffect(() => {
 		let e = (e) => {
 			if (e.storageArea === localStorage && e.key === n) {
-				if (lK(e.newValue)) {
+				if (fK(e.newValue)) {
 					o(e.newValue);
 					return;
 				}
@@ -38397,7 +38408,7 @@ function pK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 		theme: a,
 		setTheme: s
 	}), [a, s]);
-	return /* @__PURE__ */ (0, J.jsx)(cK.Provider, {
+	return /* @__PURE__ */ (0, J.jsx)(dK.Provider, {
 		...i,
 		value: u,
 		children: /* @__PURE__ */ (0, J.jsx)("div", {
@@ -38415,24 +38426,15 @@ function pK({ children: e, defaultTheme: t = "system", storageKey: n = "theme", 
 	});
 }
 //#endregion
-//#region src/lib/portalContainer.tsx
-var mK = (0, q.createContext)(null);
-function hK({ container: e, children: t }) {
-	return /* @__PURE__ */ (0, J.jsx)(mK.Provider, {
-		value: e,
-		children: t
-	});
-}
-//#endregion
 //#region src/main.tsx
-function gK(e, t = e) {
+function _K(e, t = e) {
 	let n = (0, Re.createRoot)(e);
-	return n.render(/* @__PURE__ */ (0, J.jsx)(q.StrictMode, { children: /* @__PURE__ */ (0, J.jsx)(pK, { children: /* @__PURE__ */ (0, J.jsx)(hK, {
+	return n.render(/* @__PURE__ */ (0, J.jsx)(q.StrictMode, { children: /* @__PURE__ */ (0, J.jsx)(gK, { children: /* @__PURE__ */ (0, J.jsx)(WG, {
 		container: t,
-		children: /* @__PURE__ */ (0, J.jsx)(aK, {})
+		children: /* @__PURE__ */ (0, J.jsx)(cK, {})
 	}) }) })), n;
 }
-var _K = class extends HTMLElement {
+var vK = class extends HTMLElement {
 	root;
 	connectedCallback() {
 		let e = this.shadowRoot ?? this.attachShadow({ mode: "open" });
@@ -38443,13 +38445,13 @@ var _K = class extends HTMLElement {
 		let t = e.querySelector("div[data-terminus-mount]");
 		t || (t = document.createElement("div"), t.dataset.terminusMount = "true", t.style.height = "100%", t.style.width = "100%", e.appendChild(t));
 		let n = e.querySelector("div[data-terminus-portals]");
-		n || (n = document.createElement("div"), n.dataset.terminusPortals = "true", e.appendChild(n)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = gK(t, n);
+		n || (n = document.createElement("div"), n.dataset.terminusPortals = "true", e.appendChild(n)), this.style.display = "block", this.style.height = "100%", this.style.width = "100%", this.root = _K(t, n);
 	}
 	disconnectedCallback() {
 		this.root?.unmount(), this.root = void 0;
 	}
 };
-customElements.get("terminus-panel") || customElements.define("terminus-panel", _K);
-var vK = document.getElementById("root");
-vK && gK(vK);
+customElements.get("terminus-panel") || customElements.define("terminus-panel", vK);
+var yK = document.getElementById("root");
+yK && _K(yK);
 //#endregion
