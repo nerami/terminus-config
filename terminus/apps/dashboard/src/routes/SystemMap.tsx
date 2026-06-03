@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react"
 import { ReactFlow, Background, Controls, type Edge, type Node } from "@xyflow/react"
 import type { GraphNode, Manifest } from "@/types/manifest"
 import { nodeTypes } from "@/components/nodes"
+import { useTheme } from "@/components/theme-provider"
 
 const EDGE_STYLE: Record<string, { stroke: string; strokeDasharray?: string }> = {
   trigger: { stroke: "var(--color-emerald-500)" },
@@ -18,6 +19,7 @@ type Props = {
 }
 
 export function SystemMap({ manifest, onSelect }: Props) {
+  const { theme } = useTheme()
   const nodes: Node[] = useMemo(
     () =>
       manifest.nodes.map((n) => {
@@ -77,6 +79,7 @@ export function SystemMap({ manifest, onSelect }: Props) {
         edges={edges}
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
+        colorMode={theme}
         fitView
         proOptions={{ hideAttribution: true }}
       >

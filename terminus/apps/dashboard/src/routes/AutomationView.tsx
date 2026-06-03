@@ -7,8 +7,10 @@ import type { Manifest } from "@/types/manifest"
 import { navigate } from "@/lib/router"
 import { nodeTypes } from "@/components/nodes"
 import { EmptyState } from "@/components/EmptyState"
+import { useTheme } from "@/components/theme-provider"
 
 export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoId: string }) {
+  const { theme } = useTheme()
   const detail = manifest.automations[autoId]
 
   const nodes = useMemo<Node[]>(() => {
@@ -46,7 +48,7 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
   return (
     <div className="flex h-[calc(100svh-4rem)] w-full">
       <div className="flex-1">
-        <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView proOptions={{ hideAttribution: true }}>
+        <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} colorMode={theme} fitView proOptions={{ hideAttribution: true }}>
           <Background />
           <Controls />
         </ReactFlow>

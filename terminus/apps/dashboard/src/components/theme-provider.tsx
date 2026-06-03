@@ -257,7 +257,10 @@ export const useTheme = () => {
   const context = React.useContext(ThemeProviderContext)
 
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider")
+    // Degrade gracefully when rendered without a provider (isolated tests,
+    // standalone embeds) instead of crashing. The app always wraps with
+    // ThemeProvider, so this default only applies outside it.
+    return { theme: "system" as Theme, setTheme: () => {} }
   }
 
   return context
