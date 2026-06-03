@@ -38,6 +38,7 @@
   "devDependencies": {
     "@dagrejs/dagre": "^3.0.0",
     "@eslint/js": "^10",
+    "@tanstack/router-devtools": "^1.167.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/js-yaml": "^4.0.9",

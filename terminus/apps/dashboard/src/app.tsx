@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { RouterProvider } from "@tanstack/react-router"
+import { TanStackRouterDevtools } from "@tanstack/router-devtools"
 import {
   CopilotSidebar,
   CopilotChatConfigurationProvider,
@@ -53,6 +54,7 @@ function Shell({ manifest }: { manifest: Manifest }) {
       <main className="flex-1 overflow-hidden">
         <RouterProvider router={router} context={{ manifest }} />
       </main>
+      {import.meta.env.DEV && <TanStackRouterDevtools router={router} />}
     </div>
   )
 }
