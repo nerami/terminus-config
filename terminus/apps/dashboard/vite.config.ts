@@ -12,6 +12,11 @@ export default defineConfig(({ mode }) => {
   const haOrigin = (env.VITE_HA_URL ?? "")
     .replace(/^wss?:\/\//, "https://")
     .replace(/\/api\/websocket$/, "")
+
+  // Render mode, consumed by src/main.tsx as the `__PANEL_MODE__` literal.
+  // "shadow" (default) builds the <terminus-panel> web component HA loads;
+  // "light" renders into the light DOM for easier local debugging.
+  const panelMode = env.VITE_PANEL_MODE === "light" ? "light" : "shadow"
   return {
     plugins: [react(), tailwindcss(), graphManifestPlugin(), panelCssPlugin()],
     resolve: {
@@ -33,6 +38,7 @@ export default defineConfig(({ mode }) => {
     // throws ReferenceError in the browser. Replace at build time.
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
+      __PANEL_MODE__: JSON.stringify(panelMode),
     },
     build: {
       outDir: "../../../www/terminus-dashboard",
