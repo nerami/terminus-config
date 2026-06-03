@@ -1,7 +1,6 @@
 import type { Root } from "react-dom/client"
 
 import { renderApp } from "./render"
-import { splitGlobalCss } from "@/lib/css"
 
 // This is the artifact Home Assistant loads: `panel_custom` instantiates
 // <terminus-panel> in the same document as HA's own UI. An open shadow root
@@ -11,55 +10,42 @@ import { splitGlobalCss } from "@/lib/css"
 const ASSET_BASE = "/local/terminus-dashboard/"
 const GLOBAL_STYLE_ID = "terminus-global-styles"
 
-// `@font-face` and `@property` must live in the document — declared inside a
-// shadow root they are silently ignored (font never registers; Tailwind's typed
-// `--tw-*` vars lose their initial-value). Both are non-cascading registrations,
-// so injecting them into <head> does not leak visual styles into HA's chrome.
-// Guarded by id so multiple panel instances share one registration.
-//
-// `scopedCss` (preflight, utilities, :host tokens) stays inside the shadow root.
-//
-// Prod links the two emitted files (split by `panelCssPlugin`); dev mirrors the
-// same DOM via a `?inline` split, since dev has no build step. This makes
-// shadow-only regressions (fonts, @property vars, :host tokens) reproducible
-// locally before deploy.
+// `@font-face` and `@property` must live in the document — inside a shadow root
+// they are silently ignored (font never registers; Tailwind's typed `--tw-*`
+// vars lose their initial-value). Both are non-cascading, so putting them in
+// <head> doesn't leak visual styles into HA's chrome.
 function injectStyles(shadow: ShadowRoot) {
-  const hasScoped = shadow.querySelector("[data-terminus-css]")
-  const hasGlobal = document.getElementById(GLOBAL_STYLE_ID)
+  if (shadow.querySelector("[data-terminus-css]")) return
 
   if (import.meta.env.DEV) {
-    void import("./index.css?inline").then(({ default: rawCss }) => {
-      const { globalCss, scopedCss } = splitGlobalCss(rawCss)
-      if (!hasGlobal) {
-        const style = document.createElement("style")
-        style.id = GLOBAL_STYLE_ID
-        style.textContent = globalCss
-        document.head.appendChild(style)
-      }
-      if (!hasScoped) {
-        const style = document.createElement("style")
-        style.dataset.terminusCss = "true"
-        style.textContent = scopedCss
-        shadow.appendChild(style)
-      }
+    // Dev has no build step. The side-effect `import "./index.css"` already made
+    // Vite inject the full sheet (incl. @font-face + @property) into <head>, so
+    // the shadow just needs the same rules; the document-global at-rules are
+    // inert here but harmless. (Splitting only matters for the prod files.)
+    void import("./index.css?inline").then(({ default: css }) => {
+      const style = document.createElement("style")
+      style.dataset.terminusCss = "true"
+      style.textContent = css
+      shadow.appendChild(style)
     })
     return
   }
 
-  if (!hasGlobal) {
-    const link = document.createElement("link")
-    link.id = GLOBAL_STYLE_ID
-    link.rel = "stylesheet"
-    link.href = `${ASSET_BASE}style.global.css`
-    document.head.appendChild(link)
+  // Prod: `panelCssPlugin` split the emitted sheet — globals to <head>, scoped
+  // rules to the shadow root. The <head> link is id-guarded so multiple panel
+  // instances share one registration.
+  if (!document.getElementById(GLOBAL_STYLE_ID)) {
+    const globals = document.createElement("link")
+    globals.id = GLOBAL_STYLE_ID
+    globals.rel = "stylesheet"
+    globals.href = `${ASSET_BASE}style.global.css`
+    document.head.appendChild(globals)
   }
-  if (!hasScoped) {
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
-    link.href = `${ASSET_BASE}style.css`
-    link.dataset.terminusCss = "true"
-    shadow.appendChild(link)
-  }
+  const scoped = document.createElement("link")
+  scoped.rel = "stylesheet"
+  scoped.href = `${ASSET_BASE}style.css`
+  scoped.dataset.terminusCss = "true"
+  shadow.appendChild(scoped)
 }
 
 class TerminusPanel extends HTMLElement {
