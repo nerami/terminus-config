@@ -123,13 +123,15 @@
   * {
     @apply border-border outline-ring/50;
     }
-  body {
+  /* `:host` mirrors `body`/`html` so the panel's base background, text color, and
+     font also apply inside the shadow root, which has no body/html element. */
+  body, :host {
     @apply bg-background text-foreground;
     }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
     }
-  html {
+  html, :host {
     @apply font-mono;
     }
 }
