@@ -101,10 +101,14 @@ export function ThemeProvider({
     [storageKey]
   )
 
-  // Find a class target reachable from inside our shadow root (if any).
-  // Tailwind's `dark:` variant resolves `.dark *` against the shadow's flat
-  // tree only, so a class on <html> won't reach in. Walk up the composed tree
-  // to the host element of the nearest shadow root and toggle the class there.
+  // The theme class drives two kinds of rules that need different anchors:
+  //   - `:host(.dark)` (our design tokens) needs the class on the shadow HOST.
+  //   - `:is(.dark *)` (Tailwind `dark:` variant — used by our utilities and by
+  //     CopilotKit) only matches a `.dark` ancestor *inside* the shadow tree,
+  //     which the host is not.
+  // So toggle the class on the in-shadow wrapper (wrapperRef) AND, when shadowed,
+  // the host (themeTargetRef). In the light DOM both resolve to the same element.
+  const wrapperRef = React.useRef<HTMLElement | null>(null)
   const themeTargetRef = React.useRef<HTMLElement | null>(null)
 
   const applyTheme = React.useCallback(
@@ -115,9 +119,10 @@ export function ThemeProvider({
         ? disableTransitionsTemporarily()
         : null
 
-      const targets: HTMLElement[] = []
-      if (themeTargetRef.current) targets.push(themeTargetRef.current)
-      targets.push(document.documentElement)
+      const targets = new Set<HTMLElement>()
+      if (wrapperRef.current) targets.add(wrapperRef.current)
+      if (themeTargetRef.current) targets.add(themeTargetRef.current)
+      targets.add(document.documentElement)
       for (const t of targets) {
         t.classList.remove("light", "dark")
         t.classList.add(resolvedTheme)
@@ -227,11 +232,14 @@ export function ThemeProvider({
       <div
         ref={(el) => {
           if (!el) {
+            wrapperRef.current = null
             themeTargetRef.current = null
             return
           }
-          // If we're inside a ShadowRoot, prefer the host element so styles
-          // scoped to `.dark *` cascade across all panel content.
+          // This wrapper is the in-shadow ancestor of all panel content, so it
+          // carries the class for `:is(.dark *)`. In a shadow root, also target
+          // the host for `:host(.dark)` token rules.
+          wrapperRef.current = el
           const rootNode = el.getRootNode()
           themeTargetRef.current =
             rootNode instanceof ShadowRoot ? (rootNode.host as HTMLElement) : el
