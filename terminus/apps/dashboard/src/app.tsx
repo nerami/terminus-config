@@ -142,8 +142,8 @@ function CopilotIsland({ manifest }: { manifest: Manifest }) {
   }
   const defaultOpen = sessionStorage.getItem(COPILOT_OPEN_KEY) === "true"
   return (
-    <CopilotProvider url={runtime.url}>
-      <CopilotChatConfigurationProvider isModalDefaultOpen={defaultOpen}>
+    <CopilotChatConfigurationProvider isModalDefaultOpen={defaultOpen}>
+      <CopilotProvider url={runtime.url}>
         <CopilotAgentStatus runtimeUrl={runtime.url} />
         <CopilotWiring manifest={manifest} />
         <CopilotOpenSync />
@@ -154,8 +154,8 @@ function CopilotIsland({ manifest }: { manifest: Manifest }) {
               "Describe an automation. I'll propose YAML, you approve or reject.",
           }}
         />
-      </CopilotChatConfigurationProvider>
-    </CopilotProvider>
+      </CopilotProvider>
+    </CopilotChatConfigurationProvider>
   )
 }
 
