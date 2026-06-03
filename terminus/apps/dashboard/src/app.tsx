@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { RouterProvider } from "@tanstack/react-router"
 import {
   CopilotSidebar,
   CopilotChatConfigurationProvider,
@@ -13,14 +14,11 @@ import { CopilotCatalog } from "@/copilot/readable"
 import { CopilotActions, createProposeAutomationController } from "@/copilot/actions"
 import { PreviewCard } from "@/copilot/preview-card"
 import { loadManifest } from "@/lib/graph"
-import { useRoute } from "@/lib/router"
+import { router } from "@/router"
 import { getAuthToken } from "@/lib/ha"
-import { SystemMap } from "@/routes/system-map"
-import { AutomationView } from "@/routes/automation-view"
 import { EmptyState } from "@/components/empty-state"
-import { NodeDetailSheet } from "@/components/node-detail-sheet"
 import type { AutomationProposal } from "@/lib/automation-writer"
-import type { GraphNode, Manifest } from "@/types/manifest"
+import type { Manifest } from "@/types/manifest"
 
 const STALE_DAYS = 7
 const NOW_MS = Date.now()
@@ -45,10 +43,6 @@ function StalenessBanner({ generatedAt }: { generatedAt: string }) {
 }
 
 function Shell({ manifest }: { manifest: Manifest }) {
-  const [selected, setSelected] = useState<GraphNode | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const route = useRoute()
-
   return (
     <div className="flex h-svh flex-col">
       <StalenessBanner generatedAt={manifest.generatedAt} />
@@ -56,20 +50,9 @@ function Shell({ manifest }: { manifest: Manifest }) {
         <h1 className="text-base font-semibold">Terminus</h1>
         <StatusBadge />
       </header>
-      <main className="flex-1">
-        {route.name === "map" ? (
-          <SystemMap
-            manifest={manifest}
-            onSelect={(node) => {
-              setSelected(node)
-              setSheetOpen(true)
-            }}
-          />
-        ) : (
-          <AutomationView manifest={manifest} autoId={route.id} />
-        )}
+      <main className="flex-1 overflow-hidden">
+        <RouterProvider router={router} context={{ manifest }} />
       </main>
-      <NodeDetailSheet open={sheetOpen} onOpenChange={setSheetOpen} node={selected} />
     </div>
   )
 }
@@ -131,9 +114,7 @@ function CopilotAgentStatus({ runtimeUrl }: { runtimeUrl: string }) {
   const health = useCopilotHealth(runtimeUrl)
   if (health.status !== "degraded") return null
   return (
-    <CopilotStatusBadge>
-      Terminus Agent offline — using fallback model
-    </CopilotStatusBadge>
+    <CopilotStatusBadge>Terminus Agent offline — using fallback model</CopilotStatusBadge>
   )
 }
 

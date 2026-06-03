@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
+import { useNavigate } from "@tanstack/react-router"
 import { Badge } from "@/components/ui/badge"
 import { useAutomationEnabled } from "@/lib/live-state"
-import { navigate } from "@/lib/router"
 import type { AreaId } from "@/types/manifest"
 
 const AREA_BORDER: Record<AreaId, string> = {
@@ -29,11 +29,12 @@ export function AutomationNode({ data }: NodeProps<AutomationNodeData>) {
   const vertical = data.direction === "TB"
   const targetPos = vertical ? Position.Top : Position.Left
   const sourcePos = vertical ? Position.Bottom : Position.Right
+  const navigate = useNavigate()
 
   return (
     <div
       className={`flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-card-foreground shadow-sm border-l-4 ${border} cursor-pointer hover:bg-accent`}
-      onClick={() => navigate({ name: "auto", id: data.autoId })}
+      onClick={() => navigate({ to: "/auto/$autoId", params: { autoId: data.autoId } })}
     >
       <Handle type="target" position={targetPos} />
       <span className="text-sm font-medium">{data.label}</span>

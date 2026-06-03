@@ -1,12 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { SystemMap } from "./system-map"
+import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router"
+import { routeTree } from "@/router"
 import type { Manifest } from "@/types/manifest"
 import { LiveStateProvider } from "@/lib/live-state"
+import { RegistryProvider } from "@/lib/registry"
 
 vi.mock("@/lib/ha", () => ({
   connectHA: () => new Promise(() => {}),
   watchEntities: () => () => {},
+}))
+
+// Avoid pulling in NodeDetailSheet's registry/live-state deps in this unit test
+vi.mock("@/components/node-detail-sheet", () => ({
+  NodeDetailSheet: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="node-sheet" /> : null,
 }))
 
 const manifest: Manifest = {
@@ -45,40 +53,44 @@ const manifest: Manifest = {
   },
 }
 
+function makeRouter(initialPath = "/") {
+  return createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [initialPath] }),
+    context: { manifest },
+  })
+}
+
+function renderMap(testRouter = makeRouter()) {
+  return render(
+    <LiveStateProvider>
+      <RegistryProvider>
+        <RouterProvider router={testRouter} />
+      </RegistryProvider>
+    </LiveStateProvider>
+  )
+}
+
 describe("SystemMap", () => {
   afterEach(() => cleanup())
 
   it("renders automation node label from manifest", async () => {
-    render(
-      <LiveStateProvider>
-        <SystemMap manifest={manifest} onSelect={() => {}} />
-      </LiveStateProvider>
-    )
+    renderMap()
     expect(await screen.findByText("MB: Lamp on when dark")).toBeTruthy()
   })
 
-  it("calls onSelect for non-automation node clicks", async () => {
-    const onSelect = vi.fn()
-    render(
-      <LiveStateProvider>
-        <SystemMap manifest={manifest} onSelect={onSelect} />
-      </LiveStateProvider>
-    )
+  it("opens detail sheet when a non-automation node is clicked", async () => {
+    renderMap()
     const entityLabel = await screen.findByText("light.lr_lamp")
     fireEvent.click(entityLabel)
-    expect(onSelect).toHaveBeenCalledTimes(1)
-    expect(onSelect.mock.calls[0][0].id).toBe("light.lr_lamp")
+    expect(screen.getByTestId("node-sheet")).toBeTruthy()
   })
 
-  it("does NOT call onSelect for automation node clicks (handled by drill-in)", async () => {
-    const onSelect = vi.fn()
-    render(
-      <LiveStateProvider>
-        <SystemMap manifest={manifest} onSelect={onSelect} />
-      </LiveStateProvider>
-    )
+  it("does not open sheet when automation node is clicked (drill-in handled by AutomationNode)", async () => {
+    const testRouter = makeRouter()
+    renderMap(testRouter)
     const autoLabel = await screen.findByText("MB: Lamp on when dark")
     fireEvent.click(autoLabel)
-    expect(onSelect).not.toHaveBeenCalled()
+    expect(screen.queryByTestId("node-sheet")).toBeNull()
   })
 })

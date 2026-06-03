@@ -1,8 +1,12 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
+import { getRouteApi } from "@tanstack/react-router"
 import { ReactFlow, Background, Controls, type Edge, type Node } from "@xyflow/react"
-import type { GraphNode, Manifest } from "@/types/manifest"
+import type { GraphNode } from "@/types/manifest"
 import { nodeTypes } from "@/components/nodes"
 import { useTheme } from "@/components/theme-provider"
+import { NodeDetailSheet } from "@/components/node-detail-sheet"
+
+const Route = getRouteApi("/")
 
 const EDGE_STYLE: Record<string, { stroke: string; strokeDasharray?: string }> = {
   trigger: { stroke: "var(--color-emerald-500)" },
@@ -13,13 +17,12 @@ const EDGE_STYLE: Record<string, { stroke: string; strokeDasharray?: string }> =
   template: { stroke: "var(--color-zinc-500)", strokeDasharray: "2 2" },
 }
 
-type Props = {
-  manifest: Manifest
-  onSelect: (node: GraphNode) => void
-}
-
-export function SystemMap({ manifest, onSelect }: Props) {
+export function SystemMap() {
+  const { manifest } = Route.useRouteContext()
   const { theme } = useTheme()
+  const [selected, setSelected] = useState<GraphNode | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+
   const nodes: Node[] = useMemo(
     () =>
       manifest.nodes.map((n) => {
@@ -67,25 +70,29 @@ export function SystemMap({ manifest, onSelect }: Props) {
       const graphNode = byId.get(n.id)
       if (!graphNode) return
       if (graphNode.kind === "automation") return // drill-in handled by AutomationNode itself
-      onSelect(graphNode)
+      setSelected(graphNode)
+      setSheetOpen(true)
     },
-    [byId, onSelect]
+    [byId]
   )
 
   return (
-    <div className="h-[calc(100svh-4rem)] w-full">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodeClick={handleNodeClick}
-        colorMode={theme}
-        fitView
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
-    </div>
+    <>
+      <div className="h-[calc(100svh-4rem)] w-full">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodeClick={handleNodeClick}
+          colorMode={theme}
+          fitView
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+      </div>
+      <NodeDetailSheet open={sheetOpen} onOpenChange={setSheetOpen} node={selected} />
+    </>
   )
 }

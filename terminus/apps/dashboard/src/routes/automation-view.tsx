@@ -1,16 +1,20 @@
 import { useMemo } from "react"
+import { getRouteApi, useNavigate } from "@tanstack/react-router"
 import { ReactFlow, Background, Controls, type Edge, type Node } from "@xyflow/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Manifest } from "@/types/manifest"
-import { navigate } from "@/lib/router"
 import { nodeTypes } from "@/components/nodes"
 import { EmptyState } from "@/components/empty-state"
 import { useTheme } from "@/components/theme-provider"
 
-export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoId: string }) {
+const Route = getRouteApi("/auto/$autoId")
+
+export function AutomationView() {
+  const { manifest } = Route.useRouteContext()
+  const { autoId } = Route.useParams()
   const { theme } = useTheme()
+  const navigate = useNavigate()
   const detail = manifest.automations[autoId]
 
   const nodes = useMemo<Node[]>(() => {
@@ -48,7 +52,14 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
   return (
     <div className="flex h-[calc(100svh-4rem)] w-full">
       <div className="flex-1">
-        <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} colorMode={theme} fitView proOptions={{ hideAttribution: true }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          colorMode={theme}
+          fitView
+          proOptions={{ hideAttribution: true }}
+        >
           <Background />
           <Controls />
         </ReactFlow>
@@ -59,7 +70,7 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
             <div className="text-sm font-medium">{detail.alias}</div>
             <div className="text-xs text-muted-foreground">mode: {detail.mode}</div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate({ name: "map" })}>
+          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/" })}>
             Back
           </Button>
         </div>
@@ -69,7 +80,9 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
               <CardTitle className="text-sm">Triggers</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="overflow-x-auto text-xs">{JSON.stringify(detail.triggers, null, 2)}</pre>
+              <pre className="overflow-x-auto text-xs">
+                {JSON.stringify(detail.triggers, null, 2)}
+              </pre>
             </CardContent>
           </Card>
           <Card className="m-3">
@@ -77,7 +90,9 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
               <CardTitle className="text-sm">Conditions</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="overflow-x-auto text-xs">{JSON.stringify(detail.conditions, null, 2)}</pre>
+              <pre className="overflow-x-auto text-xs">
+                {JSON.stringify(detail.conditions, null, 2)}
+              </pre>
             </CardContent>
           </Card>
           <Card className="m-3">
@@ -85,7 +100,9 @@ export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoI
               <CardTitle className="text-sm">Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="overflow-x-auto text-xs">{JSON.stringify(detail.actions, null, 2)}</pre>
+              <pre className="overflow-x-auto text-xs">
+                {JSON.stringify(detail.actions, null, 2)}
+              </pre>
             </CardContent>
           </Card>
         </ScrollArea>
