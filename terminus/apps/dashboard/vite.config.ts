@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig, loadEnv } from "vite"
 import { graphManifestPlugin } from "./vite-plugin-graph"
+import { panelCssPlugin } from "./vite-plugin-panel-css"
 
 // HA serves /config/www at /local. Build emits a library bundle so the
 // panel_custom module_url can load /local/terminus-dashboard/index.js directly.
@@ -12,7 +13,7 @@ export default defineConfig(({ mode }) => {
     .replace(/^wss?:\/\//, "https://")
     .replace(/\/api\/websocket$/, "")
   return {
-    plugins: [react(), tailwindcss(), graphManifestPlugin()],
+    plugins: [react(), tailwindcss(), graphManifestPlugin(), panelCssPlugin()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

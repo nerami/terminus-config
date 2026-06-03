@@ -1,10 +1,68 @@
 import { StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 
+// Side-effect import: makes the production build emit the compiled stylesheet as
+// an asset, which `panelCssPlugin` then splits into style.css (scoped) +
+// style.global.css (document globals). In dev it lets Vite serve the CSS.
 import "./index.css"
 import App from "./App.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { PortalContainerProvider } from "@/lib/portalContainer"
+import { splitGlobalCss } from "@/lib/css"
+
+const ASSET_BASE = "/local/terminus-dashboard/"
+const GLOBAL_STYLE_ID = "terminus-global-styles"
+
+// `@font-face` and `@property` must live in the document — declared inside a
+// shadow root they are silently ignored (font never registers; Tailwind's typed
+// `--tw-*` vars lose their initial-value). Both are non-cascading registrations,
+// so injecting them into <head> does not leak visual styles into HA's chrome.
+// Guarded by id so multiple panel instances share one registration.
+//
+// `scopedCss` (preflight, utilities, :host tokens) stays inside the shadow root.
+//
+// Prod and dev produce the identical DOM (globals in <head>, scoped in the
+// shadow); only the source differs — emitted files in prod, a `?inline` split in
+// dev — because dev has no build step. This makes shadow-only regressions
+// (fonts, @property vars, :host tokens) reproducible locally before deploy.
+function injectStyles(shadow: ShadowRoot) {
+  const hasScoped = shadow.querySelector("[data-terminus-css]")
+  const hasGlobal = document.getElementById(GLOBAL_STYLE_ID)
+
+  if (import.meta.env.DEV) {
+    void import("./index.css?inline").then(({ default: rawCss }) => {
+      const { globalCss, scopedCss } = splitGlobalCss(rawCss)
+      if (!hasGlobal) {
+        const style = document.createElement("style")
+        style.id = GLOBAL_STYLE_ID
+        style.textContent = globalCss
+        document.head.appendChild(style)
+      }
+      if (!hasScoped) {
+        const style = document.createElement("style")
+        style.dataset.terminusCss = "true"
+        style.textContent = scopedCss
+        shadow.appendChild(style)
+      }
+    })
+    return
+  }
+
+  if (!hasGlobal) {
+    const link = document.createElement("link")
+    link.id = GLOBAL_STYLE_ID
+    link.rel = "stylesheet"
+    link.href = `${ASSET_BASE}style.global.css`
+    document.head.appendChild(link)
+  }
+  if (!hasScoped) {
+    const link = document.createElement("link")
+    link.rel = "stylesheet"
+    link.href = `${ASSET_BASE}style.css`
+    link.dataset.terminusCss = "true"
+    shadow.appendChild(link)
+  }
+}
 
 function render(host: HTMLElement, portalContainer: HTMLElement | null = host) {
   const root = createRoot(host)
@@ -30,13 +88,7 @@ class TerminusPanel extends HTMLElement {
   connectedCallback() {
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" })
 
-    if (!shadow.querySelector('link[data-terminus-css]')) {
-      const link = document.createElement("link")
-      link.rel = "stylesheet"
-      link.href = "/local/terminus-dashboard/style.css"
-      link.dataset.terminusCss = "true"
-      shadow.appendChild(link)
-    }
+    injectStyles(shadow)
 
     let mount = shadow.querySelector<HTMLDivElement>("div[data-terminus-mount]")
     if (!mount) {
@@ -77,6 +129,11 @@ if (!customElements.get("terminus-panel")) {
   customElements.define("terminus-panel", TerminusPanel)
 }
 
-// Dev fallback: mount into #root from index.html when running `pnpm dev`.
+// Dev (`pnpm dev`): mount the real <terminus-panel> so the dev environment
+// exercises the same shadow root + CSS split as the HA panel. This is what makes
+// shadow-DOM-only regressions (fonts, @property vars, :host tokens) catchable
+// locally before deploy.
 const devRoot = document.getElementById("root")
-if (devRoot) render(devRoot)
+if (devRoot && !devRoot.querySelector("terminus-panel")) {
+  devRoot.appendChild(document.createElement("terminus-panel"))
+}
