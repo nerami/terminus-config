@@ -22,6 +22,7 @@ export function SystemMap() {
   const { theme } = useTheme()
   const [selected, setSelected] = useState<GraphNode | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [anchor, setAnchor] = useState<Element | null>(null)
 
   const nodes: Node[] = useMemo(
     () =>
@@ -66,10 +67,11 @@ export function SystemMap() {
   }, [manifest])
 
   const handleNodeClick = useCallback(
-    (_: React.MouseEvent, n: Node) => {
+    (e: React.MouseEvent, n: Node) => {
       const graphNode = byId.get(n.id)
       if (!graphNode) return
       if (graphNode.kind === "automation") return // drill-in handled by AutomationNode itself
+      setAnchor(e.currentTarget as Element)
       setSelected(graphNode)
       setSheetOpen(true)
     },
@@ -92,7 +94,7 @@ export function SystemMap() {
           <Controls />
         </ReactFlow>
       </div>
-      <NodeDetailSheet open={sheetOpen} onOpenChange={setSheetOpen} node={selected} />
+      <NodeDetailSheet open={sheetOpen} onOpenChange={setSheetOpen} node={selected} anchor={anchor} />
     </>
   )
 }

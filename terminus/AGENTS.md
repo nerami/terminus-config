@@ -61,6 +61,7 @@ After `pnpm build`, deploy with `bin/build-deploy-terminus-ssh.sh` (builds + rsy
 - **File naming: kebab-case only.** No PascalCase, camelCase, or snake_case. `my-component.tsx`, not `MyComponent.tsx`; `live-state.ts`, not `liveState.ts`. New files must follow this — existing files are already kebab-case.
 - Path alias `@/*` → `src/*` (vite.config.ts + tsconfig.app.json).
 - shadcn/ui components in `src/components/ui/`, follow shadcn conventions (`components.json`).
+- **Adding UI components**: use the `@terminus` registry — `pnpm dlx shadcn@latest add @terminus/<name>`. Registry runs locally at `http://localhost:6284` (see `components.json`). Never use `npx shadcn` — always `pnpm dlx`.
 - Tests: vitest + `@testing-library/react` + happy-dom. Test files next to source (`*.test.ts(x)`).
 - `build.outDir` (`../../../www/terminus-dashboard`) is load-bearing — matches `module_url` in `configuration.yaml`. Don't change without updating both.
 - Vite lib mode does NOT inline `process.env.NODE_ENV` — the `define` in `vite.config.ts` replaces it manually. Keep it when touching build config.
