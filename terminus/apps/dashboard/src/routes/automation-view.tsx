@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Manifest } from "@/types/manifest"
 import { navigate } from "@/lib/router"
 import { nodeTypes } from "@/components/nodes"
-import { EmptyState } from "@/components/EmptyState"
+import { EmptyState } from "@/components/empty-state"
 import { useTheme } from "@/components/theme-provider"
 
 export function AutomationView({ manifest, autoId }: { manifest: Manifest; autoId: string }) {

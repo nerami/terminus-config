@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { serializeYamlPreview, type AutomationProposal } from "@/lib/automationWriter"
+import { serializeYamlPreview, type AutomationProposal } from "@/lib/automation-writer"
 
 export function PreviewCard({
   proposal,

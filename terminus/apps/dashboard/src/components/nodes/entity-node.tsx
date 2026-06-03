@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
 import { Badge } from "@/components/ui/badge"
-import { useEntityState } from "@/lib/liveState"
+import { useEntityState } from "@/lib/live-state"
 import type { AreaId } from "@/types/manifest"
 
 const AREA_BORDER: Record<AreaId, string> = {

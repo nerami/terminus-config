@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { generateAutomationId } from "./automationWriter"
-import { validateAutomation, type AutomationProposal } from "./automationWriter"
-import { commitAutomation, serializeYamlPreview } from "./automationWriter"
+import { generateAutomationId } from "./automation-writer"
+import { validateAutomation, type AutomationProposal } from "./automation-writer"
+import { commitAutomation, serializeYamlPreview } from "./automation-writer"
 
 describe("generateAutomationId", () => {
   it("slugifies the alias and appends a stable 6-char hash", () => {

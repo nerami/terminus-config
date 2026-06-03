@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import { runGetEntityStateHandler } from "./actions"
 import { createProposeAutomationController } from "./actions"
 import { runCommitAutomationHandler } from "./actions"
-import type { AutomationProposal } from "@/lib/automationWriter"
+import type { AutomationProposal } from "@/lib/automation-writer"
 
 const proposal: AutomationProposal = {
   alias: "x",

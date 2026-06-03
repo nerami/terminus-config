@@ -1,7 +1,7 @@
-import { commitAutomation, type CommitResult } from "@/lib/automationWriter"
-import type { AutomationProposal } from "@/lib/automationWriter"
+import { commitAutomation, type CommitResult } from "@/lib/automation-writer"
+import type { AutomationProposal } from "@/lib/automation-writer"
 import { useFrontendTool } from "@copilotkit/react-core/v2"
-import { useLiveState } from "@/lib/liveState"
+import { useLiveState } from "@/lib/live-state"
 import { useMemo } from "react"
 import { z } from "zod"
 

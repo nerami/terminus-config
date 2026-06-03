@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { SystemMap } from "./SystemMap"
+import { SystemMap } from "./system-map"
 import type { Manifest } from "@/types/manifest"
-import { LiveStateProvider } from "@/lib/liveState"
+import { LiveStateProvider } from "@/lib/live-state"
 
 vi.mock("@/lib/ha", () => ({
   connectHA: () => new Promise(() => {}),

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, within, fireEvent } from "@testing-library/react"
-import { PreviewCard } from "./PreviewCard"
-import type { AutomationProposal } from "@/lib/automationWriter"
+import { PreviewCard } from "./preview-card"
+import type { AutomationProposal } from "@/lib/automation-writer"
 
 const proposal: AutomationProposal = {
   alias: "LR lamp off at 22:00",

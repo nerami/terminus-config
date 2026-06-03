@@ -58,6 +58,7 @@ After `pnpm build`, deploy with `bin/build-deploy-terminus-ssh.sh` (builds + rsy
 
 ### Conventions
 
+- **File naming: kebab-case only.** No PascalCase, camelCase, or snake_case. `my-component.tsx`, not `MyComponent.tsx`; `live-state.ts`, not `liveState.ts`. New files must follow this — existing files are already kebab-case.
 - Path alias `@/*` → `src/*` (vite.config.ts + tsconfig.app.json).
 - shadcn/ui components in `src/components/ui/`, follow shadcn conventions (`components.json`).
 - Tests: vitest + `@testing-library/react` + happy-dom. Test files next to source (`*.test.ts(x)`).

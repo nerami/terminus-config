@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react"
 import { Badge } from "@/components/ui/badge"
-import { useAutomationEnabled } from "@/lib/liveState"
+import { useAutomationEnabled } from "@/lib/live-state"
 import { navigate } from "@/lib/router"
 import type { AreaId } from "@/types/manifest"
 

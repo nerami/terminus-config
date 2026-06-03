@@ -1,8 +1,8 @@
 import type { NodeTypes } from "@xyflow/react"
-import { AutomationNode } from "./AutomationNode"
-import { EntityNode } from "./EntityNode"
-import { ScriptNode } from "./ScriptNode"
-import { SceneNode } from "./SceneNode"
+import { AutomationNode } from "./automation-node"
+import { EntityNode } from "./entity-node"
+import { ScriptNode } from "./script-node"
+import { SceneNode } from "./scene-node"
 
 export const nodeTypes: NodeTypes = {
   automation: AutomationNode,

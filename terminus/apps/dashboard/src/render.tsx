@@ -1,9 +1,9 @@
 import { StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 
-import App from "./App.tsx"
+import App from "./app.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
-import { PortalContainerProvider } from "@/lib/portalContainer"
+import { PortalContainerProvider } from "@/lib/portal-container"
 
 // Mounts the React tree into `host`. `portalContainer` is where Base UI portals
 // (Sheet, Dialog) render — defaults to the host, so shadow-root callers keep
