@@ -26,7 +26,7 @@ automation:
     alias: Turn on the lights when someone gets home
     triggers:
       - trigger: zone
-        entity_id: group.family_trackers
+        entity_id: device_tracker.normans_iphone
         zone: zone.home
         event: enter
     conditions:
