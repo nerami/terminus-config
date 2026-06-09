@@ -13,9 +13,10 @@
   },
   "dependencies": {
     "@terminus/manifest": "workspace:*",
-    "@langchain/anthropic": "^0.3",
-    "@langchain/core": "^0.3",
-    "@langchain/langgraph": "^0.2",
+    "@langchain/anthropic": "^1",
+    "@langchain/core": "^1",
+    "@langchain/langgraph": "^1",
+    "langchain": "^1",
     "express": "^5.0.0",
     "js-yaml": "^4.1.0",
     "uuid": "^11",
