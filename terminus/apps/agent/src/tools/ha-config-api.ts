@@ -132,4 +132,27 @@ const del = tool(
   },
 )
 
-export const haConfigTools = [list, get, upsert, del]
+const setEnabled = tool(
+  async ({ entity_id, enabled }: { entity_id: string; enabled: boolean }) => {
+    const service = enabled ? "turn_on" : "turn_off"
+    const res = await haFetch(`/api/services/automation/${service}`, {
+      method: "POST",
+      body: JSON.stringify({ entity_id }),
+    })
+    if (!res.ok) return JSON.stringify({ error: res.error, status: res.status })
+    return JSON.stringify({
+      result: "ok",
+      entity_id,
+      enabled,
+      note: "runtime-only — the automation re-enables on HA restart/reload",
+    })
+  },
+  {
+    name: "ha_automation_set_enabled",
+    description:
+      "Enable or disable an automation at runtime by entity_id (e.g. automation.lr_tv). Used to silence a packages-managed original after cloning it into a runtime copy. NOTE: this is runtime-only and resets on HA restart/reload — always warn the user that to make it permanent they must edit the package file in the repo by hand.",
+    schema: z.object({ entity_id: z.string(), enabled: z.boolean() }),
+  },
+)
+
+export const haConfigTools = [list, get, upsert, del, setEnabled]

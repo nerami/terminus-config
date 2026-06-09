@@ -138,3 +138,27 @@ describe("ha_config_delete", () => {
     expect(out.error).toContain("not editable")
   })
 })
+
+describe("ha_automation_set_enabled", () => {
+  it("calls turn_off when disabling and warns it is runtime-only", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+    const out = JSON.parse(
+      await byName("ha_automation_set_enabled").invoke({ entity_id: "automation.lr_tv", enabled: false }),
+    )
+    expect(out.result).toBe("ok")
+    expect(out.note).toContain("runtime-only")
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe("https://ha.test/api/services/automation/turn_off")
+    expect(JSON.parse(init.body as string)).toEqual({ entity_id: "automation.lr_tv" })
+  })
+
+  it("calls turn_on when enabling", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+    await byName("ha_automation_set_enabled").invoke({ entity_id: "automation.lr_tv", enabled: true })
+    expect((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[0]).toBe(
+      "https://ha.test/api/services/automation/turn_on",
+    )
+  })
+})
