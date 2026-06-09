@@ -81,3 +81,43 @@ describe("ha_config_get", () => {
     expect(out.error).toContain("not editable")
   })
 })
+
+describe("ha_config_upsert", () => {
+  it("POSTs to the supplied id and reports ok", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ result: "ok" }), { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+
+    const out = JSON.parse(
+      await byName("ha_config_upsert").invoke({
+        domain: "automation",
+        id: "222",
+        config: { alias: "Yard", trigger: [], action: [] },
+      }),
+    )
+    expect(out.result).toBe("ok")
+    expect(out.id).toBe("222")
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe("https://ha.test/api/config/automation/config/222")
+    expect(init.method).toBe("POST")
+    expect(JSON.parse(init.body as string)).toEqual({ alias: "Yard", trigger: [], action: [] })
+  })
+
+  it("generates an id when none is supplied and returns it", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ result: "ok" }), { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+    const out = JSON.parse(
+      await byName("ha_config_upsert").invoke({ domain: "automation", config: { alias: "New" } }),
+    )
+    expect(out.id).toMatch(/^\d+$/)
+    expect((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[0]).toContain(`/config/${out.id}`)
+  })
+
+  it("surfaces a 400 validation body for the model to fix", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("invalid trigger platform", { status: 400 })))
+    const out = JSON.parse(
+      await byName("ha_config_upsert").invoke({ domain: "automation", id: "1", config: {} }),
+    )
+    expect(out.status).toBe(400)
+    expect(out.error).toContain("invalid trigger")
+  })
+})

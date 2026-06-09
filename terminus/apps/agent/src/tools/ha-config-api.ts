@@ -80,4 +80,32 @@ const get = tool(
   },
 )
 
-export const haConfigTools = [list, get]
+const upsert = tool(
+  async ({ domain, id, config }: { domain: Domain; id?: string; config: Record<string, unknown> }) => {
+    const finalId = id ?? String(Date.now())
+    const res = await haFetch(`/api/config/${domain}/config/${encodeURIComponent(finalId)}`, {
+      method: "POST",
+      body: JSON.stringify(config),
+    })
+    if (!res.ok) {
+      return JSON.stringify({
+        error: res.error,
+        status: res.status,
+        ...(res.status === 400 ? { hint: "Home Assistant rejected the config — fix it and retry." } : {}),
+      })
+    }
+    return JSON.stringify({ result: "ok", id: finalId, domain })
+  },
+  {
+    name: "ha_config_upsert",
+    description:
+      "Create or overwrite an automation, scene, or script. Omit id to create (a fresh id is generated and returned); pass an existing id to overwrite. For scripts, id is the object_id (a slug). config is the full Home Assistant config object for that domain (e.g. an automation's alias/trigger/condition/action/mode). Home Assistant validates it; a 400 returns the validation error to fix. The change auto-reloads. NEVER overwrite an entity whose packages_managed is true. Before overwriting an existing entity, show the user the config and get confirmation.",
+    schema: z.object({
+      domain: domainSchema,
+      id: z.string().optional(),
+      config: z.record(z.any()),
+    }),
+  },
+)
+
+export const haConfigTools = [list, get, upsert]
