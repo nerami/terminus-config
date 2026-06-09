@@ -43,7 +43,7 @@ const EventType = {
   STATE_SNAPSHOT: "STATE_SNAPSHOT",
 } as const
 
-function aguiToLangchain(messages: AguiMessage[]): BaseMessage[] {
+export function aguiToLangchain(messages: AguiMessage[]): BaseMessage[] {
   const result: BaseMessage[] = []
   for (const m of messages) {
     if (m.role === "user") {
