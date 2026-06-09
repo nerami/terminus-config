@@ -23,10 +23,32 @@ files, **not** in `packages/*.yaml` and **not** in the git repo.
 | Packages-managed edit | **Clone into runtime** | Agent can't edit hand-authored autos in place; it offers a runtime copy, disables the original, and warns the original re-enables on restart. |
 | Tool design | **Approach A** — 4 verb tools + domain enum | Smallest surface that ships; HA owns validation. |
 
+## Prerequisite: LangChain 1.x upgrade (separate commit, done first)
+
+The agent is frozen on the pre-1.0 line — `@langchain/core@0.3.80`, `@langchain/langgraph@0.2.74`,
+`@langchain/anthropic@0.3.34`. This is scaffold drift (carets never crossed the 1.0 major), not a
+deliberate pin. Latest is core 1.1.x / langgraph 1.3.x / anthropic 1.4.x. We bump to 1.x **as its
+own commit before the CRUD work**, so new tools land on the current major and the 1.x LangChain
+skills apply cleanly.
+
+Migration surface is small:
+- `graph.ts`: `createReactAgent` (`@langchain/langgraph/prebuilt`) → `createAgent` (LangChain 1.x);
+  `stateModifier` → the 1.x prompt param; **remove the `topP` hack** — anthropic 1.4 fixes the
+  sonnet-4-6 null guard (verify, then delete).
+- `agent.ts`: confirm `streamEvents({version:"v2"})` event names/shapes
+  (`on_chat_model_stream`, `on_chat_model_end`, `on_tool_end`, `on_tool_error`) survive the bump —
+  **the one real risk**; the hand-rolled AG-UI SSE contract must stay intact.
+- tools (`tool()` + zod): unchanged.
+- deps: bump core/langgraph/anthropic to `^1`; add `langchain@^1` if `createAgent` lives there.
+
+Guided by the `ecosystem-primer` + `langgraph-fundamentals` skills (both target 1.x).
+**Verify before starting CRUD**: `pnpm typecheck` + a live smoke through Copilot (stream a normal
+reply + one `ha_read_manifest` call) proves the streaming bridge still works.
+
 ## Architecture
 
-Deployment unchanged: `@terminus/agent` stays an Express + LangGraph `createReactAgent`
-(Sonnet 4.6) server on the laptop.
+Deployment unchanged: `@terminus/agent` stays an Express + LangGraph (`createAgent`, Sonnet 4.6)
+server on the laptop.
 
 ```
 HA dashboard → Copilot panel (ingress)
