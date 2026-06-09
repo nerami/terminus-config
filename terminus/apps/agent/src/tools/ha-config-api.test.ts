@@ -9,7 +9,10 @@ vi.mock("@terminus/manifest", () => ({
 
 import { haConfigTools } from "./ha-config-api.js"
 
-const byName = (n: string) => haConfigTools.find((t) => t.name === n)!
+// tools have heterogeneous zod schemas; the union's generic .invoke signatures
+// are not mutually assignable, so expose a loosely-typed handle for tests.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const byName = (n: string): any => haConfigTools.find((t) => t.name === n)
 const ORIG = { ...process.env }
 
 beforeEach(() => {
@@ -58,5 +61,23 @@ describe("ha_config_list", () => {
     )
     const out = JSON.parse(await byName("ha_config_list").invoke({ domain: "script" }))
     expect(out[0].id).toBe("good_morning")
+  })
+})
+
+describe("ha_config_get", () => {
+  it("returns the config JSON on 200", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ alias: "Yard", trigger: [] }), { status: 200 })),
+    )
+    const out = JSON.parse(await byName("ha_config_get").invoke({ domain: "automation", id: "222" }))
+    expect(out.alias).toBe("Yard")
+  })
+
+  it("maps 404 to a not-editable message", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("Not found", { status: 404 })))
+    const out = JSON.parse(await byName("ha_config_get").invoke({ domain: "automation", id: "999" }))
+    expect(out.status).toBe(404)
+    expect(out.error).toContain("not editable")
   })
 })

@@ -58,4 +58,26 @@ const list = tool(
   },
 )
 
-export const haConfigTools = [list]
+const get = tool(
+  async ({ domain, id }: { domain: Domain; id: string }) => {
+    const res = await haFetch(`/api/config/${domain}/config/${encodeURIComponent(id)}`)
+    if (!res.ok) {
+      if (res.status === 404) {
+        return JSON.stringify({
+          error: "not editable / not found — likely packages-managed; check ha_read_manifest",
+          status: 404,
+        })
+      }
+      return JSON.stringify({ error: res.error, status: res.status })
+    }
+    return JSON.stringify(res.data, null, 2)
+  },
+  {
+    name: "ha_config_get",
+    description:
+      "Read the editable config of one automation, scene, or script by id (for scripts, id is the object_id). Returns the full config object. A 404 means the entity is not editable via these tools (hand-authored in the repo) — do not retry; treat it as packages-managed.",
+    schema: z.object({ domain: domainSchema, id: z.string() }),
+  },
+)
+
+export const haConfigTools = [list, get]
