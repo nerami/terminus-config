@@ -121,3 +121,20 @@ describe("ha_config_upsert", () => {
     expect(out.error).toContain("invalid trigger")
   })
 })
+
+describe("ha_config_delete", () => {
+  it("DELETEs the id and reports ok", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ result: "ok" }), { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+    const out = JSON.parse(await byName("ha_config_delete").invoke({ domain: "automation", id: "222" }))
+    expect(out.result).toBe("ok")
+    expect((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].method).toBe("DELETE")
+  })
+
+  it("maps 404 to a not-editable message", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("Not found", { status: 404 })))
+    const out = JSON.parse(await byName("ha_config_delete").invoke({ domain: "automation", id: "999" }))
+    expect(out.status).toBe(404)
+    expect(out.error).toContain("not editable")
+  })
+})

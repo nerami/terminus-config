@@ -108,4 +108,28 @@ const upsert = tool(
   },
 )
 
-export const haConfigTools = [list, get, upsert]
+const del = tool(
+  async ({ domain, id }: { domain: Domain; id: string }) => {
+    const res = await haFetch(`/api/config/${domain}/config/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    })
+    if (!res.ok) {
+      if (res.status === 404) {
+        return JSON.stringify({
+          error: "not editable / not found — likely packages-managed",
+          status: 404,
+        })
+      }
+      return JSON.stringify({ error: res.error, status: res.status })
+    }
+    return JSON.stringify({ result: "ok", id, domain })
+  },
+  {
+    name: "ha_config_delete",
+    description:
+      "Delete an automation, scene, or script by id (for scripts, id is the object_id). A 404 means it is not editable (packages-managed) — do not retry. The change auto-reloads. This is recoverable only via a Home Assistant backup, so confirm with the user before calling.",
+    schema: z.object({ domain: domainSchema, id: z.string() }),
+  },
+)
+
+export const haConfigTools = [list, get, upsert, del]
