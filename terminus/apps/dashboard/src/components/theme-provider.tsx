@@ -6,30 +6,18 @@ type ResolvedTheme = "dark" | "light"
 
 type ThemeProviderProps = {
   children: React.ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
   disableTransitionOnChange?: boolean
 }
 
 type ThemeProviderState = {
   theme: Theme
-  setTheme: (theme: Theme) => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
-const THEME_VALUES: Theme[] = ["dark", "light", "system"]
 
 const ThemeProviderContext = React.createContext<
   ThemeProviderState | undefined
 >(undefined)
-
-function isTheme(value: string | null): value is Theme {
-  if (value === null) {
-    return false
-  }
-
-  return THEME_VALUES.includes(value as Theme)
-}
 
 function getSystemTheme(): ResolvedTheme {
   if (window.matchMedia(COLOR_SCHEME_QUERY).matches) {
@@ -58,50 +46,13 @@ function disableTransitionsTemporarily() {
   }
 }
 
-function isEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  if (target.isContentEditable) {
-    return true
-  }
-
-  const editableParent = target.closest(
-    "input, textarea, select, [contenteditable='true']"
-  )
-  if (editableParent) {
-    return true
-  }
-
-  return false
-}
-
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
-  storageKey = "theme",
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey)
-    if (isTheme(storedTheme)) {
-      return storedTheme
-    }
-
-    return defaultTheme
-  })
-
-  const setTheme = React.useCallback(
-    (nextTheme: Theme) => {
-      localStorage.setItem(storageKey, nextTheme)
-      setThemeState(nextTheme)
-    },
-    [storageKey]
-  )
-
-  // The theme class drives two kinds of rules that need different anchors:
+  // The theme always follows the OS color scheme — there is no manual override.
+  // The resolved class drives two kinds of rules that need different anchors:
   //   - `:host(.dark)` (our design tokens) needs the class on the shadow HOST.
   //   - `:is(.dark *)` (Tailwind `dark:` variant — used by our utilities and by
   //     CopilotKit) only matches a `.dark` ancestor *inside* the shadow tree,
@@ -111,40 +62,32 @@ export function ThemeProvider({
   const wrapperRef = React.useRef<HTMLElement | null>(null)
   const themeTargetRef = React.useRef<HTMLElement | null>(null)
 
-  const applyTheme = React.useCallback(
-    (nextTheme: Theme) => {
-      const resolvedTheme =
-        nextTheme === "system" ? getSystemTheme() : nextTheme
-      const restoreTransitions = disableTransitionOnChange
-        ? disableTransitionsTemporarily()
-        : null
+  const applyTheme = React.useCallback(() => {
+    const resolvedTheme = getSystemTheme()
+    const restoreTransitions = disableTransitionOnChange
+      ? disableTransitionsTemporarily()
+      : null
 
-      const targets = new Set<HTMLElement>()
-      if (wrapperRef.current) targets.add(wrapperRef.current)
-      if (themeTargetRef.current) targets.add(themeTargetRef.current)
-      targets.add(document.documentElement)
-      for (const t of targets) {
-        t.classList.remove("light", "dark")
-        t.classList.add(resolvedTheme)
-      }
+    const targets = new Set<HTMLElement>()
+    if (wrapperRef.current) targets.add(wrapperRef.current)
+    if (themeTargetRef.current) targets.add(themeTargetRef.current)
+    targets.add(document.documentElement)
+    for (const t of targets) {
+      t.classList.remove("light", "dark")
+      t.classList.add(resolvedTheme)
+    }
 
-      if (restoreTransitions) {
-        restoreTransitions()
-      }
-    },
-    [disableTransitionOnChange]
-  )
+    if (restoreTransitions) {
+      restoreTransitions()
+    }
+  }, [disableTransitionOnChange])
 
   React.useEffect(() => {
-    applyTheme(theme)
-
-    if (theme !== "system") {
-      return undefined
-    }
+    applyTheme()
 
     const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY)
     const handleChange = () => {
-      applyTheme("system")
+      applyTheme()
     }
 
     mediaQuery.addEventListener("change", handleChange)
@@ -152,79 +95,13 @@ export function ThemeProvider({
     return () => {
       mediaQuery.removeEventListener("change", handleChange)
     }
-  }, [theme, applyTheme])
+  }, [applyTheme])
 
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat) {
-        return
-      }
-
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return
-      }
-
-      if (isEditableTarget(event.target)) {
-        return
-      }
-
-      if (event.key.toLowerCase() !== "d") {
-        return
-      }
-
-      setThemeState((currentTheme) => {
-        const nextTheme =
-          currentTheme === "dark"
-            ? "light"
-            : currentTheme === "light"
-              ? "dark"
-              : getSystemTheme() === "dark"
-                ? "light"
-                : "dark"
-
-        localStorage.setItem(storageKey, nextTheme)
-        return nextTheme
-      })
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [storageKey])
-
-  React.useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.storageArea !== localStorage) {
-        return
-      }
-
-      if (event.key !== storageKey) {
-        return
-      }
-
-      if (isTheme(event.newValue)) {
-        setThemeState(event.newValue)
-        return
-      }
-
-      setThemeState(defaultTheme)
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-    }
-  }, [defaultTheme, storageKey])
-
-  const value = React.useMemo(
+  const value = React.useMemo<ThemeProviderState>(
     () => ({
-      theme,
-      setTheme,
+      theme: "system",
     }),
-    [theme, setTheme]
+    []
   )
 
   return (
@@ -243,7 +120,7 @@ export function ThemeProvider({
           const rootNode = el.getRootNode()
           themeTargetRef.current =
             rootNode instanceof ShadowRoot ? (rootNode.host as HTMLElement) : el
-          applyTheme(theme)
+          applyTheme()
         }}
         style={{ display: "contents" }}
       >
@@ -260,7 +137,7 @@ export const useTheme = () => {
     // Degrade gracefully when rendered without a provider (isolated tests,
     // standalone embeds) instead of crashing. The app always wraps with
     // ThemeProvider, so this default only applies outside it.
-    return { theme: "system" as Theme, setTheme: () => {} }
+    return { theme: "system" as Theme }
   }
 
   return context
