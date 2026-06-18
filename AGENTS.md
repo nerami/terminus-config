@@ -79,19 +79,6 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_vscode | Studio Code Server | 6.0.1 |
 | a0d7b954_tailscale | Tailscale | 0.28.1 |
 | a0d7b954_ssh | Advanced SSH & Web Terminal | 23.0.9 |
-| local_terminus_copilot | Terminus Copilot | 0.1.0 |
-
-### Terminus Copilot Internals
-
-`addons/terminus-copilot/` (slug `local_terminus_copilot`): Node/TypeScript, pnpm, Dockerized.
-
-- **`src/server.ts`** — Hono HTTP server, Supervisor ingress entrypoint.
-- **`src/runtime.ts`** — CopilotKit runtime. Two required config values (wrong shape = startup error):
-  - `mode: "single-route"` — must be explicit
-  - `cacheControl: { type: "ephemeral" }` — must be object, not string
-- **HA auth**: `supervisor/api` WebSocket command — not REST `/api/hassio/*` (those 401 on non-admin paths).
-- **API key**: set via add-on options UI (`ANTHROPIC_API_KEY`), not `.env`.
-- After source changes: sync via `bin/deploy-addons-ssh.sh`, then `ha apps rebuild local_terminus_copilot` on device.
 
 Local add-ons live in `addons/<dir>/` in this repo. Sync to `/addons/`
 on device via `bin/deploy-addons.sh` (called by `bin/deploy.sh` when
