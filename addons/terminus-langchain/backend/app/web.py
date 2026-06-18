@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -23,6 +24,7 @@ from starlette.background import BackgroundTask
 
 from .config import Settings, load_settings
 from .ha_client import HAClient
+from . import ha_registry
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 LANGGRAPH_URL = os.environ.get("LANGGRAPH_URL", "http://127.0.0.1:2025")
@@ -44,6 +46,12 @@ _NOT_CONFIGURED = {
     "url": "",
 }
 
+_NOT_CONFIGURED_ERROR = {"error": "Home Assistant connection not configured"}
+
+# Topology snapshots are relatively expensive (four registry/state list calls),
+# so cache the last result briefly to absorb rapid view switches in the UI.
+_TOPOLOGY_TTL = 15.0
+
 
 def _ws_connect(url: str):
     import websockets
@@ -57,8 +65,11 @@ def create_app(
     client: Optional[HAClient] = None,
     static_dir: Path = STATIC_DIR,
     proxy_transport: Optional[httpx.BaseTransport] = None,
+    registry_connect: Optional[ha_registry.ConnectFn] = None,
+    ha_rest_transport: Optional[httpx.BaseTransport] = None,
 ) -> FastAPI:
     settings = settings or load_settings()
+    registry_connect = registry_connect or _ws_connect
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -66,6 +77,7 @@ def create_app(
         if ha is None and settings.ws_url:
             ha = HAClient(settings.ws_url, settings.ha_token, _ws_connect)
         app.state.ha = ha
+        app.state.topology_cache = None  # (monotonic_ts, data)
         app.state.http = httpx.AsyncClient(
             base_url=LANGGRAPH_URL, transport=proxy_transport, timeout=None
         )
@@ -91,6 +103,54 @@ def create_app(
         if ha is None:
             return JSONResponse(_NOT_CONFIGURED)
         return JSONResponse(ha.get_status())
+
+    @app.get("/ha/topology")
+    async def ha_topology():
+        if not settings.ws_url:
+            return JSONResponse(_NOT_CONFIGURED_ERROR, status_code=503)
+        cached = getattr(app.state, "topology_cache", None)
+        if cached is not None and (time.monotonic() - cached[0]) < _TOPOLOGY_TTL:
+            return JSONResponse(cached[1])
+        try:
+            data = await ha_registry.fetch_topology(settings, registry_connect)
+        except Exception as exc:  # noqa: BLE001 - surface as a 502 to the UI
+            return JSONResponse(
+                {"error": f"{type(exc).__name__}: {exc}"}, status_code=502
+            )
+        app.state.topology_cache = (time.monotonic(), data)
+        return JSONResponse(data)
+
+    @app.get("/ha/automation/{numeric_id}")
+    async def ha_automation(numeric_id: str, entity_id: Optional[str] = None):
+        if not settings.ws_url:
+            return JSONResponse(_NOT_CONFIGURED_ERROR, status_code=503)
+        try:
+            data = await ha_registry.fetch_automation(
+                settings,
+                numeric_id,
+                registry_connect,
+                entity_id=entity_id,
+                transport=ha_rest_transport,
+            )
+        except Exception as exc:  # noqa: BLE001 - surface as a 502 to the UI
+            return JSONResponse(
+                {"error": f"{type(exc).__name__}: {exc}"}, status_code=502
+            )
+        return JSONResponse(data)
+
+    @app.get("/ha/entity/{entity_id}")
+    async def ha_entity(entity_id: str):
+        if not settings.ws_url:
+            return JSONResponse(_NOT_CONFIGURED_ERROR, status_code=503)
+        try:
+            data = await ha_registry.fetch_entity(
+                settings, entity_id, transport=ha_rest_transport
+            )
+        except Exception as exc:  # noqa: BLE001 - surface as a 502 to the UI
+            return JSONResponse(
+                {"error": f"{type(exc).__name__}: {exc}"}, status_code=502
+            )
+        return JSONResponse(data)
 
     @app.api_route(
         "/api/{path:path}",

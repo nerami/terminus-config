@@ -8,6 +8,12 @@ export type Endpoints = {
   apiUrl: string
   /** Home Assistant websocket connection status endpoint. */
   haStatusUrl: string
+  /** Home Assistant topology snapshot (areas/entities/scenes/automations). */
+  haTopologyUrl: string
+  /** Builds the URL for a single automation's config + referenced ids. */
+  haAutomationUrl: (numericId: string, entityId?: string) => string
+  /** Builds the URL for a single entity's current state + attributes. */
+  haEntityUrl: (entityId: string) => string
   /** LangGraph graph id (from langgraph.json). */
   assistantId: string
 }
@@ -26,6 +32,17 @@ export function resolveEndpoints(loc: {
   return {
     apiUrl: new URL("api", base).toString(),
     haStatusUrl: new URL("ha/status", base).toString(),
+    haTopologyUrl: new URL("ha/topology", base).toString(),
+    haAutomationUrl: (numericId: string, entityId?: string) => {
+      const url = new URL(
+        `ha/automation/${encodeURIComponent(numericId)}`,
+        base,
+      )
+      if (entityId) url.searchParams.set("entity_id", entityId)
+      return url.toString()
+    },
+    haEntityUrl: (entityId: string) =>
+      new URL(`ha/entity/${encodeURIComponent(entityId)}`, base).toString(),
     assistantId: ASSISTANT_ID,
   }
 }

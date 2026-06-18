@@ -23,7 +23,11 @@ import {
   SquarePen,
   XIcon,
   Plus,
+  Network,
 } from "lucide-react";
+import { useAtom } from "jotai";
+import { graphPanelOpenAtom } from "@/lib/ha-graph/atoms";
+import { GraphPanel } from "../graph/GraphPanel";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
@@ -115,6 +119,17 @@ function OpenGitHubRepo() {
 export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
+  const [graphPanelOpen, setGraphPanelOpen] = useAtom(graphPanelOpenAtom);
+
+  // The topology diagram and the artifact panel share the right column, so
+  // opening one closes the other. The chat itself is unaffected either way.
+  const rightPanelOpen = artifactOpen || graphPanelOpen;
+  const toggleGraphPanel = () =>
+    setGraphPanelOpen((prev) => {
+      const next = !prev;
+      if (next) closeArtifact();
+      return next;
+    });
 
   const [threadId, _setThreadId] = useQueryState("threadId");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
@@ -286,7 +301,7 @@ export function Thread() {
       <div
         className={cn(
           "grid w-full grid-cols-[1fr_0fr] transition-all duration-500",
-          artifactOpen && "grid-cols-[3fr_2fr]",
+          rightPanelOpen && "grid-cols-[3fr_2fr]",
         )}
       >
         <motion.div
@@ -327,6 +342,13 @@ export function Thread() {
                 )}
               </div>
               <div className="absolute top-2 right-4 flex items-center gap-2">
+                <TooltipIconButton
+                  tooltip="Home topology"
+                  variant="ghost"
+                  onClick={toggleGraphPanel}
+                >
+                  <Network className="size-5" />
+                </TooltipIconButton>
                 <HaStatusIndicator />
                 <OpenGitHubRepo />
               </div>
@@ -373,6 +395,13 @@ export function Thread() {
               </div>
 
               <div className="flex items-center gap-4">
+                <TooltipIconButton
+                  tooltip="Home topology"
+                  variant="ghost"
+                  onClick={toggleGraphPanel}
+                >
+                  <Network className="size-5" />
+                </TooltipIconButton>
                 <HaStatusIndicator />
                 <div className="flex items-center">
                   <OpenGitHubRepo />
@@ -550,16 +579,22 @@ export function Thread() {
         </motion.div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">
-            <div className="grid grid-cols-[1fr_auto] border-b p-4">
-              <ArtifactTitle className="truncate overflow-hidden" />
-              <button
-                onClick={closeArtifact}
-                className="cursor-pointer"
-              >
-                <XIcon className="size-5" />
-              </button>
-            </div>
-            <ArtifactContent className="relative flex-grow" />
+            {graphPanelOpen ? (
+              <GraphPanel />
+            ) : (
+              <>
+                <div className="grid grid-cols-[1fr_auto] border-b p-4">
+                  <ArtifactTitle className="truncate overflow-hidden" />
+                  <button
+                    onClick={closeArtifact}
+                    className="cursor-pointer"
+                  >
+                    <XIcon className="size-5" />
+                  </button>
+                </div>
+                <ArtifactContent className="relative flex-grow" />
+              </>
+            )}
           </div>
         </div>
       </div>
