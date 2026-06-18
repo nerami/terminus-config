@@ -93,16 +93,41 @@ export function GraphCanvas() {
     return () => window.clearTimeout(id);
   }, [baseGraph, setNodes, setEdges, fitView]);
 
-  // Connected-set used to highlight relationships around the selection.
-  const neighbors = useMemo(() => {
+  // Set of nodes to highlight around the selection.
+  //
+  // In the automation drill-down we highlight the *upstream path to the
+  // trigger* - the ancestor closure of the selected node (follow edges backward
+  // source<-target, skipping dashed repeat loop-backs so a loop doesn't drag in
+  // downstream siblings) - plus the selected node's own direct children
+  // (targets). Other views keep simple direct-neighbour highlighting.
+  const isUpstreamMode = view.kind === "automation";
+  const highlightSet = useMemo(() => {
     if (!selected) return null;
     const set = new Set<string>([selected]);
+    if (isUpstreamMode) {
+      const stack = [selected];
+      while (stack.length) {
+        const cur = stack.pop()!;
+        for (const e of edges) {
+          if ((e.data as { dashed?: boolean } | undefined)?.dashed) continue;
+          if (e.target === cur && !set.has(e.source)) {
+            set.add(e.source);
+            stack.push(e.source);
+          }
+        }
+      }
+      // Also include the selected node's direct children (one hop downstream).
+      for (const e of edges) {
+        if (e.source === selected) set.add(e.target);
+      }
+      return set;
+    }
     for (const e of edges) {
       if (e.source === selected) set.add(e.target);
       if (e.target === selected) set.add(e.source);
     }
     return set;
-  }, [selected, edges]);
+  }, [selected, edges, isUpstreamMode]);
 
   // Decorate nodes/edges with highlight + dim flags (req 4).
   const decoratedNodes = useMemo(
@@ -112,24 +137,32 @@ export function GraphCanvas() {
         const data: GraphNodeData = {
           ...n.data,
           isSelected: selected === n.id,
-          emphasized: !!neighbors && neighbors.has(n.id) && selected !== n.id,
+          emphasized:
+            !!highlightSet && highlightSet.has(n.id) && selected !== n.id,
           dimmed:
-            !!neighbors && !neighbors.has(n.id) && !isStructural,
+            !!highlightSet && !highlightSet.has(n.id) && !isStructural,
         };
         return { ...n, data };
       }),
-    [nodes, neighbors, selected],
+    [nodes, highlightSet, selected],
   );
 
   const decoratedEdges = useMemo(
     () =>
       edges.map((e) => {
-        const active = neighbors
-          ? e.source === selected || e.target === selected
-          : false;
-        // Edges dimmed by default; the selected node's edges light up (req 4.1/4.2).
-        const opacity = neighbors ? (active ? 1 : 0.06) : 0.25;
         const dashed = !!(e.data as { dashed?: boolean } | undefined)?.dashed;
+        // In upstream mode an edge is on the highlighted path when both of its
+        // ends are in the ancestor set (and it isn't a loop-back); otherwise an
+        // edge lights up only when it touches the selected node directly.
+        const active = highlightSet
+          ? isUpstreamMode
+            ? !dashed &&
+              highlightSet.has(e.source) &&
+              highlightSet.has(e.target)
+            : e.source === selected || e.target === selected
+          : false;
+        // Edges dimmed by default; highlighted edges light up (req 4.1/4.2).
+        const opacity = highlightSet ? (active ? 1 : 0.06) : 0.25;
         return {
           ...e,
           animated: active,
@@ -141,7 +174,7 @@ export function GraphCanvas() {
           },
         };
       }),
-    [edges, neighbors, selected],
+    [edges, highlightSet, selected, isUpstreamMode],
   );
 
   const currentAreaId = "areaId" in view ? view.areaId : undefined;

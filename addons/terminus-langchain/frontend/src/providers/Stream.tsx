@@ -20,11 +20,10 @@ import { Button } from "@/components/ui/button";
 import { LangGraphLogoSVG } from "@/components/icons/langgraph";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LoaderCircle, RefreshCw } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey } from "@/lib/api-key";
 import { useThreads } from "./Thread";
-import { toast } from "sonner";
 import { endpoints, ASSISTANT_ID } from "@/runtime-config";
 
 export type StateType = { messages: Message[]; ui?: UIMessage[] };
@@ -111,28 +110,132 @@ const StreamSession = ({
     },
   });
 
-  useEffect(() => {
-    checkGraphStatus(apiUrl, apiKey, authScheme).then((ok) => {
-      if (!ok) {
-        toast.error("Failed to connect to LangGraph server", {
-          description: () => (
-            <p>
-              Please ensure your graph is running at <code>{apiUrl}</code> and
-              your API key is correctly set (if connecting to a deployed graph).
-            </p>
-          ),
-          duration: 10000,
-          richColors: true,
-          closeButton: true,
-        });
-      }
-    });
-  }, [apiKey, apiUrl, authScheme]);
-
   return (
     <StreamContext.Provider value={streamValue}>
       {children}
     </StreamContext.Provider>
+  );
+};
+
+type ReadyStatus = "checking" | "ready" | "error";
+
+// Polls the LangGraph server until it answers, so the UI can show a "warming
+// up" state right after an add-on update/restart (the graph server takes a few
+// seconds to come up) instead of a one-shot connection error.
+function useGraphReady(
+  apiUrl: string,
+  apiKey: string | null,
+  authScheme?: string,
+): { status: ReadyStatus; retry: () => void } {
+  const [status, setStatus] = useState<ReadyStatus>("checking");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 40; // ~80s of polling before giving up
+    const INTERVAL_MS = 2000;
+
+    setStatus("checking");
+    const tick = async () => {
+      const ok = await checkGraphStatus(apiUrl, apiKey, authScheme);
+      if (cancelled) return;
+      if (ok) {
+        setStatus("ready");
+        return;
+      }
+      attempts += 1;
+      if (attempts >= MAX_ATTEMPTS) {
+        setStatus("error");
+        return;
+      }
+      timer = setTimeout(tick, INTERVAL_MS);
+    };
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [apiUrl, apiKey, authScheme, reloadKey]);
+
+  return { status, retry: () => setReloadKey((k) => k + 1) };
+}
+
+function StatusCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center p-4">
+      <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-md flex-col items-center gap-4 rounded-lg border p-10 text-center shadow-lg">
+        <LangGraphLogoSVG className="h-8" />
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Gates the chat on the LangGraph server being reachable, showing a warming-up
+// indicator while it starts and a retryable error if it never comes up.
+const ChatRuntime = ({
+  children,
+  apiKey,
+  apiUrl,
+  assistantId,
+  authScheme,
+}: {
+  children: ReactNode;
+  apiKey: string | null;
+  apiUrl: string;
+  assistantId: string;
+  authScheme?: string;
+}) => {
+  const { status, retry } = useGraphReady(apiUrl, apiKey, authScheme);
+
+  if (status === "checking") {
+    return (
+      <StatusCard>
+        <LoaderCircle className="text-muted-foreground size-7 animate-spin" />
+        <h1 className="text-lg font-semibold tracking-tight">
+          Starting Terminus…
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          The agent server is warming up. This can take a moment right after an
+          update or restart.
+        </p>
+      </StatusCard>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <StatusCard>
+        <h1 className="text-lg font-semibold tracking-tight">
+          Couldn't reach the agent server
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Please ensure the graph is running at <code>{apiUrl}</code> and your
+          API key is correctly set (if connecting to a deployed graph).
+        </p>
+        <Button
+          variant="outline"
+          onClick={retry}
+        >
+          <RefreshCw className="size-4" />
+          Retry
+        </Button>
+      </StatusCard>
+    );
+  }
+
+  return (
+    <StreamSession
+      apiKey={apiKey}
+      apiUrl={apiUrl}
+      assistantId={assistantId}
+      authScheme={authScheme}
+    >
+      {children}
+    </StreamSession>
   );
 };
 
@@ -305,14 +408,14 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   return (
-    <StreamSession
+    <ChatRuntime
       apiKey={apiKey}
       apiUrl={finalApiUrl}
       assistantId={finalAssistantId}
       authScheme={finalAuthScheme || undefined}
     >
       {children}
-    </StreamSession>
+    </ChatRuntime>
   );
 };
 

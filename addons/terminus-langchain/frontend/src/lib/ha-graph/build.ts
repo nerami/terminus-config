@@ -119,10 +119,10 @@ export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   const nodes: RFNode[] = [];
   const edges: Edge[] = [];
 
-  // Triangle anchors: Entities top-left, Scenes top-right, Automations bottom.
-  const ENT_ORIGIN = { x: 0, y: 80 };
-  const SCN_ORIGIN = { x: 760, y: 80 };
-  const AUT_ORIGIN = { x: 380, y: 560 };
+  // Triangle anchors: Automations top-middle, Entities bottom-left, Scenes bottom-right.
+  const AUT_ORIGIN = { x: 380, y: 80 };
+  const ENT_ORIGIN = { x: 0, y: 560 };
+  const SCN_ORIGIN = { x: 760, y: 560 };
 
   const groupHeader = (
     id: string,
