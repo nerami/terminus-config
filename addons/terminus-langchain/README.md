@@ -12,9 +12,9 @@ One add-on, two processes behind a single Home Assistant ingress port (`8099`):
 ```
 HA Ingress ─▶ FastAPI (uvicorn :8099)            ── public face
                 ├─ GET /ha/status   → HA websocket connection status
-                ├─ /api/*  (proxy)  → LangGraph dev server :2024   (Plan 2)
+                ├─ /api/*  (proxy)  → LangGraph dev server :2025   (Plan 2)
                 └─ /  (static SPA)  → frontend/dist                (Plan 3)
-             langgraph dev (langgraph-cli[inmem] :2024)            (Plan 2)
+             langgraph dev (langgraph-cli[inmem] :2025)            (Plan 2)
                 └─ graph "agent" = create_agent(ChatAnthropic, tools=[ha_basic_info])
 ```
 
@@ -60,3 +60,29 @@ pnpm dev                     # Vite dev server (proxies /ha and /api to :8099)
 
 Use the existing repo scripts, e.g. `bin/deploy-addons-ssh.sh`, then install
 **Terminus LangChain** from the local add-on store and set the Anthropic key.
+
+After source changes (version unchanged) rebuild on device:
+`ha apps rebuild local_terminus_langchain`.
+
+### Gotchas (learned the hard way)
+
+- **Base image tag must be `{python}-alpine{alpine}`, never bare `{python}`.**
+  `ghcr.io/home-assistant/{arch}-base-python:3.12` does **not** exist — the
+  build dies at metadata resolution (`not found`) before any layer runs. Pin a
+  real published tag in `build.yaml` *and* the Dockerfile `ARG BUILD_FROM`
+  default. Newest available is `3.12-alpine3.18` (no `3.13` yet). List tags:
+  ```bash
+  TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:home-assistant/aarch64-base-python:pull" | jq -r .token)
+  curl -s -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/home-assistant/aarch64-base-python/tags/list | jq -r '.tags[]' | grep '^3.12-'
+  ```
+
+- **`langgraph.json` graph paths must be absolute.** `langgraph dev` resolves
+  relative paths against the process **cwd**, not the `--config` directory.
+  `run.sh` runs from `/data/langgraph` (checkpoint scratch dir), so a relative
+  `./app/agent.py` resolves to `/data/langgraph/app/agent.py` and fails with
+  `GraphLoadError`. Use `/app/backend/...` absolute paths instead.
+
+- **This runs the LangGraph *dev* (in-memory) server**, not a production
+  deployment. Thread history is not durable across rebuilds — `cd /data/langgraph`
+  only persists the `.langgraph_api` scratch dir. Swap to LangSmith Deployment
+  if persistence matters.
