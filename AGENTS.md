@@ -79,6 +79,17 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_vscode | Studio Code Server | 6.0.1 |
 | a0d7b954_tailscale | Tailscale | 0.28.1 |
 | a0d7b954_ssh | Advanced SSH & Web Terminal | 23.0.9 |
+| local_terminus_langchain | Terminus LangChain | 0.1.0 |
+
+### Terminus LangChain Internals
+
+`addons/terminus-langchain/` (slug `local_terminus_langchain`): Python/FastAPI backend + Vite/React frontend, Dockerized.
+
+- **Architecture**: two processes behind ingress port `8099` — FastAPI (uvicorn) is the public face; LangGraph dev server runs on loopback `:2025` and is proxied via `/api/*`. Frontend SPA served from `/` (static build in `frontend/dist`).
+- **HA auth**: `SUPERVISOR_TOKEN` injected automatically (`homeassistant_api: true`) → Core websocket `ws://supervisor/core/websocket`. `ha_url`/`ha_token` options are dev-only fallback.
+- **API key**: set via add-on options UI (`anthropic_api_key`), not `.env`. Model configurable (`model`, default `claude-sonnet-4-6`).
+- After source changes: sync via `bin/deploy-addons-ssh.sh`, then `ha apps rebuild local_terminus_langchain` on device.
+- **Gotchas**: base image tag must be `3.12-alpine3.18` (never bare `:3.12`); `langgraph.json` paths must be absolute (`/app/backend/...`). See `addons/terminus-langchain/README.md` for full details.
 
 Local add-ons live in `addons/<dir>/` in this repo. Sync to `/addons/`
 on device via `bin/deploy-addons.sh` (called by `bin/deploy.sh` when
