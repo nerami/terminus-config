@@ -22,7 +22,6 @@ DEBOUNCE=1  # seconds of quiet before syncing
 log() { printf '%s [sync] %s\n' "$(date '+%H:%M:%S')" "$*"; }
 
 RSYNC_EXCLUDES=(
-  --exclude="terminus/"
   --exclude="addons/"
   --exclude="node_modules/"
   --exclude=".git/"
@@ -82,7 +81,6 @@ do_sync
 # fswatch → debounced rsync
 # Inner read -t drains rapid-fire events; syncs once quiet for DEBOUNCE seconds.
 fswatch -r \
-  -e "terminus" \
   -e "addons" \
   -e "node_modules" \
   -e "\.git" \
