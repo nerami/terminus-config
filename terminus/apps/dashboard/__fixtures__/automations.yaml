@@ -1,9 +1,0 @@
-- id: ui_kitchen_off
-  alias: 'Kitchen: off at midnight'
-  trigger:
-    - platform: time
-      at: '00:00:00'
-  action:
-    - service: switch.turn_off
-      target:
-        entity_id: switch.kitchen_main

@@ -3,7 +3,7 @@
 Inside the Supervisor the add-on talks to Core through the Supervisor proxy
 (``ws://supervisor/core/websocket``) authenticated with ``SUPERVISOR_TOKEN``.
 For local development outside the Supervisor we fall back to an explicit HA URL
-plus a long-lived access token (mirrors ``terminus/apps/agent``).
+plus a long-lived access token.
 """
 
 from __future__ import annotations

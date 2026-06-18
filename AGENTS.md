@@ -1,5 +1,3 @@
-@terminus/AGENTS.md
-
 # HA Config Repo
 
 Source-of-truth for HA Green at home. Edit here → commit `git@github.com:nerami/home-assistant.git` → deploy on device.
@@ -18,7 +16,7 @@ Source-of-truth for HA Green at home. Edit here → commit `git@github.com:neram
 - **Network split**:
   - Tailscale Funnel exposes frontend `:443` to public internet (HTTPS only, 443/8443/10000).
   - SSH NOT on Funnel. Tailnet-only, peer-to-peer 100.x.
-  - **SSH add-on uses Docker bridge networking** — outbound connections from inside the SSH add-on shell cannot reach Tailscale peers (100.x.x.x). Use LAN IPs for device→laptop connections (e.g. `terminus_agent_url`). `tailscale` binary is also not available in the SSH add-on PATH.
+  - **SSH add-on uses Docker bridge networking** — outbound connections from inside the SSH add-on shell cannot reach Tailscale peers (100.x.x.x). Use LAN IPs for device→laptop connections. `tailscale` binary is also not available in the SSH add-on PATH.
 - SSH: `root@terminus.tanuki-mirzam.ts.net -p 22222`. Add-on: **Advanced SSH & Web Terminal** (Frenck). Has `jq`, `python3`, `curl`, full Alpine apk. Key-auth + command-mode (`ssh root@host 'cmd'`).
 - Local env (assume defined, do not re-verify):
   - `HASS_SERVER=https://terminus.tanuki-mirzam.ts.net`
@@ -112,11 +110,7 @@ secrets.yaml.example       # schema only; real secrets.yaml lives on device
 packages/                  # source-of-truth for hand-written work
 blueprints/                # automation/script blueprints
 addons/                    # local Supervisor add-ons (synced to /addons/)
-terminus/                  # pnpm workspace — apps/dashboard (panel) + apps/agent (LangGraph)
-  apps/dashboard/          # custom HA panel — own CLAUDE.md
-  apps/agent/              # LangGraph.js agent (laptop-hosted, Tailscale LAN)
 bin/                       # deploy + reload + watcher scripts (see bin/ inventory below)
-www/terminus-dashboard/    # built Terminus panel artifacts (index.js, style.css, graph.json)
 # themes/, custom_components/, dashboards/ — absent, create when needed
 ```
 
@@ -207,27 +201,8 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 | `watcher-ssh.sh` | laptop | SSH wrapper to manage watcher.sh (start/stop/status/logs) |
 | `sync-watch.sh` | laptop | fswatch → debounced rsync main/ → device; pairs with watcher.sh |
 | `dev-watch.sh` | laptop | start device watcher + sync-watch.sh together (hot-reload pair) |
-| `deploy-www-ssh.sh` | laptop | rsync built www/terminus-dashboard/ → /config/www/terminus-dashboard/ on device |
-| `build-deploy-terminus-ssh.sh` | laptop | pnpm build in terminus-dashboard/ then deploy-www-ssh.sh in one step |
 | `status.sh` | device | show HA core info, addon states, last deploy SHA, watcher status |
 | `status-ssh.sh` | laptop | SSH wrapper for status.sh |
-
-### Terminus Panel Build Artifacts
-
-`www/` is gitignored — build artifacts are not committed. Workflow after editing `terminus-dashboard/src/`:
-
-```bash
-bin/build-deploy-terminus-ssh.sh          # build + rsync in one step
-# or manually:
-cd terminus/apps/dashboard && pnpm build  # outputs to ../../../www/terminus-dashboard/
-bin/deploy-www-ssh.sh                     # rsync www/terminus-dashboard/ → /config/www/terminus-dashboard/ on device
-```
-
-HA serves the bundle from `/local/terminus-dashboard/` (maps to `/config/www/terminus-dashboard/` on device).
-
-**Backlog**:
-- Build `terminus-dashboard/` directly on the HA Green after `git pull` — eliminates the laptop build + SSH copy step.
-- Add health-check endpoint in `terminus-copilot` that pings `TERMINUS_AGENT_URL/health` and exposes agent liveness to HA (`binary_sensor` via REST or Supervisor) for dashboards / notifications.
 
 ## Do Not Touch
 

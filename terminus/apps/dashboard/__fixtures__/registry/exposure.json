@@ -1,6 +1,0 @@
-{
-  "exposed_entities": {
-    "light.lr_lamp": { "conversation": true },
-    "scene.lr_dim": { "conversation": false }
-  }
-}
