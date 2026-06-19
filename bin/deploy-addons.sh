@@ -11,8 +11,12 @@
 #   - Version bumped → ha apps update  local_<slug>
 #   - Same version   → ha apps rebuild local_<slug>
 #
-# Intentionally NO --delete: never nuke a manually-installed local add-on
-# that lives outside the repo. Remove stale dirs manually if needed.
+# Per-addon --delete: we sync each tracked add-on dir individually with
+# --delete so files removed/renamed in the repo (e.g. a refactor that splits a
+# flat module into a directory) don't linger on the device and shadow the new
+# layout. We iterate only over dirs present in the repo, so a manually-installed
+# local add-on that lives in /addons/ but NOT in the repo is never touched.
+# --exclude'd paths (node_modules/, dist/, build/) are protected from deletion.
 #
 # Standalone usage OR called by deploy.sh after a successful git pull.
 
@@ -37,15 +41,18 @@ fi
 command -v rsync >/dev/null || fail "rsync not found in PATH."
 command -v ha    >/dev/null || fail "ha CLI not found — run inside the SSH add-on."
 
-log "Syncing $SRC/ → $DST/"
-rsync -a \
-  --exclude 'node_modules/' \
-  --exclude '.git/' \
-  --exclude 'dist/' \
-  --exclude 'build/' \
-  --exclude '__pycache__/' \
-  --exclude '*.log' \
-  "$SRC/" "$DST/" || fail "rsync failed."
+log "Syncing $SRC/ → $DST/ (per-addon, mirroring in-repo deletions)"
+for dir in "$SRC"/*/; do
+  name="$(basename "$dir")"
+  rsync -a --delete \
+    --exclude 'node_modules/' \
+    --exclude '.git/' \
+    --exclude 'dist/' \
+    --exclude 'build/' \
+    --exclude '__pycache__/' \
+    --exclude '*.log' \
+    "$dir" "$DST/$name/" || fail "rsync failed for $name."
+done
 
 log "Reloading Supervisor (picks up new local add-ons)"
 ha supervisor reload || fail "ha supervisor reload failed."
