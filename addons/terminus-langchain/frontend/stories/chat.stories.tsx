@@ -1,5 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { Message } from '@langchain/langgraph-sdk';
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+} from '@tanstack/react-router';
 
 import StreamContext, { useStreamContext } from '@/providers/Stream';
 import { ThreadContext } from '@/providers/Thread';
@@ -82,7 +90,9 @@ const MOCK_THREADS = {
   setThreadsLoading: () => {},
 };
 
-function ChatStory() {
+// Thread calls useThreadId() → useParams() → TanStack Router context required.
+// Solution: render Thread as a route component so RouterProvider provides context.
+function ThreadWithProviders() {
   return (
     <ThreadContext.Provider value={MOCK_THREADS}>
       <StreamContext.Provider value={MOCK_STREAM}>
@@ -93,6 +103,21 @@ function ChatStory() {
       </StreamContext.Provider>
     </ThreadContext.Provider>
   );
+}
+
+const _rootRoute = createRootRoute({ component: () => <Outlet /> });
+const _indexRoute = createRoute({
+  getParentRoute: () => _rootRoute,
+  path: '/',
+  component: ThreadWithProviders,
+});
+const storyRouter = createRouter({
+  routeTree: _rootRoute.addChildren([_indexRoute]),
+  history: createMemoryHistory({ initialEntries: ['/'] }),
+});
+
+function ChatStory() {
+  return <RouterProvider router={storyRouter} />;
 }
 
 const meta: Meta = {
