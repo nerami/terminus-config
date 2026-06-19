@@ -1,4 +1,4 @@
-name: Terminus LangChain
+name: Terminus
 version: "0.3.9"
 slug: terminus
 description: Agent chat UI backed by a local LangChain/LangGraph agent (Anthropic).
