@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
 import { ReactNode, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useStreamContext } from "@/providers/Stream";
 import { useState, FormEvent } from "react";
 import { Button } from "../ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Checkpoint, Message } from "@langchain/langgraph-sdk";
 import { AssistantMessage, AssistantMessageLoading } from "./messages/ai";
 import { HumanMessage } from "./messages/human";
@@ -12,21 +12,27 @@ import {
   DO_NOT_RENDER_ID_PREFIX,
   ensureToolCallsHaveResponses,
 } from "@/lib/ensure-tool-responses";
-import { LangGraphLogoSVG } from "../icons/langgraph";
+import { TerminusLogoSVG } from "../icons/terminus";
 import { TooltipIconButton } from "./tooltip-icon-button";
 import { HaStatusIndicator } from "./ha-status-indicator";
 import {
   ArrowDown,
   LoaderCircle,
-  PanelRightOpen,
-  PanelRightClose,
   SquarePen,
   XIcon,
   Plus,
   Network,
 } from "lucide-react";
-import { useAtom, useSetAtom } from "jotai";
-import { chatHistoryOpenAtom, graphPanelOpenAtom, graphViewAtom } from "@/lib/ha-graph/atoms";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import {
+  graphFullscreenAtom,
+  graphPanelOpenAtom,
+  graphViewAtom,
+  selectedNodeAtom,
+  topologyAtom,
+} from "@/lib/ha-graph/atoms";
+import { contextItems, formatContextBlock } from "@/lib/chat-context";
+import { ContextChips } from "./ContextChips";
 import { GraphPanel } from "../graph/GraphPanel";
 import { TopologyUrlSync } from "../graph/TopologyUrlSync";
 import { ParentUrlSync } from "../ParentUrlSync";
@@ -35,16 +41,8 @@ import { useThreadId } from "@/hooks/use-thread-id";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
-import { GitHubSVG } from "../icons/github";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { ContentBlocksPreview } from "./ContentBlocksPreview";
 import {
@@ -95,36 +93,11 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
-function OpenGitHubRepo() {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <a
-              href="https://github.com/langchain-ai/agent-chat-ui"
-              target="_blank"
-              className="flex items-center justify-center"
-            />
-          }
-        >
-          <GitHubSVG
-            width="24"
-            height="24"
-          />
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Open GitHub repo</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
 export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
   const [graphPanelOpen, setGraphPanelOpen] = useAtom(graphPanelOpenAtom);
+  const [graphFullscreen, setGraphFullscreen] = useAtom(graphFullscreenAtom);
   const setGraphView = useSetAtom(graphViewAtom);
 
   // The topology diagram and the artifact panel share the right column, so
@@ -138,12 +111,15 @@ export function Thread() {
       if (next) {
         closeArtifact();
         setGraphView({ kind: "areas" });
+      } else {
+        // Leaving the panel always exits fullscreen so the chat comes back.
+        setGraphFullscreen(false);
       }
       return next;
     });
 
   const [threadId, _setThreadId] = useThreadId();
-  const [chatHistoryOpen, setChatHistoryOpen] = useAtom(chatHistoryOpenAtom);
+  const [chatTab, setChatTab] = useState<"session" | "history">("session");
   const [hideToolCalls, setHideToolCalls] = useQueryState(
     "hideToolCalls",
     parseAsBoolean.withDefault(false),
@@ -160,7 +136,27 @@ export function Thread() {
     handlePaste,
   } = useFileUpload();
   const [firstTokenReceived, setFirstTokenReceived] = useState(false);
-  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+
+  // Home-topology context the user can attach to a message via chips.
+  const graphView = useAtomValue(graphViewAtom);
+  const selectedNode = useAtomValue(selectedNodeAtom);
+  const topology = useAtomValue(topologyAtom);
+  const [inactiveContextIds, setInactiveContextIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const availableContext = contextItems(graphView, selectedNode, topology);
+  const activeContextIds = new Set(
+    availableContext
+      .filter((i) => !inactiveContextIds.has(i.id))
+      .map((i) => i.id),
+  );
+  const toggleContext = (id: string) =>
+    setInactiveContextIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const stream = useStreamContext();
   const messages = stream.messages;
@@ -238,12 +234,22 @@ export function Thread() {
     const context =
       Object.keys(artifactContext).length > 0 ? artifactContext : undefined;
 
+    // Active topology chips are sent as the run's runtime context (not in the
+    // message), so the agent reads them for this turn while the stored message
+    // stays exactly what the user typed.
+    const topologyContext = formatContextBlock(
+      availableContext.filter((i) => activeContextIds.has(i.id)),
+    );
+
     stream.submit(
       { messages: [...toolMessages, newHumanMessage], context },
       {
         streamMode: ["values"],
         streamSubgraphs: true,
         streamResumable: true,
+        ...(topologyContext
+          ? { context: { topology_context: topologyContext } }
+          : {}),
         optimisticValues: (prev) => ({
           ...prev,
           context,
@@ -283,128 +289,40 @@ export function Thread() {
     <div className="flex h-screen w-full overflow-hidden">
       <TopologyUrlSync />
       <ParentUrlSync />
-      <div className="relative hidden lg:flex">
-        <motion.div
-          className="absolute z-20 h-full overflow-hidden border-r"
-          style={{ width: 300 }}
-          animate={
-            isLargeScreen
-              ? { x: chatHistoryOpen ? 0 : -300 }
-              : { x: chatHistoryOpen ? 0 : -300 }
-          }
-          initial={{ x: -300 }}
-          transition={
-            isLargeScreen
-              ? { type: "spring", stiffness: 300, damping: 30 }
-              : { duration: 0 }
-          }
-        >
-          <div
-            className="relative h-full"
-            style={{ width: 300 }}
-          >
-            <ThreadHistory />
-          </div>
-        </motion.div>
-      </div>
 
       <div
         className={cn(
           "grid w-full grid-cols-[1fr_0fr] transition-all duration-500",
-          rightPanelOpen && "grid-cols-[3fr_2fr]",
+          // Open: equal split on large screens, give the panel more room on xl.
+          rightPanelOpen && "grid-cols-[2fr_2fr] xl:grid-cols-[2fr_3fr]",
+          // Fullscreen topology hides the chat column entirely.
+          rightPanelOpen &&
+            graphFullscreen &&
+            "grid-cols-[0fr_1fr] xl:grid-cols-[0fr_1fr]",
         )}
       >
-        <motion.div
-          className={cn(
-            "relative flex min-w-0 flex-1 flex-col overflow-hidden",
-            !chatStarted && "grid-rows-[1fr]",
-          )}
-          layout={isLargeScreen}
-          animate={{
-            marginLeft: chatHistoryOpen ? (isLargeScreen ? 300 : 0) : 0,
-            width: chatHistoryOpen
-              ? isLargeScreen
-                ? "calc(100% - 300px)"
-                : "100%"
-              : "100%",
-          }}
-          transition={
-            isLargeScreen
-              ? { type: "spring", stiffness: 300, damping: 30 }
-              : { duration: 0 }
-          }
-        >
-          {!chatStarted && (
-            <div className="absolute top-0 left-0 z-10 flex w-full items-center justify-between gap-3 p-2 pl-4">
-              <div>
-                {(!chatHistoryOpen || !isLargeScreen) && (
-                  <Button
-                    className="hover:bg-gray-100"
-                    variant="ghost"
-                    onClick={() => setChatHistoryOpen((p) => !p)}
-                  >
-                    {chatHistoryOpen ? (
-                      <PanelRightOpen className="size-5" />
-                    ) : (
-                      <PanelRightClose className="size-5" />
-                    )}
-                  </Button>
-                )}
-              </div>
-              <div className="absolute top-2 right-4 flex items-center gap-2">
-                <TooltipIconButton
-                  tooltip="Home topology"
-                  variant="ghost"
-                  onClick={toggleGraphPanel}
-                >
-                  <Network className="size-5" />
-                </TooltipIconButton>
-                <HaStatusIndicator />
-                <OpenGitHubRepo />
-              </div>
-            </div>
-          )}
-          {chatStarted && (
-            <div className="relative z-10 flex items-center justify-between gap-3 p-2">
-              <div className="relative flex items-center justify-start gap-2">
-                <div className="absolute left-0 z-10">
-                  {(!chatHistoryOpen || !isLargeScreen) && (
-                    <Button
-                      className="hover:bg-gray-100"
-                      variant="ghost"
-                      onClick={() => setChatHistoryOpen((p) => !p)}
-                    >
-                      {chatHistoryOpen ? (
-                        <PanelRightOpen className="size-5" />
-                      ) : (
-                        <PanelRightClose className="size-5" />
-                      )}
-                    </Button>
-                  )}
-                </div>
-                <motion.button
-                  className="flex cursor-pointer items-center gap-2"
-                  onClick={() => setThreadId(null)}
-                  animate={{
-                    marginLeft: !chatHistoryOpen ? 48 : 0,
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30,
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <Tabs
+            value={chatTab}
+            onValueChange={(v) => setChatTab(v as "session" | "history")}
+            className="flex h-full min-h-0 flex-col gap-0"
+          >
+            {/* 1. Top bar: the logo (always) + actions. */}
+            <div className="z-10 flex min-h-[52px] items-center justify-between gap-3 p-2">
+              <div className="flex items-center gap-3">
+                <button
+                  className="flex cursor-pointer items-center"
+                  aria-label="New chat"
+                  onClick={() => {
+                    setThreadId(null);
+                    setChatTab("session");
                   }}
                 >
-                  <LangGraphLogoSVG
-                    width={32}
-                    height={32}
-                  />
-                  <span className="text-xl font-semibold tracking-tight">
-                    Agent Chat
-                  </span>
-                </motion.button>
+                  <TerminusLogoSVG className="h-6" />
+                </button>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <TooltipIconButton
                   tooltip="Home topology"
                   variant="ghost"
@@ -413,28 +331,38 @@ export function Thread() {
                   <Network className="size-5" />
                 </TooltipIconButton>
                 <HaStatusIndicator />
-                <div className="flex items-center">
-                  <OpenGitHubRepo />
-                </div>
                 <TooltipIconButton
                   size="lg"
                   className="p-4"
                   tooltip="New thread"
                   variant="ghost"
-                  onClick={() => setThreadId(null)}
+                  onClick={() => {
+                    setThreadId(null);
+                    setChatTab("session");
+                  }}
                 >
                   <SquarePen className="size-5" />
                 </TooltipIconButton>
               </div>
-
-              <div className="from-background to-background/0 absolute inset-x-0 top-full h-5 bg-gradient-to-b" />
             </div>
-          )}
 
-          <StickToBottom className="relative flex-1 overflow-hidden">
+            {/* 2. Tabs navigation. */}
+            <div className="px-2 pb-2">
+              <TabsList>
+                <TabsTrigger value="session">Session</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* 3. Tabs container. */}
+            <TabsContent
+              value="session"
+              className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
+            >
+              <StickToBottom className="relative flex-1 overflow-hidden">
             <StickyToBottomContent
               className={cn(
-                "absolute inset-0 overflow-y-scroll px-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
+                "absolute inset-0 overflow-x-hidden overflow-y-scroll px-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent",
                 !chatStarted && "mt-[25vh] flex flex-col items-stretch",
                 chatStarted && "grid grid-rows-[1fr_auto]",
               )}
@@ -477,11 +405,14 @@ export function Thread() {
               footer={
                 <div className="sticky bottom-0 flex flex-col items-center gap-8">
                   {!chatStarted && (
-                    <div className="flex items-center gap-3">
-                      <LangGraphLogoSVG className="h-8 flex-shrink-0" />
+                    <div className="flex flex-col items-center gap-2 text-center">
                       <h1 className="text-2xl font-semibold tracking-tight">
-                        Agent Chat
+                        Welcome to Terminus
                       </h1>
+                      <p className="text-muted-foreground">
+                        Ask about your Home Assistant setup, or have it run a
+                        scene or automation for you.
+                      </p>
                     </div>
                   )}
 
@@ -500,6 +431,11 @@ export function Thread() {
                       onSubmit={handleSubmit}
                       className="mx-auto grid max-w-3xl grid-rows-[1fr_auto] gap-2"
                     >
+                      <ContextChips
+                        items={availableContext}
+                        activeIds={activeContextIds}
+                        onToggle={toggleContext}
+                      />
                       <ContentBlocksPreview
                         blocks={contentBlocks}
                         onRemove={removeBlock}
@@ -535,7 +471,7 @@ export function Thread() {
                             />
                             <Label
                               htmlFor="render-tool-calls"
-                              className="text-sm text-gray-600"
+                              className="text-muted-foreground text-sm"
                             >
                               Hide Tool Calls
                             </Label>
@@ -545,8 +481,8 @@ export function Thread() {
                           htmlFor="file-input"
                           className="flex cursor-pointer items-center gap-2"
                         >
-                          <Plus className="size-5 text-gray-600" />
-                          <span className="text-sm text-gray-600">
+                          <Plus className="text-muted-foreground size-5" />
+                          <span className="text-muted-foreground text-sm">
                             Upload PDF or Image
                           </span>
                         </Label>
@@ -584,9 +520,18 @@ export function Thread() {
                   </div>
                 </div>
               }
-            />
-          </StickToBottom>
-        </motion.div>
+              />
+              </StickToBottom>
+            </TabsContent>
+
+            <TabsContent
+              value="history"
+              className="min-h-0 flex-1 overflow-hidden p-2"
+            >
+              <ThreadHistory onThreadSelect={() => setChatTab("session")} />
+            </TabsContent>
+          </Tabs>
+        </div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">
             {graphPanelOpen ? (

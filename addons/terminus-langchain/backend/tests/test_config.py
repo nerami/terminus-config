@@ -61,3 +61,27 @@ def test_normalize_ws_url_variants():
     assert _normalize_ws_url("http://h:8123/api/websocket") == "ws://h:8123/api/websocket"
     assert _normalize_ws_url("ws://h:8123/api/websocket") == "ws://h:8123/api/websocket"
     assert _normalize_ws_url("h:8123") == "ws://h:8123/api/websocket"
+
+
+def test_auto_run_tools_defaults_false():
+    assert load_settings(env={}, options={}).auto_run_tools is False
+
+
+def test_auto_run_tools_from_options():
+    settings = load_settings(env={}, options={"auto_run_tools": True})
+    assert settings.auto_run_tools is True
+
+
+def test_auto_run_tools_from_env_truthy_and_falsy():
+    for truthy in ("true", "True", "1", "yes"):
+        assert load_settings(env={"AUTO_RUN_TOOLS": truthy}, options={}).auto_run_tools is True
+    for falsy in ("false", "False", "0", "no", ""):
+        assert load_settings(env={"AUTO_RUN_TOOLS": falsy}, options={}).auto_run_tools is False
+
+
+def test_auto_run_tools_carried_in_supervisor_mode():
+    settings = load_settings(
+        env={"SUPERVISOR_TOKEN": "super"}, options={"auto_run_tools": True}
+    )
+    assert settings.use_supervisor is True
+    assert settings.auto_run_tools is True

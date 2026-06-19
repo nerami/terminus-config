@@ -148,7 +148,7 @@ export function AssistantMessage({
 
   return (
     <div className="group mr-auto flex w-full items-start gap-2">
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full min-w-0 flex-col gap-2">
         {isToolResult ? (
           <>
             <ToolResult message={message} />

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  automationHasStructure,
   buildAreaGraph,
   buildAreasGraph,
   buildAutomationGraph,
@@ -71,6 +72,21 @@ describe("buildAreaGraph", () => {
     expect(ids).toContain("automation.night->light.lamp");
     expect(ids).toContain("automation.night->scene.movie");
   });
+
+  it("rotates the triangle left: automations & entities share the left column, scenes is right-centered", () => {
+    const { nodes } = buildAreaGraph(topology, "living");
+    const aut = nodes.find((n) => n.id === "group:automations")!;
+    const ent = nodes.find((n) => n.id === "group:entities")!;
+    const scn = nodes.find((n) => n.id === "group:scenes")!;
+
+    // Automations (top) and Entities (bottom) are aligned on the same left x.
+    expect(aut.position.x).toBe(ent.position.x);
+    // Scenes sits to the right of that left column.
+    expect(scn.position.x).toBeGreaterThan(aut.position.x);
+    // Scenes is vertically centered between automations and entities.
+    expect(scn.position.y).toBeGreaterThan(aut.position.y);
+    expect(scn.position.y).toBeLessThan(ent.position.y);
+  });
 });
 
 describe("buildAutomationGraph", () => {
@@ -112,6 +128,22 @@ describe("buildAutomationGraph", () => {
     expect(
       edges.some((e) => e.source === "condition/0" && e.target === "action/0"),
     ).toBe(true);
+  });
+
+  it("detects whether an automation has a parsable structure", () => {
+    expect(
+      automationHasStructure({
+        config: { trigger: [], action: [] },
+        referenced: { entities: [], scenes: [], devices: [] },
+      }),
+    ).toBe(true);
+    // Empty config => never run / not editable => no structure (show hint).
+    expect(
+      automationHasStructure({
+        config: {},
+        referenced: { entities: ["light.lamp"], scenes: [], devices: [] },
+      }),
+    ).toBe(false);
   });
 
   it("falls back to referenced ids when config is empty", () => {

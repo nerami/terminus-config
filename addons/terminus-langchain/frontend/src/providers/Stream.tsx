@@ -18,7 +18,7 @@ import { useQueryState } from "nuqs";
 import { useThreadId } from "@/hooks/use-thread-id";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { LangGraphLogoSVG } from "@/components/icons/langgraph";
+import { TerminusLogoSVG } from "@/components/icons/terminus";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, LoaderCircle, RefreshCw } from "lucide-react";
@@ -168,7 +168,7 @@ function StatusCard({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-4">
       <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-md flex-col items-center gap-4 rounded-lg border p-10 text-center shadow-lg">
-        <LangGraphLogoSVG className="h-8" />
+        <TerminusLogoSVG className="h-8" />
         {children}
       </div>
     </div>
@@ -294,14 +294,14 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
         <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-3xl flex-col rounded-lg border shadow-lg">
           <div className="mt-14 flex flex-col gap-2 border-b p-6">
             <div className="flex flex-col items-start gap-2">
-              <LangGraphLogoSVG className="h-7" />
+              <TerminusLogoSVG className="h-7" />
               <h1 className="text-xl font-semibold tracking-tight">
-                Agent Chat
+                Terminus
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Welcome to Agent Chat! Before you get started, you need to enter
-              the URL of the deployment and the assistant / graph ID.
+              Welcome to Terminus! Before you get started, you need to enter the
+              URL of the deployment and the assistant / graph ID.
             </p>
           </div>
           <form

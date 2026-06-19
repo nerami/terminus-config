@@ -11,10 +11,19 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   graphViewAtom,
+  groupingOf,
+  rootViewFor,
   topologyAtom,
   type GraphView,
 } from "@/lib/ha-graph/atoms";
 import { UNASSIGNED_AREA_ID } from "@/lib/ha-graph/types";
+
+const ROOT_LABEL = {
+  area: "Areas",
+  scenes: "Scenes",
+  automations: "Automations",
+  entities: "Entities",
+} as const;
 
 interface Crumb {
   label: string;
@@ -30,11 +39,20 @@ export function Breadcrumbs() {
       ? "Unassigned"
       : (topology?.areas.find((a) => a.area_id === areaId)?.name ?? areaId);
 
+  const grouping = groupingOf(view);
+  const isRoot =
+    view.kind === "areas" ||
+    view.kind === "scenes" ||
+    view.kind === "automations" ||
+    view.kind === "entities";
   const crumbs: Crumb[] = [
-    { label: "Areas", view: view.kind === "areas" ? null : { kind: "areas" } },
+    {
+      label: ROOT_LABEL[grouping],
+      view: isRoot ? null : rootViewFor(grouping),
+    },
   ];
 
-  if (view.kind !== "areas") {
+  if (grouping === "area" && "areaId" in view) {
     const areaId = view.areaId;
     crumbs.push({
       label: areaName(areaId),

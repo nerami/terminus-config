@@ -4,85 +4,134 @@ import { Thread } from "@langchain/langgraph-sdk";
 import { useEffect } from "react";
 
 import { getContentString } from "../utils";
-import { useAtom } from "jotai";
-import { chatHistoryOpenAtom } from "@/lib/ha-graph/atoms";
 import { useThreadId } from "@/hooks/use-thread-id";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PanelRightOpen, PanelRightClose } from "lucide-react";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { cn } from "@/lib/utils";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import { Archive, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
+
+const SCROLLBAR =
+  "overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent";
+
+function threadLabel(t: Thread): string {
+  if (
+    typeof t.values === "object" &&
+    t.values &&
+    "messages" in t.values &&
+    Array.isArray(t.values.messages) &&
+    t.values.messages?.length > 0
+  ) {
+    return getContentString(t.values.messages[0].content);
+  }
+  return t.thread_id;
+}
 
 function ThreadList({
   threads,
   onThreadClick,
+  onArchive,
 }: {
   threads: Thread[];
   onThreadClick?: (threadId: string) => void;
+  onArchive?: (threadId: string) => void;
 }) {
   const [threadId, setThreadId] = useThreadId();
 
+  if (threads.length === 0) {
+    return (
+      <div className="text-muted-foreground flex h-full w-full items-center justify-center p-6 text-sm">
+        No conversations yet.
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-full w-full flex-col items-start justify-start gap-2 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
-      {threads.map((t) => {
-        let itemText = t.thread_id;
-        if (
-          typeof t.values === "object" &&
-          t.values &&
-          "messages" in t.values &&
-          Array.isArray(t.values.messages) &&
-          t.values.messages?.length > 0
-        ) {
-          const firstMessage = t.values.messages[0];
-          itemText = getContentString(firstMessage.content);
-        }
-        return (
-          <div
-            key={t.thread_id}
-            className="w-full px-1"
+    <div
+      className={cn(
+        "flex h-full w-full flex-col items-start justify-start gap-1",
+        SCROLLBAR,
+      )}
+    >
+      {threads.map((t) => (
+        <div
+          key={t.thread_id}
+          className="group/thread relative flex w-full items-center px-1"
+        >
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full items-start justify-start pr-9 text-left font-normal",
+              t.thread_id === threadId && "bg-muted",
+            )}
+            onClick={(e) => {
+              e.preventDefault();
+              onThreadClick?.(t.thread_id);
+              if (t.thread_id === threadId) return;
+              setThreadId(t.thread_id);
+            }}
           >
-            <Button
-              variant="ghost"
-              className="w-[280px] items-start justify-start text-left font-normal"
-              onClick={(e) => {
-                e.preventDefault();
-                onThreadClick?.(t.thread_id);
-                if (t.thread_id === threadId) return;
-                setThreadId(t.thread_id);
-              }}
-            >
-              <p className="truncate text-ellipsis">{itemText}</p>
-            </Button>
-          </div>
-        );
-      })}
+            <p className="truncate text-ellipsis">{threadLabel(t)}</p>
+          </Button>
+          {onArchive && (
+            <Menu>
+              <MenuTrigger
+                aria-label="Conversation options"
+                className="hover:bg-muted text-muted-foreground absolute right-2 flex size-8 cursor-pointer items-center justify-center rounded-md opacity-0 transition-opacity group-hover/thread:opacity-100 focus-visible:opacity-100 data-[popup-open]:opacity-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="size-4" />
+              </MenuTrigger>
+              <MenuContent>
+                <MenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onArchive(t.thread_id);
+                  }}
+                >
+                  <Archive />
+                  Archive
+                </MenuItem>
+              </MenuContent>
+            </Menu>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
 
 function ThreadHistoryLoading() {
   return (
-    <div className="flex h-full w-full flex-col items-start justify-start gap-2 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
-      {Array.from({ length: 30 }).map((_, i) => (
+    <div
+      className={cn(
+        "flex h-full w-full flex-col items-start justify-start gap-2",
+        SCROLLBAR,
+      )}
+    >
+      {Array.from({ length: 20 }).map((_, i) => (
         <Skeleton
           key={`skeleton-${i}`}
-          className="h-10 w-[280px]"
+          className="h-10 w-full"
         />
       ))}
     </div>
   );
 }
 
-export default function ThreadHistory() {
-  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-  const [chatHistoryOpen, setChatHistoryOpen] = useAtom(chatHistoryOpenAtom);
-
-  const { getThreads, threads, setThreads, threadsLoading, setThreadsLoading } =
-    useThreads();
+export default function ThreadHistory({
+  onThreadSelect,
+}: {
+  onThreadSelect?: (threadId: string) => void;
+}) {
+  const {
+    getThreads,
+    archiveThread,
+    threads,
+    setThreads,
+    threadsLoading,
+    setThreadsLoading,
+  } = useThreads();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -91,55 +140,29 @@ export default function ThreadHistory() {
       .then(setThreads)
       .catch(console.error)
       .finally(() => setThreadsLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleArchive = (id: string) => {
+    archiveThread(id)
+      .then(() => toast.success("Conversation archived"))
+      .catch((err) => {
+        console.error(err);
+        toast.error("Couldn't archive conversation");
+      });
+  };
+
   return (
-    <>
-      <div className="shadow-inner-right hidden h-screen w-[300px] shrink-0 flex-col items-start justify-start gap-6 border-r-[1px] border-slate-300 lg:flex">
-        <div className="flex w-full items-center justify-between px-4 pt-1.5">
-          <Button
-            className="hover:bg-gray-100"
-            variant="ghost"
-            onClick={() => setChatHistoryOpen((p) => !p)}
-          >
-            {chatHistoryOpen ? (
-              <PanelRightOpen className="size-5" />
-            ) : (
-              <PanelRightClose className="size-5" />
-            )}
-          </Button>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Thread History
-          </h1>
-        </div>
-        {threadsLoading ? (
-          <ThreadHistoryLoading />
-        ) : (
-          <ThreadList threads={threads} />
-        )}
-      </div>
-      <div className="lg:hidden">
-        <Sheet
-          open={!!chatHistoryOpen && !isLargeScreen}
-          onOpenChange={(open) => {
-            if (isLargeScreen) return;
-            setChatHistoryOpen(open);
-          }}
-        >
-          <SheetContent
-            side="left"
-            className="flex lg:hidden"
-          >
-            <SheetHeader>
-              <SheetTitle>Thread History</SheetTitle>
-            </SheetHeader>
-            <ThreadList
-              threads={threads}
-              onThreadClick={() => setChatHistoryOpen((o) => !o)}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+    <div className="mx-auto flex h-full w-full max-w-3xl flex-col">
+      {threadsLoading ? (
+        <ThreadHistoryLoading />
+      ) : (
+        <ThreadList
+          threads={threads}
+          onThreadClick={onThreadSelect}
+          onArchive={handleArchive}
+        />
+      )}
+    </div>
   );
 }

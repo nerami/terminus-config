@@ -13,9 +13,11 @@ import {
   SetStateAction,
 } from "react";
 import { createClient } from "./client";
+import { ARCHIVE_METADATA, filterActiveThreads } from "@/lib/thread-archive";
 
 interface ThreadContextType {
   getThreads: () => Promise<Thread[]>;
+  archiveThread: (threadId: string) => Promise<void>;
   threads: Thread[];
   setThreads: Dispatch<SetStateAction<Thread[]>>;
   threadsLoading: boolean;
@@ -66,11 +68,28 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
       limit: 100,
     });
 
-    return threads;
+    // Archived conversations are kept server-side but hidden from the list.
+    return filterActiveThreads(threads);
   }, [apiUrl, assistantId, authScheme, envAssistantId]);
+
+  const archiveThread = useCallback(
+    async (threadId: string): Promise<void> => {
+      if (!apiUrl) return;
+      const client = createClient(
+        apiUrl,
+        getApiKey() ?? undefined,
+        authScheme || undefined,
+      );
+      await client.threads.update(threadId, { metadata: ARCHIVE_METADATA });
+      // Optimistically drop it from the visible list.
+      setThreads((prev) => prev.filter((t) => t.thread_id !== threadId));
+    },
+    [apiUrl, authScheme],
+  );
 
   const value = {
     getThreads,
+    archiveThread,
     threads,
     setThreads,
     threadsLoading,

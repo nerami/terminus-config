@@ -7,6 +7,8 @@ set -e
 # websocket / REST; ha_url/ha_token are a dev-only fallback.
 export ANTHROPIC_API_KEY="$(bashio::config 'anthropic_api_key')"
 export TLC_MODEL="$(bashio::config 'model')"
+# When true, scene/automation tools run without the human approval prompt.
+export AUTO_RUN_TOOLS="$(bashio::config 'auto_run_tools')"
 
 if bashio::config.has_value 'ha_url'; then
   export HASS_URL="$(bashio::config 'ha_url')"

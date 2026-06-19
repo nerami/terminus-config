@@ -1,18 +1,29 @@
 import "@xyflow/react/dist/style.css";
 
 import { ReactFlowProvider } from "@xyflow/react";
-import { useAtomValue, useSetAtom } from "jotai";
-import { LoaderCircle, RefreshCw, XIcon } from "lucide-react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import {
+  LoaderCircle,
+  Maximize2,
+  Minimize2,
+  RefreshCw,
+  XIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTopology } from "@/hooks/use-topology";
-import { graphPanelOpenAtom, topologyAtom } from "@/lib/ha-graph/atoms";
+import {
+  graphFullscreenAtom,
+  graphPanelOpenAtom,
+  topologyAtom,
+} from "@/lib/ha-graph/atoms";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { EntityDetailModal } from "./EntityDetailModal";
 import { GraphCanvas } from "./GraphCanvas";
 
 export function GraphPanel() {
   const setOpen = useSetAtom(graphPanelOpenAtom);
+  const [fullscreen, setFullscreen] = useAtom(graphFullscreenAtom);
   const topology = useAtomValue(topologyAtom);
   const { loading, error, reload } = useTopology(true);
 
@@ -42,7 +53,22 @@ export function GraphPanel() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setOpen(false)}
+            onClick={() => setFullscreen((f) => !f)}
+            title={fullscreen ? "Exit full screen" : "Full screen"}
+          >
+            {fullscreen ? (
+              <Minimize2 className="size-4" />
+            ) : (
+              <Maximize2 className="size-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setFullscreen(false);
+              setOpen(false);
+            }}
             title="Close"
           >
             <XIcon className="size-5" />

@@ -1,5 +1,8 @@
 name: Terminus
-version: "0.4.0"
+# Canonical add-on version — the ONLY version bumped on release. The frontend
+# (package.json) and backend (pyproject.toml) versions are intentionally static
+# ("0.0.0") to preserve Docker dependency-layer caching.
+version: "0.5.4"
 slug: terminus
 description: Agent chat UI backed by a local LangChain/LangGraph agent (Anthropic).
 arch:
@@ -15,10 +18,12 @@ options:
   model: claude-sonnet-4-6
   ha_url: ""
   ha_token: ""
+  auto_run_tools: false
 schema:
   anthropic_api_key: password
   model: str
   ha_url: str?
   ha_token: password?
+  auto_run_tools: bool
 boot: auto
 startup: application

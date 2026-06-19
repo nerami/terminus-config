@@ -1,6 +1,9 @@
 [project]
 name = "terminus-langchain"
-version = "0.3.9"
+# Static placeholder. The add-on's real version lives in config.yaml (the only
+# one bumped on release); keeping this constant avoids busting the Docker
+# pip-install cache layer on every version bump. Do not sync it to config.yaml.
+version = "0.0.0"
 description = "Terminus LangChain Home Assistant add-on backend"
 requires-python = ">=3.11"
 dependencies = [

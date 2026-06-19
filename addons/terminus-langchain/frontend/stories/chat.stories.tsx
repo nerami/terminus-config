@@ -84,6 +84,7 @@ const MOCK_STREAM = {
 // ThreadContext value: empty thread list, no loading.
 const MOCK_THREADS = {
   getThreads: async () => [],
+  archiveThread: async () => {},
   threads: [],
   setThreads: () => {},
   threadsLoading: false,

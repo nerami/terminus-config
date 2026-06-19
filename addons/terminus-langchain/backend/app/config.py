@@ -26,6 +26,14 @@ class Settings:
     anthropic_api_key: str
     model: str
     use_supervisor: bool
+    auto_run_tools: bool = False
+
+
+def _as_bool(value: object) -> bool:
+    """Parse an add-on option / env var into a bool (HA passes strings)."""
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in ("true", "1", "yes", "on")
 
 
 def _normalize_ws_url(raw: str) -> str:
@@ -86,6 +94,12 @@ def load_settings(
     )
     model = str(options.get("model") or env.get("TLC_MODEL") or DEFAULT_MODEL)
 
+    auto_run_tools = _as_bool(
+        options.get("auto_run_tools")
+        if options.get("auto_run_tools") is not None
+        else env.get("AUTO_RUN_TOOLS", "")
+    )
+
     supervisor_token = env.get("SUPERVISOR_TOKEN")
     if supervisor_token:
         return Settings(
@@ -94,6 +108,7 @@ def load_settings(
             anthropic_api_key=anthropic_api_key,
             model=model,
             use_supervisor=True,
+            auto_run_tools=auto_run_tools,
         )
 
     raw_url = str(
@@ -111,4 +126,5 @@ def load_settings(
         anthropic_api_key=anthropic_api_key,
         model=model,
         use_supervisor=False,
+        auto_run_tools=auto_run_tools,
     )

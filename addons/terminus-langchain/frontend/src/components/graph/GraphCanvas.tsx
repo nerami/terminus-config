@@ -11,16 +11,24 @@ import {
 } from "@xyflow/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { LoaderCircle } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  automationHasStructure,
   buildAreaGraph,
   buildAreasGraph,
   buildAutomationGraph,
+  buildAutomationsGraph,
+  buildEntitiesGraph,
   buildSceneGraph,
+  buildScenesGraph,
   type GraphNodeData,
   type RFGraph,
 } from "@/lib/ha-graph/build";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info, X } from "lucide-react";
+import { GroupByControls } from "./GroupByControls";
 import {
   entityModalAtom,
   graphViewAtom,
@@ -41,6 +49,10 @@ export function GraphCanvas() {
   const setEntityModal = useSetAtom(entityModalAtom);
   const [positions, setPositions] = useAtom(nodePositionsAtom);
   const { fitView } = useReactFlow();
+  const { resolvedTheme } = useTheme();
+  // React Flow's Background/Controls/MiniMap need an explicit colorMode to match
+  // the app theme; without it they always render in light mode (req: dark bug).
+  const colorMode = resolvedTheme === "dark" ? "dark" : "light";
 
   const scope = viewScope(view);
 
@@ -66,6 +78,12 @@ export function GraphCanvas() {
       if (automation && automationDetail) {
         graph = buildAutomationGraph(topology, automation, automationDetail);
       }
+    } else if (view.kind === "scenes") {
+      graph = buildScenesGraph(topology);
+    } else if (view.kind === "automations") {
+      graph = buildAutomationsGraph(topology);
+    } else if (view.kind === "entities") {
+      graph = buildEntitiesGraph(topology);
     }
 
     const saved = positions[scope] ?? {};
@@ -205,16 +223,18 @@ export function GraphCanvas() {
           kind: "scene",
           areaId: currentAreaId ?? "",
           sceneId: data.sceneId,
+          via: view.kind === "scenes" ? "scenes" : "area",
         });
       } else if (data.kind === "automation" && data.automationId) {
         setView({
           kind: "automation",
           areaId: currentAreaId ?? "",
           automationId: data.automationId,
+          via: view.kind === "automations" ? "automations" : "area",
         });
       }
     },
-    [selected, setSelected, setView, setEntityModal, currentAreaId],
+    [selected, setSelected, setView, setEntityModal, currentAreaId, view.kind],
   );
 
   // Clicking empty canvas clears the current selection.
@@ -233,9 +253,25 @@ export function GraphCanvas() {
 
   const showSpinner = view.kind === "automation" && automationLoading;
 
+  // When an automation has no parsable structure (typically never run / HA
+  // can't return its config) the flow is just a flat fallback, so nudge the
+  // user to run it once to get the real diagram.
+  const showAutomationHint =
+    view.kind === "automation" &&
+    !automationLoading &&
+    !!automationDetail &&
+    !automationHasStructure(automationDetail);
+
+  // The hint is dismissible; reset the dismissal when the automation changes
+  // so each automation gets its own chance to show the "run me" nudge.
+  const automationId = view.kind === "automation" ? view.automationId : null;
+  const [hintDismissed, setHintDismissed] = useState(false);
+  useEffect(() => setHintDismissed(false), [automationId]);
+
   return (
     <div className="relative h-full w-full">
       <ReactFlow
+        colorMode={colorMode}
         nodes={decoratedNodes}
         edges={decoratedEdges}
         onNodesChange={onNodesChange}
@@ -256,6 +292,29 @@ export function GraphCanvas() {
         <Background />
         <Controls showInteractive={false} />
       </ReactFlow>
+      <GroupByControls />
+      {showAutomationHint && !hintDismissed && (
+        <Alert
+          variant="info"
+          className="bg-card/95 absolute top-3 right-3 left-3 z-10 pr-9 shadow-md backdrop-blur sm:right-auto sm:left-1/2 sm:max-w-md sm:min-w-[20rem] sm:-translate-x-1/2"
+        >
+          <Info />
+          <AlertTitle>Run this automation to see its real flow</AlertTitle>
+          <AlertDescription>
+            The diagram below is a simplified view. Trigger the automation once
+            so Home Assistant records a trace, then refresh to see the actual
+            steps.
+          </AlertDescription>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setHintDismissed(true)}
+            className="hover:bg-muted text-muted-foreground absolute top-2 right-2 flex size-6 cursor-pointer items-center justify-center rounded-md"
+          >
+            <X className="size-4" />
+          </button>
+        </Alert>
+      )}
       {showSpinner && (
         <div className="bg-background/60 absolute inset-0 flex items-center justify-center">
           <LoaderCircle className="text-muted-foreground size-6 animate-spin" />

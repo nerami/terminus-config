@@ -54,6 +54,24 @@ export type RFGraph = { nodes: RFNode[]; edges: Edge[] };
 
 const edgeId = (a: string, b: string) => `${a}~${b}`;
 
+/**
+ * Whether an automation's detail carries a parsable trigger/condition/action
+ * structure. When false the flow diagram falls back to a flat star of
+ * referenced ids - which usually means the automation has not run / HA could
+ * not return its config, so the canvas shows a "run it once" hint.
+ */
+export function automationHasStructure(detail: AutomationDetail): boolean {
+  const config = detail.config ?? {};
+  return [
+    "trigger",
+    "triggers",
+    "condition",
+    "conditions",
+    "action",
+    "actions",
+  ].some((k) => k in config);
+}
+
 function domainOf(entityId: string): string {
   return entityId.includes(".") ? entityId.split(".", 1)[0] : entityId;
 }
@@ -104,6 +122,98 @@ export function buildAreasGraph(topology: Topology): RFGraph {
   return { nodes, edges: [] };
 }
 
+// -- group-by Scenes: every scene in the home -----------------------------
+export function buildScenesGraph(topology: Topology): RFGraph {
+  const ids = topology.scenes.map((s) => s.entity_id);
+  const pos = gridLayout(ids, { x: 0, y: 0 }, { columns: 4, cellW: 240, cellH: 110 });
+  const nodes: RFNode[] = topology.scenes.map((s) => ({
+    id: s.entity_id,
+    type: "scene",
+    position: pos[s.entity_id],
+    data: {
+      label: s.name,
+      kind: "scene",
+      entityId: s.entity_id,
+      sceneId: s.entity_id,
+      sublabel: `${s.entities.length} entities`,
+      interactive: true,
+    },
+  }));
+  return { nodes, edges: [] };
+}
+
+// -- group-by Automations: every automation in the home -------------------
+export function buildAutomationsGraph(topology: Topology): RFGraph {
+  const ids = topology.automations.map((a) => a.entity_id);
+  const pos = gridLayout(ids, { x: 0, y: 0 }, { columns: 4, cellW: 240, cellH: 110 });
+  const nodes: RFNode[] = topology.automations.map((a) => ({
+    id: a.entity_id,
+    type: "automation",
+    position: pos[a.entity_id],
+    data: {
+      label: a.name,
+      kind: "automation",
+      entityId: a.entity_id,
+      automationId: a.entity_id,
+      numericId: a.numeric_id,
+      sublabel: `${a.references.entities.length + a.references.scenes.length} refs`,
+      interactive: true,
+    },
+  }));
+  return { nodes, edges: [] };
+}
+
+// -- group-by Entities: every entity, grouped into domain blocks ----------
+export function buildEntitiesGraph(topology: Topology): RFGraph {
+  const byDomain = new Map<string, typeof topology.entities>();
+  topology.entities.forEach((e) => {
+    const list = byDomain.get(e.domain) ?? [];
+    list.push(e);
+    byDomain.set(e.domain, list);
+  });
+
+  const nodes: RFNode[] = [];
+  const COLUMNS = 4;
+  const CELL_H = 84;
+  let y = 0;
+  [...byDomain.keys()].sort().forEach((domain) => {
+    const entities = byDomain.get(domain)!;
+    const origin = { x: 0, y: y + NODE_H + 16 };
+    nodes.push({
+      id: `group:domain:${domain}`,
+      type: "group",
+      position: { x: 0, y },
+      draggable: false,
+      selectable: false,
+      data: { label: domain, kind: "group", sublabel: `${entities.length}` },
+    });
+    const pos = gridLayout(
+      entities.map((e) => e.entity_id),
+      origin,
+      { columns: COLUMNS, cellH: CELL_H },
+    );
+    entities.forEach((e) => {
+      nodes.push({
+        id: e.entity_id,
+        type: "entity",
+        position: pos[e.entity_id],
+        data: {
+          label: e.name,
+          kind: "entity",
+          entityId: e.entity_id,
+          domain: e.domain,
+          sublabel: e.device_name ?? e.domain,
+          interactive: true,
+        },
+      });
+    });
+    const rows = Math.ceil(entities.length / COLUMNS);
+    y = origin.y + rows * CELL_H + 48;
+  });
+
+  return { nodes, edges: [] };
+}
+
 // -- single area: entities / scenes / automations triangle ----------------
 export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   const inArea = <T extends { area_id: string | null }>(item: T) =>
@@ -119,10 +229,11 @@ export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   const nodes: RFNode[] = [];
   const edges: Edge[] = [];
 
-  // Triangle anchors: Automations top-middle, Entities bottom-left, Scenes bottom-right.
-  const AUT_ORIGIN = { x: 380, y: 80 };
+  // Triangle rotated slightly left: Automations (top) and Entities (bottom)
+  // share the left column, while Scenes sits to the right, vertically centered.
+  const AUT_ORIGIN = { x: 0, y: 80 };
   const ENT_ORIGIN = { x: 0, y: 560 };
-  const SCN_ORIGIN = { x: 760, y: 560 };
+  const SCN_ORIGIN = { x: 760, y: 320 };
 
   const groupHeader = (
     id: string,
@@ -338,14 +449,7 @@ export function buildAutomationGraph(
   };
 
   const config = detail.config ?? {};
-  const hasStructure = [
-    "trigger",
-    "triggers",
-    "condition",
-    "conditions",
-    "action",
-    "actions",
-  ].some((k) => k in config);
+  const hasStructure = automationHasStructure(detail);
 
   if (hasStructure) {
     const flow = buildAutomationFlow(config, rootId);
