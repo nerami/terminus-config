@@ -23,6 +23,7 @@ interface ThreadContextType {
 }
 
 const ThreadContext = createContext<ThreadContextType | undefined>(undefined);
+export { ThreadContext };
 
 function getThreadSearchMetadata(
   assistantId: string,
