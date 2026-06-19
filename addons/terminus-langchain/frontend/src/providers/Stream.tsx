@@ -388,7 +388,7 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
                 <Switch
                   id="agentBuilderEnabled"
                   checked={isAgentBuilder}
-                  onCheckedChange={setIsAgentBuilder}
+                  onCheckedChange={(checked) => setIsAgentBuilder(checked)}
                 />
               </div>
             </div>

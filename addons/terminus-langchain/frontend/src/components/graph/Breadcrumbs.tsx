@@ -64,12 +64,10 @@ export function Breadcrumbs() {
             <BreadcrumbItem>
               {c.view ? (
                 <BreadcrumbLink
-                  asChild
+                  render={<button onClick={() => setView(c.view as GraphView)} />}
                   className="cursor-pointer"
                 >
-                  <button onClick={() => setView(c.view as GraphView)}>
-                    {c.label}
-                  </button>
+                  {c.label}
                 </BreadcrumbLink>
               ) : (
                 <BreadcrumbPage className="max-w-[200px] truncate">

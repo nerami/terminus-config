@@ -99,17 +99,19 @@ function OpenGitHubRepo() {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <a
-            href="https://github.com/langchain-ai/agent-chat-ui"
-            target="_blank"
-            className="flex items-center justify-center"
-          >
-            <GitHubSVG
-              width="24"
-              height="24"
+        <TooltipTrigger
+          render={
+            <a
+              href="https://github.com/langchain-ai/agent-chat-ui"
+              target="_blank"
+              className="flex items-center justify-center"
             />
-          </a>
+          }
+        >
+          <GitHubSVG
+            width="24"
+            height="24"
+          />
         </TooltipTrigger>
         <TooltipContent side="left">
           <p>Open GitHub repo</p>
@@ -532,7 +534,7 @@ export function Thread() {
                             <Switch
                               id="render-tool-calls"
                               checked={hideToolCalls ?? false}
-                              onCheckedChange={setHideToolCalls}
+                              onCheckedChange={(checked) => setHideToolCalls(checked)}
                             />
                             <Label
                               htmlFor="render-tool-calls"

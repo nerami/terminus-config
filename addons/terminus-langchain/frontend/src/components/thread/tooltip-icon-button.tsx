@@ -1,6 +1,5 @@
-"use client";
-
 import { forwardRef } from "react";
+import { type VariantProps } from "class-variance-authority";
 
 import {
   Tooltip,
@@ -8,13 +7,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type TooltipIconButtonProps = ButtonProps & {
-  tooltip: string;
-  side?: "top" | "bottom" | "left" | "right";
-};
+export type TooltipIconButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    tooltip: string;
+    side?: "top" | "bottom" | "left" | "right";
+  };
 
 export const TooltipIconButton = forwardRef<
   HTMLButtonElement,
@@ -23,17 +23,19 @@ export const TooltipIconButton = forwardRef<
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            {...rest}
-            className={cn("size-6 p-1", className)}
-            ref={ref}
-          >
-            {children}
-            <span className="sr-only">{tooltip}</span>
-          </Button>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              {...rest}
+              className={cn("size-6 p-1", className)}
+              ref={ref}
+            />
+          }
+        >
+          {children}
+          <span className="sr-only">{tooltip}</span>
         </TooltipTrigger>
         <TooltipContent side={side}>{tooltip}</TooltipContent>
       </Tooltip>

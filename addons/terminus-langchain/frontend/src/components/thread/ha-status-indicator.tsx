@@ -37,17 +37,19 @@ export function HaStatusIndicator() {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            role="status"
-            aria-label={`Home Assistant: ${label}`}
-            className="flex size-6 items-center justify-center"
-          >
+        <TooltipTrigger
+          render={
             <span
-              className={cn("size-2 rounded-full", DOT[status.status])}
-              aria-hidden
+              role="status"
+              aria-label={`Home Assistant: ${label}`}
+              className="flex size-6 items-center justify-center"
             />
-          </span>
+          }
+        >
+          <span
+            className={cn("size-2 rounded-full", DOT[status.status])}
+            aria-hidden
+          />
         </TooltipTrigger>
         <TooltipContent side="bottom">Home Assistant: {label}</TooltipContent>
       </Tooltip>
