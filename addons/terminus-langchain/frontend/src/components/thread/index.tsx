@@ -26,7 +26,7 @@ import {
   Network,
 } from "lucide-react";
 import { useAtom, useSetAtom } from "jotai";
-import { graphPanelOpenAtom, graphViewAtom } from "@/lib/ha-graph/atoms";
+import { chatHistoryOpenAtom, graphPanelOpenAtom, graphViewAtom } from "@/lib/ha-graph/atoms";
 import { GraphPanel } from "../graph/GraphPanel";
 import { TopologyUrlSync } from "../graph/TopologyUrlSync";
 import { ParentUrlSync } from "../ParentUrlSync";
@@ -143,10 +143,7 @@ export function Thread() {
     });
 
   const [threadId, _setThreadId] = useThreadId();
-  const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
-    "chatHistoryOpen",
-    parseAsBoolean.withDefault(false),
-  );
+  const [chatHistoryOpen, setChatHistoryOpen] = useAtom(chatHistoryOpenAtom);
   const [hideToolCalls, setHideToolCalls] = useQueryState(
     "hideToolCalls",
     parseAsBoolean.withDefault(false),

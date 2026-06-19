@@ -1,6 +1,6 @@
 name: Terminus LangChain
 version: "0.3.9"
-slug: terminus_langchain
+slug: terminus
 description: Agent chat UI backed by a local LangChain/LangGraph agent (Anthropic).
 arch:
   - aarch64

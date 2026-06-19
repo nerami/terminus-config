@@ -6,6 +6,9 @@ import type { Topology } from "./types";
 /** Whether the diagram panel is open next to the chat. */
 export const graphPanelOpenAtom = atom(false);
 
+/** Whether the thread history sidebar is open. */
+export const chatHistoryOpenAtom = atom(false);
+
 /** The loaded topology snapshot (set by `useTopology`). */
 export const topologyAtom = atom<Topology | null>(null);
 

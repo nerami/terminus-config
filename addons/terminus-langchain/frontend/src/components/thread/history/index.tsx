@@ -4,7 +4,8 @@ import { Thread } from "@langchain/langgraph-sdk";
 import { useEffect } from "react";
 
 import { getContentString } from "../utils";
-import { useQueryState, parseAsBoolean } from "nuqs";
+import { useAtom } from "jotai";
+import { chatHistoryOpenAtom } from "@/lib/ha-graph/atoms";
 import { useThreadId } from "@/hooks/use-thread-id";
 import {
   Sheet,
@@ -78,10 +79,7 @@ function ThreadHistoryLoading() {
 
 export default function ThreadHistory() {
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-  const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
-    "chatHistoryOpen",
-    parseAsBoolean.withDefault(false),
-  );
+  const [chatHistoryOpen, setChatHistoryOpen] = useAtom(chatHistoryOpenAtom);
 
   const { getThreads, threads, setThreads, threadsLoading, setThreadsLoading } =
     useThreads();
