@@ -82,7 +82,7 @@ export function ThreadView({ interrupt }: ThreadViewProps) {
                       "rounded-full border px-3 py-1 text-sm transition-colors",
                       idx === activeInterruptIndex
                         ? "border-primary bg-primary/10 text-primary"
-                        : "hover:border-primary hover:text-primary border-gray-300 bg-white text-gray-600",
+                        : "hover:border-primary hover:text-primary border-gray-300 text-gray-600",
                     )}
                   >
                     {title}
