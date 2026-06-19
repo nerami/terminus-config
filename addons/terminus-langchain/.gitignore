@@ -9,3 +9,4 @@ __pycache__/
 *.log
 *.tsbuildinfo
 .langgraph_api/
+storybook-static/
