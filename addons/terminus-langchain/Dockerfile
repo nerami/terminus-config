@@ -13,8 +13,20 @@ RUN pnpm build
 FROM ${BUILD_FROM}
 WORKDIR /app
 
+# Install backend dependencies first, keyed only on the dependency manifest.
+# pyproject.toml's version is frozen at 0.0.0, so this layer is reused across
+# version bumps and source-only edits; it re-runs only when deps change.
+# setuptools needs a buildable package to read [project] metadata, so provide a
+# stub package for this deps-only layer.
+COPY backend/pyproject.toml /app/backend/pyproject.toml
+RUN mkdir -p /app/backend/app \
+    && touch /app/backend/app/__init__.py \
+    && pip install --no-cache-dir "/app/backend[server]"
+
+# Copy the real backend source and reinstall just the project — dependencies are
+# already cached above. This layer busts on any source edit but is cheap.
 COPY backend/ /app/backend/
-RUN pip install --no-cache-dir "/app/backend[server]"
+RUN pip install --no-cache-dir --no-deps --force-reinstall "/app/backend"
 
 COPY --from=frontend /build/dist /app/frontend/dist
 

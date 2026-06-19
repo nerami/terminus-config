@@ -35,6 +35,23 @@ HA Ingress ─▶ FastAPI (uvicorn :8099)            ── public face
 
 ## Development
 
+### Quick start
+
+Run the whole local stack (LangGraph + uvicorn `--reload` + Vite HMR) with one
+command, then open the Vite URL:
+
+```bash
+cp .env.example .env      # add ANTHROPIC_API_KEY (+ HASS_URL/HASS_TOKEN)
+./dev.sh                  # LangGraph :2025 + uvicorn :8099 + Vite :5173, hot-reload
+# open http://localhost:5173   (Ctrl-C stops everything)
+```
+
+First run bootstraps the backend venv and `pnpm install`; later runs go straight
+to the servers. `dev.sh` generates a LangGraph config with local paths (the
+committed `langgraph.json` uses in-container `/app/backend` paths — see Gotchas).
+
+The manual steps below are what `dev.sh` runs under the hood.
+
 Backend:
 
 ```bash

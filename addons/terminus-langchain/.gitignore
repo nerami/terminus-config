@@ -10,3 +10,4 @@ __pycache__/
 *.tsbuildinfo
 .langgraph_api/
 storybook-static/
+.env
