@@ -7,6 +7,7 @@ import useInterruptedActions from "../hooks/use-interrupted-actions";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryState } from "nuqs";
+import { useThreadId } from "@/hooks/use-thread-id";
 import { constructOpenInStudioURL, buildDecisionFromState } from "../utils";
 import { Decision, HITLRequest, DecisionType, ActionRequest } from "../types";
 import { useStreamContext } from "@/providers/Stream";
@@ -87,7 +88,7 @@ export function ThreadActionsView({
   showState,
 }: ThreadActionsViewProps) {
   const stream = useStreamContext();
-  const [threadId] = useQueryState("threadId");
+  const [threadId] = useThreadId();
   const [apiUrl] = useQueryState("apiUrl");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [addressedActions, setAddressedActions] = useState<

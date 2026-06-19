@@ -39,6 +39,24 @@ export const graphViewAtom = atom(
   },
 );
 
+/**
+ * A stable, fully-qualified key for a view (includes the area context). Unlike
+ * `viewScope`, this distinguishes e.g. the same scene reached via different
+ * areas, so it can be used for view equality when syncing to/from the URL.
+ */
+export function viewKey(view: GraphView): string {
+  switch (view.kind) {
+    case "areas":
+      return "areas";
+    case "area":
+      return `area:${view.areaId}`;
+    case "scene":
+      return `scene:${view.areaId}:${view.sceneId}`;
+    case "automation":
+      return `automation:${view.areaId}:${view.automationId}`;
+  }
+}
+
 /** A stable string scope for the current view, used to key node positions. */
 export function viewScope(view: GraphView): string {
   switch (view.kind) {

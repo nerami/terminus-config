@@ -3,29 +3,22 @@ import "@xyflow/react/dist/style.css";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { LoaderCircle, RefreshCw, XIcon } from "lucide-react";
-import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useTopology } from "@/hooks/use-topology";
-import {
-  graphPanelOpenAtom,
-  graphViewAtom,
-  topologyAtom,
-} from "@/lib/ha-graph/atoms";
+import { graphPanelOpenAtom, topologyAtom } from "@/lib/ha-graph/atoms";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { EntityDetailModal } from "./EntityDetailModal";
 import { GraphCanvas } from "./GraphCanvas";
 
 export function GraphPanel() {
   const setOpen = useSetAtom(graphPanelOpenAtom);
-  const setView = useSetAtom(graphViewAtom);
   const topology = useAtomValue(topologyAtom);
   const { loading, error, reload } = useTopology(true);
 
-  // Opening the panel always starts at the areas overview (requirement 2).
-  useEffect(() => {
-    setView({ kind: "areas" });
-  }, [setView]);
+  // The current view is owned by the URL (see TopologyUrlSync): a fresh toolbar
+  // open resets it to the areas overview, while a deep-link/back restore keeps
+  // whatever view the URL encodes — so the panel must NOT force a view here.
 
   return (
     <div className="flex h-full min-w-0 flex-col">

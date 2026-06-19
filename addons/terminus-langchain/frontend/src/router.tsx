@@ -1,5 +1,5 @@
 import {
-  createHashHistory,
+  createBrowserHistory,
   createRootRoute,
   createRoute,
   createRouter,
@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router"
 
 import { ChatPage } from "@/routes/chat"
+import { resolveBasePath } from "@/runtime-config"
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -18,13 +19,22 @@ const indexRoute = createRoute({
   component: ChatPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute])
+// A chat session: the bare thread id appended to the served root. Renders the
+// same ChatPage; the id is read from the path via `useThreadId`.
+const sessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/$threadId",
+  component: ChatPage,
+})
 
-// Hash history avoids server-side route handling so the SPA works unchanged
-// under the dynamic HA ingress prefix.
+const routeTree = rootRoute.addChildren([indexRoute, sessionRoute])
+
+// Browser (path) history so the server can read the URL. `basepath` is the
+// dynamic HA ingress directory, detected at load from the page location.
 export const router = createRouter({
   routeTree,
-  history: createHashHistory(),
+  history: createBrowserHistory(),
+  basepath: resolveBasePath(window.location),
 })
 
 declare module "@tanstack/react-router" {

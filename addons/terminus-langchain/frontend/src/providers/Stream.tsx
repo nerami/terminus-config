@@ -15,6 +15,7 @@ import {
   type RemoveUIMessage,
 } from "@langchain/langgraph-sdk/react-ui";
 import { useQueryState } from "nuqs";
+import { useThreadId } from "@/hooks/use-thread-id";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LangGraphLogoSVG } from "@/components/icons/langgraph";
@@ -81,7 +82,7 @@ const StreamSession = ({
   assistantId: string;
   authScheme?: string;
 }) => {
-  const [threadId, setThreadId] = useQueryState("threadId");
+  const [threadId, setThreadId] = useThreadId();
   const { getThreads, setThreads } = useThreads();
   const streamValue = useTypedStream({
     apiUrl,

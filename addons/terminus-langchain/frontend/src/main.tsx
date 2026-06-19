@@ -1,3 +1,7 @@
+// Restore the iframe location from the parent (HA) URL hash BEFORE the router is
+// imported/evaluated. Must stay the first import.
+import "./lib/parent-url-restore"
+
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { RouterProvider } from "@tanstack/react-router"

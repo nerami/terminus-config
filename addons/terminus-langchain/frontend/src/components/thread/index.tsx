@@ -25,10 +25,13 @@ import {
   Plus,
   Network,
 } from "lucide-react";
-import { useAtom } from "jotai";
-import { graphPanelOpenAtom } from "@/lib/ha-graph/atoms";
+import { useAtom, useSetAtom } from "jotai";
+import { graphPanelOpenAtom, graphViewAtom } from "@/lib/ha-graph/atoms";
 import { GraphPanel } from "../graph/GraphPanel";
+import { TopologyUrlSync } from "../graph/TopologyUrlSync";
+import { ParentUrlSync } from "../ParentUrlSync";
 import { useQueryState, parseAsBoolean } from "nuqs";
+import { useThreadId } from "@/hooks/use-thread-id";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
@@ -120,6 +123,7 @@ export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
   const [graphPanelOpen, setGraphPanelOpen] = useAtom(graphPanelOpenAtom);
+  const setGraphView = useSetAtom(graphViewAtom);
 
   // The topology diagram and the artifact panel share the right column, so
   // opening one closes the other. The chat itself is unaffected either way.
@@ -127,11 +131,16 @@ export function Thread() {
   const toggleGraphPanel = () =>
     setGraphPanelOpen((prev) => {
       const next = !prev;
-      if (next) closeArtifact();
+      // A fresh open from the toolbar always starts at the areas overview; a
+      // restore from the URL opens via TopologyUrlSync instead (keeping its view).
+      if (next) {
+        closeArtifact();
+        setGraphView({ kind: "areas" });
+      }
       return next;
     });
 
-  const [threadId, _setThreadId] = useQueryState("threadId");
+  const [threadId, _setThreadId] = useThreadId();
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
     "chatHistoryOpen",
     parseAsBoolean.withDefault(false),
@@ -273,6 +282,8 @@ export function Thread() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
+      <TopologyUrlSync />
+      <ParentUrlSync />
       <div className="relative hidden lg:flex">
         <motion.div
           className="absolute z-20 h-full overflow-hidden border-r bg-white"

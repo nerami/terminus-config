@@ -3,8 +3,9 @@
 Responsibilities:
   * ``GET /ha/status`` - the live Home Assistant websocket connection status.
   * ``/api/*``         - reverse proxy to the local LangGraph server (added in Plan 2).
-  * ``/``              - the built SPA (static files), mounted last so it never
-                         shadows the API routes above.
+  * ``/``              - the built SPA (static files), with a catch-all
+                         fallback to ``index.html`` for client-side routes;
+                         registered last so it never shadows the routes above.
 """
 
 from __future__ import annotations
@@ -17,9 +18,8 @@ from pathlib import Path
 from typing import Optional
 
 import httpx
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.background import BackgroundTask
 
 from .config import Settings, load_settings
@@ -186,8 +186,28 @@ def create_app(
             background=BackgroundTask(resp.aclose),
         )
 
+    # Serve the built SPA. Registered LAST so it never shadows the explicit
+    # /ha/* and /api/* routes above (FastAPI matches in registration order).
     if static_dir.is_dir():
-        app.mount("/", StaticFiles(directory=static_dir, html=True), name="spa")
+        index_file = static_dir / "index.html"
+        root = static_dir.resolve()
+
+        @app.get("/{full_path:path}")
+        async def spa_fallback(full_path: str):
+            """Serve real static files; fall back to index.html for SPA routes.
+
+            Path-traversal safe: a resolved candidate must live under
+            ``static_dir`` before it is served, so requests containing ``..``
+            can never reach a file outside the dist directory.
+            """
+            candidate = (static_dir / full_path).resolve()
+            if (
+                candidate == root or root in candidate.parents
+            ) and candidate.is_file():
+                return FileResponse(candidate)
+            if index_file.is_file():
+                return FileResponse(index_file)
+            raise HTTPException(status_code=404)
 
     return app
 

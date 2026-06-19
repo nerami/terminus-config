@@ -20,14 +20,28 @@ export type Endpoints = {
 
 export const ASSISTANT_ID = "agent"
 
+// HA serves the SPA under a fixed-shape prefix: /api/hassio_ingress/<token>/.
+// Match it so we can recover the served directory even when a session id
+// (or any deeper path-routed segment) is appended after the prefix.
+const INGRESS_RE = /^.*?\/api\/hassio_ingress\/[^/]+\//
+
+// Returns the served directory (always ending in "/") for the router basepath
+// and for resolving backend endpoints. When behind HA ingress this is the fixed
+// /api/hassio_ingress/<token>/ prefix regardless of any trailing <threadId>
+// session segment; otherwise (vite dev / direct serve at root) it is "/".
+export function resolveBasePath(loc: { pathname: string }): string {
+  const m = loc.pathname.match(INGRESS_RE)
+  if (m) return m[0] // e.g. "/api/hassio_ingress/<token>/"
+  return "/" // non-ingress: vite dev / direct serve at root
+}
+
 export function resolveEndpoints(loc: {
   origin: string
   pathname: string
 }): Endpoints {
-  // Directory the SPA is served from, always with a trailing slash.
-  const dir = loc.pathname.endsWith("/")
-    ? loc.pathname
-    : loc.pathname.replace(/[^/]*$/, "")
+  // Directory the SPA is served from, always with a trailing slash. Derived
+  // from the ingress prefix so deep session paths (…/<threadId>) don't skew it.
+  const dir = resolveBasePath(loc)
   const base = loc.origin + dir
   return {
     apiUrl: new URL("api", base).toString(),

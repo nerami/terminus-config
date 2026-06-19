@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { getContentString } from "../utils";
 import { useQueryState, parseAsBoolean } from "nuqs";
+import { useThreadId } from "@/hooks/use-thread-id";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +23,7 @@ function ThreadList({
   threads: Thread[];
   onThreadClick?: (threadId: string) => void;
 }) {
-  const [threadId, setThreadId] = useQueryState("threadId");
+  const [threadId, setThreadId] = useThreadId();
 
   return (
     <div className="flex h-full w-full flex-col items-start justify-start gap-2 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
