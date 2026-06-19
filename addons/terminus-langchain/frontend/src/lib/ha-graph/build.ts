@@ -366,6 +366,7 @@ export function buildSceneGraph(topology: Topology, scene: HaScene): RFGraph {
         entityId: scene.entity_id,
         sceneId: scene.entity_id,
         sublabel: `${scene.entities.length} entities`,
+        interactive: true,
       },
     },
   ];
@@ -425,6 +426,7 @@ export function buildAutomationGraph(
       entityId: automation.entity_id,
       automationId: automation.entity_id,
       sublabel: "automation",
+      interactive: true,
     },
   });
 

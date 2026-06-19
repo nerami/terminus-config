@@ -27,16 +27,12 @@ fi
 export LANGGRAPH_URL="http://127.0.0.1:2025"
 
 # --- tooling checks --------------------------------------------------------
-command -v python3 >/dev/null || fail "python3 not found."
-command -v pnpm    >/dev/null || fail "pnpm not found (npm install -g pnpm@10.33.0)."
+command -v uv   >/dev/null || fail "uv not found (see https://docs.astral.sh/uv/getting-started/installation/)."
+command -v pnpm >/dev/null || fail "pnpm not found (npm install -g pnpm@10.33.0)."
 
 # --- backend bootstrap -----------------------------------------------------
-if [ ! -d "$BACKEND/.venv" ]; then
-  log "Creating backend venv + installing (first run)"
-  python3 -m venv "$BACKEND/.venv"
-  "$BACKEND/.venv/bin/pip" install -q --upgrade pip
-  "$BACKEND/.venv/bin/pip" install -e "$BACKEND[dev,server]"
-fi
+log "Syncing backend deps via uv"
+( cd "$BACKEND" && uv sync --extra dev --extra server )
 VENV_BIN="$BACKEND/.venv/bin"
 
 # --- frontend bootstrap ----------------------------------------------------

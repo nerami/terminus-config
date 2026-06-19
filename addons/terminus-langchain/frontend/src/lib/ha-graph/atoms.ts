@@ -4,7 +4,7 @@ import { atomWithStorage } from "jotai/utils";
 import type { Topology } from "./types";
 
 /** Whether the diagram panel is open next to the chat. */
-export const graphPanelOpenAtom = atom(false);
+export const graphPanelOpenAtom = atomWithStorage("terminus-graph-panel-open", false);
 
 /** Whether the topology panel is expanded full screen (hiding the chat). */
 export const graphFullscreenAtom = atom(false);
@@ -69,7 +69,7 @@ export function rootViewFor(grouping: GraphGrouping): GraphView {
   }
 }
 
-const graphViewBaseAtom = atom<GraphView>({ kind: "areas" });
+const graphViewBaseAtom = atomWithStorage<GraphView>("terminus-graph-view", { kind: "areas" });
 
 /** Currently selected node id (drives highlight/dim). Null = nothing selected. */
 export const selectedNodeAtom = atom<string | null>(null);

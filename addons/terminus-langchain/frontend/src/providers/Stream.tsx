@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { TerminusLogoSVG } from "@/components/icons/terminus";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, LoaderCircle, RefreshCw } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey } from "@/lib/api-key";
 import { useThreads } from "./Thread";
@@ -168,7 +168,7 @@ function StatusCard({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-4">
       <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-md flex-col items-center gap-4 rounded-lg border p-10 text-center shadow-lg">
-        <TerminusLogoSVG className="h-8" />
+        <TerminusLogoSVG className="h-8" variant="wave" />
         {children}
       </div>
     </div>
@@ -195,7 +195,6 @@ const ChatRuntime = ({
   if (status === "checking") {
     return (
       <StatusCard>
-        <LoaderCircle className="text-muted-foreground size-7 animate-spin" />
         <h1 className="text-lg font-semibold tracking-tight">
           Starting Terminus…
         </h1>

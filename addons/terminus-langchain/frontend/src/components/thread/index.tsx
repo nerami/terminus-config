@@ -23,7 +23,7 @@ import {
   Plus,
   Network,
 } from "lucide-react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import {
   graphFullscreenAtom,
   graphPanelOpenAtom,
@@ -98,19 +98,16 @@ export function Thread() {
   const [artifactOpen, closeArtifact] = useArtifactOpen();
   const [graphPanelOpen, setGraphPanelOpen] = useAtom(graphPanelOpenAtom);
   const [graphFullscreen, setGraphFullscreen] = useAtom(graphFullscreenAtom);
-  const setGraphView = useSetAtom(graphViewAtom);
-
   // The topology diagram and the artifact panel share the right column, so
   // opening one closes the other. The chat itself is unaffected either way.
   const rightPanelOpen = artifactOpen || graphPanelOpen;
   const toggleGraphPanel = () =>
     setGraphPanelOpen((prev) => {
       const next = !prev;
-      // A fresh open from the toolbar always starts at the areas overview; a
-      // restore from the URL opens via TopologyUrlSync instead (keeping its view).
       if (next) {
         closeArtifact();
-        setGraphView({ kind: "areas" });
+        // View is preserved from the last session (graphViewBaseAtom persists to
+        // localStorage; URL params restore it on deeplink via TopologyUrlSync).
       } else {
         // Leaving the panel always exits fullscreen so the chat comes back.
         setGraphFullscreen(false);

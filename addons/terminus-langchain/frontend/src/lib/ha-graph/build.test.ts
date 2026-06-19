@@ -5,8 +5,9 @@ import {
   buildAreaGraph,
   buildAreasGraph,
   buildAutomationGraph,
+  buildSceneGraph,
 } from "./build";
-import type { AutomationDetail, HaAutomation, Topology } from "./types";
+import type { AutomationDetail, HaAutomation, HaScene, Topology } from "./types";
 
 const topology: Topology = {
   areas: [{ area_id: "living", name: "Living Room" }],
@@ -156,5 +157,32 @@ describe("buildAutomationGraph", () => {
     const ids = edges.map((e) => `${e.source}->${e.target}`);
     expect(ids).toContain("automation.night->light.lamp");
     expect(ids).toContain("automation.night->scene.movie");
+  });
+
+  it("root automation node is interactive so double-click fires the modal", () => {
+    const automation: HaAutomation = topology.automations[0];
+    const detail: AutomationDetail = {
+      config: {},
+      referenced: { entities: ["light.lamp"], scenes: [], devices: [] },
+    };
+    const { nodes } = buildAutomationGraph(topology, automation, detail);
+    const root = nodes.find((n) => n.id === automation.entity_id);
+    expect(root?.data.interactive).toBe(true);
+  });
+});
+
+describe("buildSceneGraph", () => {
+  it("root scene node is interactive so double-click fires the modal", () => {
+    const scene: HaScene = topology.scenes[0];
+    const { nodes } = buildSceneGraph(topology, scene);
+    const root = nodes.find((n) => n.id === scene.entity_id);
+    expect(root?.data.interactive).toBe(true);
+  });
+
+  it("entity child nodes are interactive", () => {
+    const scene: HaScene = topology.scenes[0];
+    const { nodes } = buildSceneGraph(topology, scene);
+    const child = nodes.find((n) => n.id === "light.lamp");
+    expect(child?.data.interactive).toBe(true);
   });
 });

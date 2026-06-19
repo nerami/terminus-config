@@ -219,22 +219,30 @@ export function GraphCanvas() {
       if (data.kind === "entity" && data.entityId) {
         setEntityModal(data.entityId);
       } else if (data.kind === "scene" && data.sceneId) {
-        setView({
-          kind: "scene",
-          areaId: currentAreaId ?? "",
-          sceneId: data.sceneId,
-          via: view.kind === "scenes" ? "scenes" : "area",
-        });
+        if (view.kind === "scene" && view.sceneId === data.sceneId) {
+          if (data.entityId) setEntityModal(data.entityId);
+        } else {
+          setView({
+            kind: "scene",
+            areaId: currentAreaId ?? "",
+            sceneId: data.sceneId,
+            via: view.kind === "scenes" ? "scenes" : "area",
+          });
+        }
       } else if (data.kind === "automation" && data.automationId) {
-        setView({
-          kind: "automation",
-          areaId: currentAreaId ?? "",
-          automationId: data.automationId,
-          via: view.kind === "automations" ? "automations" : "area",
-        });
+        if (view.kind === "automation" && view.automationId === data.automationId) {
+          if (data.entityId) setEntityModal(data.entityId);
+        } else {
+          setView({
+            kind: "automation",
+            areaId: currentAreaId ?? "",
+            automationId: data.automationId,
+            via: view.kind === "automations" ? "automations" : "area",
+          });
+        }
       }
     },
-    [selected, setSelected, setView, setEntityModal, currentAreaId, view.kind],
+    [selected, setSelected, setView, setEntityModal, currentAreaId, view],
   );
 
   // Clicking empty canvas clears the current selection.

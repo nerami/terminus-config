@@ -78,18 +78,34 @@ export function TopologyUrlSync(): null {
   const [view, setView] = useAtom(graphViewAtom);
 
   // URL -> atoms (mount/deep-link restore + back/forward navigation).
+  //
+  // Panel open/close: we only OPEN the panel from the URL (deeplink / back-
+  // forward). Closing is always user-driven (X button / toolbar toggle) so the
+  // URL can't fight a localStorage-initialised panelOpen=true on a fresh tab.
+  //
+  // View sync is gated on open=true: when the panel closes, atoms→URL clears
+  // the topology params, which would otherwise trigger viewFromParams(null,…)
+  // and reset graphViewAtom to "areas" as an unintended roundtrip side-effect.
   useEffect(() => {
-    if (panelOpen !== open) setPanelOpen(open);
-    const next = viewFromParams(group, area, scene, automation);
-    if (viewKey(next) !== viewKey(view)) setView(next);
+    if (open && !panelOpen) setPanelOpen(true);
+    if (open) {
+      const next = viewFromParams(group, area, scene, automation);
+      if (viewKey(next) !== viewKey(view)) setView(next);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, group, area, scene, automation]);
 
   // atoms -> URL (toolbar open/close, canvas drill-down, breadcrumbs). Skipped
   // on the first commit so it never overwrites the incoming URL before hydration.
+  // Exception: if localStorage initialised panelOpen=true but the URL has no
+  // topology param (new tab / cleared history), write it now so ParentUrlSync
+  // can mirror the actual panel state to the parent hash immediately.
   const mounted = useRef(false);
   useEffect(() => {
-    if (!mounted.current) return;
+    if (!mounted.current) {
+      if (panelOpen && !open) setOpenParam(true);
+      return;
+    }
     const grouping = groupingOf(view);
     // Keep the default (Area) grouping out of the URL for clean links.
     const wantGroup = panelOpen && grouping !== "area" ? grouping : null;
