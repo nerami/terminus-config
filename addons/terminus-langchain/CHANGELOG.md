@@ -4,6 +4,16 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.6.1
+
+- Error states now render the **glitch** logo variant instead of wave, signalling
+  an agent-server problem visually. The shared StatusCard shell is extracted into
+  its own module so `Stream.tsx` and the LoadingScreen story render from one
+  source and can't drift.
+- Fix: the glitch hot-flash frame flashed to a hardcoded white, invisible in dark
+  mode where the foreground is already near-white. It now flashes to
+  `var(--background)`, so the pixel pops in both light and dark themes.
+
 ## 0.6.0
 
 - Refactor the Terminus logo into a variant architecture (`base-layer`,
