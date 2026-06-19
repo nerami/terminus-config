@@ -10,7 +10,10 @@ const hash = (n: number) => ((n * 2654435761) >>> 0) / 0x100000000;
 // Each cell runs the same keyframe but at a unique duration (0.6s–2.4s) with
 // steps(1) timing — abrupt jumps, no interpolation. Because 120+ cells never
 // share a period, they're always at different positions in the cycle, producing
-// a visually unpredictable flicker with occasional white hot flashes.
+// a visually unpredictable flicker with occasional hot flashes. The flash frame
+// fills with var(--background) — the pixel inverts to the page background, which
+// pops in both light and dark themes (a fixed `white` vanished in dark mode,
+// where the foreground is already near-white).
 export function GlitchVariant({ cells }: { cells: Cell[] }) {
   return (
     <>
@@ -19,7 +22,7 @@ export function GlitchVariant({ cells }: { cells: Cell[] }) {
           0%   { opacity: 1;    fill: currentColor; }
           14%  { opacity: 0.15; fill: currentColor; }
           28%  { opacity: 0.8;  fill: currentColor; }
-          40%  { opacity: 1;    fill: white;        }
+          40%  { opacity: 1;    fill: var(--background); }
           43%  { opacity: 0.2;  fill: currentColor; }
           64%  { opacity: 0.7;  fill: currentColor; }
           78%  { opacity: 0.1;  fill: currentColor; }
