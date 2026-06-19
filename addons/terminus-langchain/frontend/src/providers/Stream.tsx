@@ -19,6 +19,7 @@ import { useThreadId } from "@/hooks/use-thread-id";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TerminusLogoSVG } from "@/components/icons/terminus";
+import { StatusCard } from "@/components/status-card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight, RefreshCw } from "lucide-react";
@@ -164,17 +165,6 @@ function useGraphReady(
   return { status, retry: () => setReloadKey((k) => k + 1) };
 }
 
-function StatusCard({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-screen w-full items-center justify-center p-4">
-      <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-md flex-col items-center gap-4 rounded-lg border p-10 text-center shadow-lg">
-        <TerminusLogoSVG className="h-8" variant="wave" />
-        {children}
-      </div>
-    </div>
-  );
-}
-
 // Gates the chat on the LangGraph server being reachable, showing a warming-up
 // indicator while it starts and a retryable error if it never comes up.
 const ChatRuntime = ({
@@ -208,7 +198,7 @@ const ChatRuntime = ({
 
   if (status === "error") {
     return (
-      <StatusCard>
+      <StatusCard variant="glitch">
         <h1 className="text-lg font-semibold tracking-tight">
           Couldn't reach the agent server
         </h1>

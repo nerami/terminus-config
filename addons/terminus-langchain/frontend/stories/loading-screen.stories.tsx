@@ -1,19 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RefreshCw } from 'lucide-react';
-import { TerminusLogoSVG } from '@/components/icons/terminus';
+import { StatusCard } from '@/components/status-card';
 import { Button } from '@/components/ui/button';
-
-// Mirrors StatusCard in src/providers/Stream.tsx
-function StatusCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-screen w-full items-center justify-center p-4">
-      <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-md flex-col items-center gap-4 rounded-lg border p-10 text-center shadow-lg">
-        <TerminusLogoSVG className="h-8" variant="wave" />
-        {children}
-      </div>
-    </div>
-  );
-}
 
 const meta: Meta = {
   title: 'Screens/LoadingScreen',
@@ -36,7 +24,7 @@ export const Checking: Story = {
 
 export const Error: Story = {
   render: () => (
-    <StatusCard>
+    <StatusCard variant="glitch">
       <h1 className="text-lg font-semibold tracking-tight">Couldn't reach the agent server</h1>
       <p className="text-muted-foreground text-sm">
         Please ensure the graph is running at <code>http://localhost:2025</code> and your API key
