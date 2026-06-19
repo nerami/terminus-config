@@ -429,7 +429,7 @@ export function ThreadActionsView({
             </Button>
           </div>
           <Button
-            variant="brand"
+            variant="default"
             disabled={!hasAllDecisions || submittingAll}
             onClick={handleSubmitAll}
           >

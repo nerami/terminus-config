@@ -303,7 +303,7 @@ export function GraphCanvas() {
       <GroupByControls />
       {showAutomationHint && !hintDismissed && (
         <Alert
-          variant="info"
+          variant="default"
           className="bg-card/95 absolute top-3 right-3 left-3 z-10 pr-9 shadow-md backdrop-blur sm:right-auto sm:left-1/2 sm:max-w-md sm:min-w-[20rem] sm:-translate-x-1/2"
         >
           <Info />

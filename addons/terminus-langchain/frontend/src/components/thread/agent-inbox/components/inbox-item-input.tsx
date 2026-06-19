@@ -88,7 +88,7 @@ function ApproveOnly({
         <ArgsRenderer args={actionRequestArgs} />
       )}
       <Button
-        variant="brand"
+        variant="default"
         disabled={isLoading}
         onClick={handleSubmit}
         className="w-full"
@@ -229,7 +229,7 @@ function EditActionCard({
 
       <div className="flex w-full items-center justify-end gap-2">
         <Button
-          variant="brand"
+          variant="default"
           disabled={isLoading}
           onClick={handleSubmit}
         >
@@ -297,7 +297,7 @@ function RejectActionCard({
 
       <div className="flex w-full items-center justify-end gap-2">
         <Button
-          variant="brand"
+          variant="default"
           disabled={isLoading}
           onClick={handleSubmit}
         >
