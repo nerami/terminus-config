@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   Background,
@@ -11,44 +11,29 @@ import {
   useNodesState,
   useReactFlow,
 } from '@xyflow/react';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { LoaderCircle } from 'lucide-react';
-import { Info, X } from 'lucide-react';
+import { useAtom } from 'jotai';
 import { useTheme } from 'next-themes';
 
-import { GroupByControls } from './group-by-controls';
+import { AutomationHint, CanvasSpinner } from './canvas-overlays';
 import { nodeTypes } from './nodes';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAutomationDetail } from '@/hooks/use-topology';
-import {
-  entityModalAtom,
-  graphViewAtom,
-  nodePositionsAtom,
-  selectedNodeAtom,
-  topologyAtom,
-  viewScope,
-} from '@/lib/ha-graph/atoms';
-import {
-  automationHasStructure,
-  buildAreaGraph,
-  buildAreasGraph,
-  buildAutomationGraph,
-  buildAutomationsGraph,
-  buildEntitiesGraph,
-  buildSceneGraph,
-  buildScenesGraph,
-  type GraphNodeData,
-  type RFGraph,
-} from '@/lib/ha-graph/build';
-
-const EMPTY_GRAPH: RFGraph = { nodes: [], edges: [] };
+import { nodePositionsAtom } from '@/lib/ha-graph/atoms';
+import { type GraphNodeData } from '@/lib/ha-graph/build';
+import { useTopologyGraph } from '@/lib/ha-graph/use-topology-graph';
 
 export function GraphCanvas() {
-  const topology = useAtomValue(topologyAtom);
-  const [view, setView] = useAtom(graphViewAtom);
-  const [selected, setSelected] = useAtom(selectedNodeAtom);
-  const setEntityModal = useSetAtom(entityModalAtom);
+  const {
+    activate,
+    automationId,
+    automationLoading,
+    baseGraph,
+    clearSelection,
+    highlightSet,
+    isUpstreamMode,
+    scope,
+    selected,
+    showAutomationHint,
+  } = useTopologyGraph();
   const [positions, setPositions] = useAtom(nodePositionsAtom);
   const { fitView } = useReactFlow();
   const { resolvedTheme } = useTheme();
@@ -56,90 +41,24 @@ export function GraphCanvas() {
   // the app theme; without it they always render in light mode (req: dark bug).
   const colorMode = resolvedTheme === 'dark' ? 'dark' : 'light';
 
-  const scope = viewScope(view);
-
-  // Automation drill-down needs the config; falls back to topology references.
-  const { detail: automationDetail, loading: automationLoading } = useAutomationDetail(
-    view.kind === 'automation' ? view.automationId : null,
-  );
-
-  // Build the base graph for the current view, then overlay saved positions.
-  const baseGraph = useMemo<RFGraph>(() => {
-    if (!topology) return EMPTY_GRAPH;
-    let graph: RFGraph = EMPTY_GRAPH;
-    if (view.kind === 'areas') {
-      graph = buildAreasGraph(topology);
-    } else if (view.kind === 'area') {
-      graph = buildAreaGraph(topology, view.areaId);
-    } else if (view.kind === 'scene') {
-      const scene = topology.scenes.find((s) => s.entity_id === view.sceneId);
-      graph = scene ? buildSceneGraph(topology, scene) : EMPTY_GRAPH;
-    } else if (view.kind === 'automation') {
-      const automation = topology.automations.find((a) => a.entity_id === view.automationId);
-      if (automation && automationDetail) {
-        graph = buildAutomationGraph(topology, automation, automationDetail);
-      }
-    } else if (view.kind === 'scenes') {
-      graph = buildScenesGraph(topology);
-    } else if (view.kind === 'automations') {
-      graph = buildAutomationsGraph(topology);
-    } else if (view.kind === 'entities') {
-      graph = buildEntitiesGraph(topology);
-    }
-
+  // Overlay saved positions onto the freshly built graph.
+  const positionedNodes = useMemo(() => {
     const saved = positions[scope] ?? {};
-    const nodes = graph.nodes.map((n) => (saved[n.id] ? { ...n, position: saved[n.id] } : n));
-    return { nodes, edges: graph.edges };
+    return baseGraph.nodes.map((n) => (saved[n.id] ? { ...n, position: saved[n.id] } : n));
     // `positions` intentionally omitted: saved drags shouldn't rebuild/refit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topology, view, automationDetail, scope]);
+  }, [baseGraph, scope]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(baseGraph.nodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(positionedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(baseGraph.edges);
 
   // Swap the canvas contents when the view changes, then gracefully refit.
   useEffect(() => {
-    setNodes(baseGraph.nodes);
+    setNodes(positionedNodes);
     setEdges(baseGraph.edges);
     const id = window.setTimeout(() => fitView({ duration: 600, padding: 0.2 }), 0);
     return () => window.clearTimeout(id);
-  }, [baseGraph, setNodes, setEdges, fitView]);
-
-  // Set of nodes to highlight around the selection.
-  //
-  // In the automation drill-down we highlight the *upstream path to the
-  // trigger* - the ancestor closure of the selected node (follow edges backward
-  // source<-target, skipping dashed repeat loop-backs so a loop doesn't drag in
-  // downstream siblings) - plus the selected node's own direct children
-  // (targets). Other views keep simple direct-neighbour highlighting.
-  const isUpstreamMode = view.kind === 'automation';
-  const highlightSet = useMemo(() => {
-    if (!selected) return null;
-    const set = new Set<string>([selected]);
-    if (isUpstreamMode) {
-      const stack = [selected];
-      while (stack.length) {
-        const cur = stack.pop()!;
-        for (const e of edges) {
-          if ((e.data as { dashed?: boolean } | undefined)?.dashed) continue;
-          if (e.target === cur && !set.has(e.source)) {
-            set.add(e.source);
-            stack.push(e.source);
-          }
-        }
-      }
-      // Also include the selected node's direct children (one hop downstream).
-      for (const e of edges) {
-        if (e.source === selected) set.add(e.target);
-      }
-      return set;
-    }
-    for (const e of edges) {
-      if (e.source === selected) set.add(e.target);
-      if (e.target === selected) set.add(e.source);
-    }
-    return set;
-  }, [selected, edges, isUpstreamMode]);
+  }, [positionedNodes, baseGraph, setNodes, setEdges, fitView]);
 
   // Decorate nodes/edges with highlight + dim flags (req 4).
   const decoratedNodes = useMemo(
@@ -185,58 +104,10 @@ export function GraphCanvas() {
     [edges, highlightSet, selected, isUpstreamMode],
   );
 
-  const currentAreaId = 'areaId' in view ? view.areaId : undefined;
-
   const onNodeClick = useCallback<NodeMouseHandler>(
-    (_evt, node) => {
-      const data = node.data as GraphNodeData;
-
-      // Areas drill in on a single click; they have no relationships to show.
-      if (data.kind === 'area' && data.areaId) {
-        setView({ kind: 'area', areaId: data.areaId });
-        return;
-      }
-
-      // First click selects (highlights relationships) - works for every node.
-      // Second click on the same node acts, but only for interactive nodes.
-      if (selected !== node.id) {
-        setSelected(node.id);
-        return;
-      }
-
-      if (!data.interactive) return;
-
-      if (data.kind === 'entity' && data.entityId) {
-        setEntityModal(data.entityId);
-      } else if (data.kind === 'scene' && data.sceneId) {
-        if (view.kind === 'scene' && view.sceneId === data.sceneId) {
-          if (data.entityId) setEntityModal(data.entityId);
-        } else {
-          setView({
-            kind: 'scene',
-            areaId: currentAreaId ?? '',
-            sceneId: data.sceneId,
-            via: view.kind === 'scenes' ? 'scenes' : 'area',
-          });
-        }
-      } else if (data.kind === 'automation' && data.automationId) {
-        if (view.kind === 'automation' && view.automationId === data.automationId) {
-          if (data.entityId) setEntityModal(data.entityId);
-        } else {
-          setView({
-            kind: 'automation',
-            areaId: currentAreaId ?? '',
-            automationId: data.automationId,
-            via: view.kind === 'automations' ? 'automations' : 'area',
-          });
-        }
-      }
-    },
-    [selected, setSelected, setView, setEntityModal, currentAreaId, view],
+    (_evt, node) => activate({ id: node.id, data: node.data as GraphNodeData }),
+    [activate],
   );
-
-  // Clicking empty canvas clears the current selection.
-  const onPaneClick = useCallback(() => setSelected(null), [setSelected]);
 
   // Persist user-arranged positions to localStorage (req 7).
   const onNodeDragStop = useCallback(
@@ -249,19 +120,7 @@ export function GraphCanvas() {
     [setPositions, scope],
   );
 
-  const showSpinner = view.kind === 'automation' && automationLoading;
-
-  // When an automation has no parsable structure (typically never run / HA
-  // can't return its config) the flow is just a flat fallback, so nudge the
-  // user to run it once to get the real diagram.
-  const showAutomationHint =
-    view.kind === 'automation' && !automationLoading && !!automationDetail && !automationHasStructure(automationDetail);
-
-  // The hint is dismissible; reset the dismissal when the automation changes
-  // so each automation gets its own chance to show the "run me" nudge.
-  const automationId = view.kind === 'automation' ? view.automationId : null;
-  const [hintDismissed, setHintDismissed] = useState(false);
-  useEffect(() => setHintDismissed(false), [automationId]);
+  const showSpinner = automationLoading;
 
   return (
     <div className="relative h-full w-full">
@@ -274,7 +133,7 @@ export function GraphCanvas() {
         nodeTypes={nodeTypes}
         onNodeClick={onNodeClick}
         onNodeDragStop={onNodeDragStop}
-        onPaneClick={onPaneClick}
+        onPaneClick={clearSelection}
         defaultEdgeOptions={{ type: 'bezier' }}
         nodesConnectable={false}
         nodesFocusable={false}
@@ -288,33 +147,8 @@ export function GraphCanvas() {
         <Background />
         <Controls showInteractive={false} />
       </ReactFlow>
-      <GroupByControls />
-      {showAutomationHint && !hintDismissed && (
-        <Alert
-          variant="default"
-          className="bg-card/95 absolute top-3 right-3 left-3 z-10 pr-9 shadow-md backdrop-blur sm:right-auto sm:left-1/2 sm:max-w-md sm:min-w-[20rem] sm:-translate-x-1/2"
-        >
-          <Info />
-          <AlertTitle>Run this automation to see its real flow</AlertTitle>
-          <AlertDescription>
-            The diagram below is a simplified view. Trigger the automation once so Home Assistant records a trace, then
-            refresh to see the actual steps.
-          </AlertDescription>
-          <button
-            type="button"
-            aria-label="Dismiss"
-            onClick={() => setHintDismissed(true)}
-            className="hover:bg-muted text-muted-foreground absolute top-2 right-2 flex size-6 cursor-pointer items-center justify-center rounded-md"
-          >
-            <X className="size-4" />
-          </button>
-        </Alert>
-      )}
-      {showSpinner && (
-        <div className="bg-background/60 absolute inset-0 flex items-center justify-center">
-          <LoaderCircle className="text-muted-foreground size-6 animate-spin" />
-        </div>
-      )}
+      {showAutomationHint && <AutomationHint key={automationId} />}
+      {showSpinner && <CanvasSpinner />}
     </div>
   );
 }

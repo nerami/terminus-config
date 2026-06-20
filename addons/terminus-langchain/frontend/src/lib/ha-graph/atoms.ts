@@ -146,3 +146,19 @@ export const nodePositionsAtom = atomWithStorage<Record<string, Record<string, X
   'terminus-graph-positions',
   {},
 );
+
+export interface XYZPosition {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * Persisted, user-dragged node positions for the 3D (reagraph) view, keyed by
+ * view scope then node id. Kept separate from `nodePositionsAtom` because the 3D
+ * coordinate space differs from the 2D react-flow one.
+ */
+export const nodePositions3dAtom = atomWithStorage<Record<string, Record<string, XYZPosition>>>(
+  'terminus-graph-positions-3d',
+  {},
+);

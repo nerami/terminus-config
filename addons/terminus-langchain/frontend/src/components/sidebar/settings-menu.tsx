@@ -1,11 +1,13 @@
 import { useAtom } from 'jotai';
 import { Check, Minus, Plus, Settings } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useViewTools } from '@/hooks/use-view-tools';
-import { MAX_FONT_SIZE, MIN_FONT_SIZE, clampFontSize, fontSizeAtom } from '@/lib/settings';
+import { MAX_FONT_SIZE, MIN_FONT_SIZE, clampFontSize, fontSizeAtom, topology3dAtom } from '@/lib/settings';
 import { cn } from '@/lib/utils';
 
 /**
@@ -15,6 +17,7 @@ import { cn } from '@/lib/utils';
 export function SettingsMenu() {
   const [viewTools, setViewTools] = useViewTools();
   const [fontSize, setFontSize] = useAtom(fontSizeAtom);
+  const [topology3d, setTopology3d] = useAtom(topology3dAtom);
   const size = clampFontSize(fontSize);
 
   return (
@@ -64,6 +67,16 @@ export function SettingsMenu() {
               <Plus />
             </Button>
           </div>
+        </div>
+        <div
+          className="flex items-center justify-between gap-6 px-2 py-1.5 text-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="flex items-center gap-2">
+            3D topology
+            <Badge variant="secondary">Beta</Badge>
+          </span>
+          <Switch checked={topology3d} onCheckedChange={setTopology3d} aria-label="3D topology" />
         </div>
       </MenuContent>
     </Menu>

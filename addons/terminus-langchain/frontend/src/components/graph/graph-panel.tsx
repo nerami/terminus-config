@@ -1,11 +1,11 @@
-import '@xyflow/react/dist/style.css';
+import { Suspense, lazy } from 'react';
 
-import { ReactFlowProvider } from '@xyflow/react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { BotMessageSquare, LoaderCircle, RefreshCw, XIcon } from 'lucide-react';
 
+import { CanvasSpinner } from './canvas-overlays';
 import { EntityDetailModal } from './entity-detail-modal';
-import { GraphCanvas } from './graph-canvas';
+import { GroupByControls } from './group-by-controls';
 
 import { TooltipIconButton } from '@/components/thread/tooltip-icon-button';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,18 @@ import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTopology } from '@/hooks/use-topology';
 import { graphFullscreenAtom, graphPanelOpenAtom, topologyAtom } from '@/lib/ha-graph/atoms';
+import { topology3dAtom } from '@/lib/settings';
+
+// Each renderer is its own lazy chunk so neither react-flow nor reagraph/three.js
+// loads unless its mode is active (req 6).
+const Topology2D = lazy(() => import('./topology-2d').then((m) => ({ default: m.Topology2D })));
+const Topology3D = lazy(() => import('./topology-3d').then((m) => ({ default: m.Topology3D })));
 
 export function GraphPanel() {
   const setOpen = useSetAtom(graphPanelOpenAtom);
   const [fullscreen, setFullscreen] = useAtom(graphFullscreenAtom);
   const topology = useAtomValue(topologyAtom);
+  const topology3d = useAtomValue(topology3dAtom);
   const isMobile = useIsMobile();
   const { error, loading, reload } = useTopology(true);
 
@@ -86,10 +93,11 @@ export function GraphPanel() {
           </div>
         )}
         {topology && (
-          <ReactFlowProvider>
-            <GraphCanvas />
+          <>
+            <Suspense fallback={<CanvasSpinner />}>{topology3d ? <Topology3D /> : <Topology2D />}</Suspense>
+            <GroupByControls />
             <EntityDetailModal />
-          </ReactFlowProvider>
+          </>
         )}
       </div>
     </div>
