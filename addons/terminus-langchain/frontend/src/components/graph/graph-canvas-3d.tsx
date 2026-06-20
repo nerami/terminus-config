@@ -36,6 +36,9 @@ const ICON_SCALE = 1.3;
 // Slight icon transparency so the glyph sits softly on the sphere.
 const ICON_OPACITY = 0.85;
 
+// Edge line thickness; also shrinks the arrow head (reagraph couples them).
+const EDGE_SIZE = 0.5;
+
 // reagraph hardcodes the node name to fontSize 7 with a fixed sub-label offset,
 // which overlaps on small nodes. We render our own labels (smaller, spaced) and
 // set labelType="edges" so reagraph only draws edge labels.
@@ -111,6 +114,9 @@ export function GraphCanvas3D() {
         label: typeof e.label === 'string' ? e.label : undefined,
         dashed: !!(e.data as { dashed?: boolean } | undefined)?.dashed,
         interpolation: 'curved',
+        // Edge `size` drives both line thickness and arrow size
+        // (reagraph: arrow = [size + 6, 2 + size / 1.5]). Thinner = subtler edges.
+        size: EDGE_SIZE,
       })),
     [baseGraph],
   );
