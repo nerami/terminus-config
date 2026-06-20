@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   Background,
-  Controls,
   type Edge,
   type Node,
   type NodeMouseHandler,
@@ -15,6 +14,7 @@ import { useAtom } from 'jotai';
 import { useTheme } from 'next-themes';
 
 import { AutomationHint, CanvasSpinner } from './canvas-overlays';
+import { GraphControls } from './graph-controls';
 import { nodeTypes } from './nodes';
 
 import { nodePositionsAtom } from '@/lib/ha-graph/atoms';
@@ -35,7 +35,7 @@ export function GraphCanvas() {
     showAutomationHint,
   } = useTopologyGraph();
   const [positions, setPositions] = useAtom(nodePositionsAtom);
-  const { fitView } = useReactFlow();
+  const { fitView, zoomIn, zoomOut } = useReactFlow();
   const { resolvedTheme } = useTheme();
   // React Flow's Background/Controls/MiniMap need an explicit colorMode to match
   // the app theme; without it they always render in light mode (req: dark bug).
@@ -145,8 +145,12 @@ export function GraphCanvas() {
         fitView
       >
         <Background />
-        <Controls showInteractive={false} />
       </ReactFlow>
+      <GraphControls
+        onZoomIn={() => zoomIn()}
+        onZoomOut={() => zoomOut()}
+        onFit={() => fitView({ duration: 600, padding: 0.2 })}
+      />
       {showAutomationHint && <AutomationHint key={automationId} />}
       {showSpinner && <CanvasSpinner />}
     </div>

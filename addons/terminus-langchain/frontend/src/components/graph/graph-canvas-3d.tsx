@@ -24,6 +24,7 @@ import {
 import { AutomationHint, CanvasSpinner } from './canvas-overlays';
 import { Graph3dLegend } from './graph-3d-legend';
 import { KIND_FILL, KIND_ICON_URI, KIND_ORDER, sizeForKind } from './graph-3d-style';
+import { GraphControls } from './graph-controls';
 
 import { nodePositions3dAtom } from '@/lib/ha-graph/atoms';
 import { type GraphNodeData, type NodeKind } from '@/lib/ha-graph/build';
@@ -251,6 +252,11 @@ export function GraphCanvas3D() {
         <directionalLight position={[0, 5, 4]} intensity={1.5} />
         <directionalLight position={[-3, -2, -4]} intensity={0.4} />
       </GraphCanvas>
+      <GraphControls
+        onZoomIn={() => graphRef.current?.zoomIn()}
+        onZoomOut={() => graphRef.current?.zoomOut()}
+        onFit={() => graphRef.current?.fitNodesInView()}
+      />
       <Graph3dLegend kinds={legendKinds} />
       {showAutomationHint && <AutomationHint key={automationId} />}
       {automationLoading && <CanvasSpinner />}

@@ -10,7 +10,7 @@ import type { NodeKind } from '@/lib/ha-graph/build';
 export function Graph3dLegend({ kinds }: { kinds: NodeKind[] }) {
   if (kinds.length === 0) return null;
   return (
-    <div className="bg-card/90 text-card-foreground absolute bottom-3 left-3 z-10 rounded-md border p-2 text-xs shadow-md backdrop-blur">
+    <div className="bg-card/90 text-card-foreground absolute top-3 right-3 z-10 rounded-md border p-2 text-xs shadow-md backdrop-blur">
       <ul className="space-y-1">
         {kinds.map((kind) => (
           <li key={kind} className="flex items-center gap-2">
