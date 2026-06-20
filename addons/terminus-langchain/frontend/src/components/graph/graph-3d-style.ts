@@ -78,9 +78,30 @@ export const KIND_ORDER: NodeKind[] = [
 
 export function sizeForKind(kind: NodeKind): number {
   if (kind === 'area') return 12;
-  if (kind === 'automation') return 9;
-  if (kind === 'scene') return 8;
+  if (kind === 'automation' || kind === 'scene') return 9;
+  if (kind === 'entity') return 8;
   return 7;
+}
+
+/** Platonic-solid (or sphere) geometry used to render each node kind in 3D. */
+export type SolidKind = 'dodecahedron' | 'icosahedron' | 'octahedron' | 'sphere' | 'tetrahedron';
+
+// The four top-level topology kinds each get a distinct Platonic solid so they
+// read apart at a glance; the automation-flow kinds (and anything else) keep the
+// sphere fallback. Entities are the most numerous, so the sharp tetrahedron.
+export function solidForKind(kind: NodeKind): SolidKind {
+  if (kind === 'area') return 'icosahedron';
+  if (kind === 'automation') return 'dodecahedron';
+  if (kind === 'scene') return 'octahedron';
+  if (kind === 'entity') return 'tetrahedron';
+  return 'sphere';
+}
+
+/** Top/bottom gradient colors for the 3D "room" skybox, per resolved theme. */
+export function roomEnvForTheme(resolvedTheme: string | undefined): { bottom: string; top: string } {
+  return resolvedTheme === 'dark'
+    ? { bottom: '#010309', top: '#334155' } // near-black → slate-700
+    : { bottom: '#b6c2d2', top: '#ffffff' }; // slate-300/400 → white
 }
 
 function toIconUri(svg: string): string {

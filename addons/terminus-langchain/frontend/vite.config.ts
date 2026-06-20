@@ -15,6 +15,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // reagraph pulls three/r3f transitively; the topology-3d code now also
+    // imports them directly. Force a single copy — a second `three` breaks r3f's
+    // cross-instance `instanceof` checks in the reconciler.
+    dedupe: ['three', '@react-three/fiber', '@react-three/drei'],
   },
   server: {
     port: 5173,

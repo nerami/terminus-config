@@ -17,6 +17,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+import { KIND_FILL } from './graph-3d-style';
+
 import type { GraphNodeData, NodeKind } from '@/lib/ha-graph/build';
 
 import { cn } from '@/lib/utils';
@@ -37,25 +39,6 @@ const KIND_ICON: Record<NodeKind, LucideIcon> = {
   parallel: Columns2,
   sequence: List,
   stop: Octagon,
-};
-
-// Accent colors keyed to the theme chart variables so nodes match the app.
-const KIND_ACCENT: Record<NodeKind, string> = {
-  area: 'var(--chart-3)',
-  group: 'var(--muted-foreground)',
-  entity: 'var(--chart-1)',
-  scene: 'var(--chart-4)',
-  automation: 'var(--chart-2)',
-  trigger: 'var(--chart-2)',
-  condition: 'var(--chart-4)',
-  logic: 'var(--muted-foreground)',
-  action: 'var(--chart-1)',
-  choose: 'var(--chart-2)',
-  if: 'var(--chart-2)',
-  repeat: 'var(--chart-3)',
-  parallel: 'var(--chart-3)',
-  sequence: 'var(--muted-foreground)',
-  stop: 'var(--destructive)',
 };
 
 function NodeShell({
@@ -105,7 +88,7 @@ function withHandles(node: React.ReactNode) {
 function makeNode(kind: NodeKind) {
   return function GraphNode({ data }: NodeProps) {
     const d = data as GraphNodeData;
-    return withHandles(<NodeShell data={d} accent={KIND_ACCENT[kind]} icon={KIND_ICON[kind]} />);
+    return withHandles(<NodeShell data={d} accent={KIND_FILL[kind]} icon={KIND_ICON[kind]} />);
   };
 }
 

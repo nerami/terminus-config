@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
 import { describe, expect, it } from 'vitest';
 
+import { KIND_FILL } from './graph-3d-style';
 import { nodeTypes } from './nodes';
 
 type TestNodeProps = { data: { label: string; sublabel?: string; interactive?: boolean } };
@@ -31,5 +32,15 @@ describe('regular node', () => {
       </ReactFlowProvider>,
     );
     expect(container.innerHTML).not.toMatch(/rounded/);
+  });
+
+  it('colors the icon swatch from the shared KIND_FILL palette so 2D matches 3D', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <EntityNode data={{ label: 'Light', interactive: false }} />
+      </ReactFlowProvider>,
+    );
+    const swatch = container.querySelector('span[style]') as HTMLElement;
+    expect(swatch).toHaveStyle({ backgroundColor: KIND_FILL.entity });
   });
 });

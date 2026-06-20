@@ -2,12 +2,13 @@ import React from 'react';
 
 import { createStore } from 'jotai';
 import { Provider as JotaiProvider } from 'jotai';
+import { ThemeProvider } from 'next-themes';
 
 import type { Topology } from '@/lib/ha-graph/types';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GraphCanvas3D } from '@/components/graph/graph-canvas-3d';
-import { graphViewAtom, topologyAtom } from '@/lib/ha-graph/atoms';
+import { graphViewAtom, selectedNodeAtom, topologyAtom } from '@/lib/ha-graph/atoms';
 
 const FIXTURE_TOPOLOGY: Topology = {
   areas: [
@@ -74,31 +75,53 @@ const FIXTURE_TOPOLOGY: Topology = {
 };
 
 // Fresh Jotai store pre-seeded with topology + area view (mirrors the 2D story).
-function createTopologyStore() {
+function createTopologyStore(selectedId?: string) {
   const store = createStore();
   store.set(topologyAtom, FIXTURE_TOPOLOGY);
   store.set(graphViewAtom, { kind: 'area', areaId: 'living_room' });
+  if (selectedId) store.set(selectedNodeAtom, selectedId);
   return store;
 }
 
-function Topology3DStory() {
-  const [store] = React.useState(createTopologyStore);
-  return (
+// `forcedTheme` drives next-themes' resolvedTheme, which the 3D canvas maps to the
+// reagraph theme, the room-background tint, and the additive/normal icon blend.
+// Storybook itself has no next-themes provider, so without this the canvas always
+// resolves to light.
+function Topology3DStory({ forcedTheme, selectedId }: { forcedTheme?: string; selectedId?: string }) {
+  const [store] = React.useState(() => createTopologyStore(selectedId));
+  const canvas = (
     <JotaiProvider store={store}>
       <div style={{ width: '100%', height: '100vh' }}>
         <GraphCanvas3D />
       </div>
     </JotaiProvider>
   );
+  if (!forcedTheme) return canvas;
+  return (
+    <ThemeProvider attribute="class" forcedTheme={forcedTheme}>
+      {canvas}
+    </ThemeProvider>
+  );
 }
 
-const meta: Meta = {
+const meta: Meta<typeof Topology3DStory> = {
   title: 'Topology 3D',
   component: Topology3DStory,
   parameters: { layout: 'fullscreen' },
 };
 
 export default meta;
-type Story = StoryObj;
+type Story = StoryObj<typeof Topology3DStory>;
 
+// Area view: area=icosahedron, automation=dodecahedron, scene=octahedron,
+// entity=tetrahedron. Default has no forced theme (resolves light in Storybook).
 export const Default: Story = {};
+
+// Dark room + additive (glowing) icons.
+export const Dark: Story = { args: { forcedTheme: 'dark' } };
+
+// Light room + flat (normal-blended) icons — the additive glow would wash out here.
+export const Light: Story = { args: { forcedTheme: 'light' } };
+
+// Verifies the selection ring + emissive bump still land on the Platonic solids.
+export const Selected: Story = { args: { forcedTheme: 'dark', selectedId: 'light.lr_led_strip' } };
