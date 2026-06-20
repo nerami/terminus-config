@@ -1,8 +1,9 @@
-import { Boxes, Check, MapPin } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 
 import type { ContextItem } from '@/lib/chat-context';
 
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 /**
  * Toggleable chips shown in the chat input that attach Home-topology context
@@ -24,12 +25,11 @@ export function ContextChips({
     <div className="flex flex-wrap gap-2 p-3.5 pb-0">
       {items.map((item) => {
         const active = activeIds.has(item.id);
-        const Icon = item.kind === 'node' ? Boxes : MapPin;
         return (
           <Badge
             key={item.id}
             variant={active ? 'default' : 'outline'}
-            className="cursor-pointer gap-1.5"
+            className={cn('cursor-pointer gap-1.5', !active && 'border-dashed')}
             render={
               <button
                 type="button"
@@ -39,7 +39,7 @@ export function ContextChips({
               />
             }
           >
-            {active ? <Check /> : <Icon />}
+            {active ? <Check /> : <Plus />}
             <span className="max-w-[160px] truncate">{item.label}</span>
           </Badge>
         );

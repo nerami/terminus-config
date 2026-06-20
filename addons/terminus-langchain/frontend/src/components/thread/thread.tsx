@@ -127,11 +127,10 @@ export function Thread() {
   const graphView = useAtomValue(graphViewAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const topology = useAtomValue(topologyAtom);
-  const [inactiveContextIds, setInactiveContextIds] = useState<Set<string>>(new Set());
+  const [activeContextIds, setActiveContextIds] = useState<Set<string>>(new Set());
   const availableContext = contextItems(graphView, selectedNode, topology);
-  const activeContextIds = new Set(availableContext.filter((i) => !inactiveContextIds.has(i.id)).map((i) => i.id));
   const toggleContext = (id: string) =>
-    setInactiveContextIds((prev) => {
+    setActiveContextIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -351,7 +350,7 @@ export function Thread() {
               <StickToBottom className="relative flex-1 overflow-hidden">
                 <StickyToBottomContent
                   className={cn(
-                    '[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 absolute inset-0 overflow-x-hidden overflow-y-scroll px-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent',
+                    'absolute inset-0 overflow-x-hidden overflow-y-scroll px-4',
                     !chatStarted && 'mt-[25vh] flex flex-col items-stretch',
                     chatStarted && 'grid grid-rows-[1fr_auto]',
                   )}
