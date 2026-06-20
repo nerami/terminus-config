@@ -33,6 +33,9 @@ import { useTopologyGraph } from '@/lib/ha-graph/use-topology-graph';
 // Icon glyph size as a fraction of the node sphere diameter (diameter = 2*size).
 const ICON_SCALE = 1.3;
 
+// Slight icon transparency so the glyph sits softly on the sphere.
+const ICON_OPACITY = 0.85;
+
 // reagraph hardcodes the node name to fontSize 7 with a fixed sub-label offset,
 // which overlaps on small nodes. We render our own labels (smaller, spaced) and
 // set labelType="edges" so reagraph only draws edge labels.
@@ -169,7 +172,7 @@ export function GraphCanvas3D() {
               // Sphere diameter is 2*size; ~0.65x of that reads as an inset glyph
               // and scales with the node (unlike reagraph's default size + 8).
               size={size * ICON_SCALE}
-              opacity={opacity}
+              opacity={opacity * ICON_OPACITY}
               animated={animated}
               color={color}
               node={node}
@@ -249,8 +252,8 @@ export function GraphCanvas3D() {
         {/* The node spheres use a Phong material, so directional light gives them
             shading + a specular highlight. A soft fill from the opposite side keeps
             the shadowed faces from going flat. reagraph adds its own ambient light. */}
-        <directionalLight position={[0, 5, 4]} intensity={1.5} />
-        <directionalLight position={[-3, -2, -4]} intensity={0.4} />
+        <directionalLight position={[0, 5, 4]} intensity={0.8} />
+        <directionalLight position={[-3, -2, -4]} intensity={0.3} />
       </GraphCanvas>
       <GraphControls
         onZoomIn={() => graphRef.current?.zoomIn()}
