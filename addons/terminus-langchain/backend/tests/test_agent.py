@@ -41,6 +41,39 @@ def test_topology_context_injected_into_system_prompt():
     assert "ZZZ-CTX-TOKEN" in _captured_text(fake)
 
 
+def test_topology_context_is_framed():
+    """The injected context is labelled so the model knows what it is."""
+    fake = CapturingModel()
+    graph = build_graph(model=fake, auto_run=True)
+    graph.invoke(
+        {"messages": [HumanMessage(content="hi")]},
+        context=AgentContext(topology_context="ZZZ-CTX-TOKEN"),
+    )
+    text = _captured_text(fake)
+    assert "currently viewing the Home topology panel" in text
+    assert "ZZZ-CTX-TOKEN" in text
+
+
+def test_approval_clause_gated_by_default():
+    """Without auto-run, the prompt promises an approval pause."""
+    fake = CapturingModel()
+    graph = build_graph(model=fake, auto_run=False)
+    graph.invoke({"messages": [HumanMessage(content="hi")]})
+    text = _captured_text(fake)
+    assert "pause for your sign-off" in text
+    assert "run immediately" not in text
+
+
+def test_approval_clause_reflects_auto_run():
+    """With auto-run, the prompt must not promise a pause that won't happen."""
+    fake = CapturingModel()
+    graph = build_graph(model=fake, auto_run=True)
+    graph.invoke({"messages": [HumanMessage(content="hi")]})
+    text = _captured_text(fake)
+    assert "run immediately" in text
+    assert "pause for your sign-off" not in text
+
+
 def test_no_topology_context_leaves_prompt_clean():
     fake = CapturingModel()
     graph = build_graph(model=fake, auto_run=True)

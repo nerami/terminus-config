@@ -4,6 +4,23 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.8.0
+
+- Terminus has a new voice: a "warm terminal" persona — plain, calm, structured
+  output (an aligned three-operation table) that stays friendly rather than cold.
+  The system prompt now also states its capability boundary (it only reports
+  basic instance info and runs existing scenes/automations — it can't control
+  individual entities), tells the model not to invent entity ids (ask when the
+  target is ambiguous), and to surface tool errors plainly instead of claiming a
+  success it didn't receive.
+- Fixed a prompt/runtime mismatch: the approval sentence is now built from the
+  same `auto_run` flag that decides whether the approval interrupt is attached.
+  With auto-run enabled the prompt no longer promises a pause that won't happen;
+  it says actions run immediately instead.
+- The per-turn topology context injected from the Home panel is now labelled
+  ("context for this turn only, not a command") so the model knows what the
+  appended block is instead of receiving an unframed blob.
+
 ## 0.7.1
 
 - Tool calls and their results now collapse to a single line, expanding on click
