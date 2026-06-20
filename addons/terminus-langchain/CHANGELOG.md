@@ -4,6 +4,24 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.10.0
+
+- The **3D topology** nodes are now kind-specific, slowly-rotating Platonic
+  solids — areas are icosahedrons, automations dodecahedrons, scenes octahedrons,
+  and entities tetrahedrons — instead of uniform spheres, so each kind reads apart
+  at a glance.
+- The 3D scene now sits inside a soft, procedurally-shaded gradient "room" that
+  follows the light/dark theme, and the camera's zoom-out is clamped so you stay
+  inside it.
+- Each 3D node's name, metadata, and kind icon are combined into a single label
+  chip that always faces the camera, depth-sorts so nearer labels sit on top
+  (updating as you rotate), and is clipped to the panel.
+- Roomier layout: wider spacing between nodes and a larger gap between a node and
+  its label, plus tuned node sizes (automations and scenes match; entities a touch
+  larger).
+- The 2D and 3D views now share one color palette, so a node's color is the same
+  in both.
+
 ## 0.9.0
 
 - New **3D home topology** view (beta), toggleable from Settings → Appearance.
