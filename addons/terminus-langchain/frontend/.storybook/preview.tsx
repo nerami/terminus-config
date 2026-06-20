@@ -4,6 +4,8 @@ import React, { useEffect } from 'react';
 
 import { DocsContainer } from '@storybook/addon-docs/blocks';
 import { withThemeByClassName } from '@storybook/addon-themes';
+import { Provider as JotaiProvider } from 'jotai';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 
 import { getSystemTheme, resolveTheme } from './theme';
 
@@ -55,6 +57,16 @@ const withSystemTheme = (Story: React.ComponentType, context: { globals: { theme
   );
 };
 
+// Outermost wrapper: provides Jotai store + nuqs URL adapter to every story.
+// Listed last in `decorators` so it is the outermost React component.
+const withJotaiAndNuqs = (Story: React.ComponentType) => (
+  <JotaiProvider>
+    <NuqsAdapter>
+      <Story />
+    </NuqsAdapter>
+  </JotaiProvider>
+);
+
 const preview: Preview = {
   decorators: [
     withThemeByClassName({
@@ -66,6 +78,7 @@ const preview: Preview = {
       defaultTheme: 'system',
     }),
     withSystemTheme,
+    withJotaiAndNuqs,
   ],
   parameters: {
     controls: {
