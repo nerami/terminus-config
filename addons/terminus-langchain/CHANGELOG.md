@@ -4,6 +4,14 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.6.2
+
+- Dev tooling: adopt the `terminus-ui` ESLint setup in the frontend
+  (`eslint.config.js` + `.prettierrc`, plus `lint`/`format` scripts) and run
+  `eslint --fix` across the source. Rules existing source still violates are
+  temporarily relaxed in a `TODO(lint)` block listing each offender. No change
+  to the add-on's runtime behavior.
+
 ## 0.6.1
 
 - Error states now render the **glitch** logo variant instead of wave, signalling
