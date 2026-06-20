@@ -28,6 +28,7 @@ import { Label } from '../ui/label';
 import { useArtifactOpen, ArtifactContent, ArtifactTitle, useArtifactContext } from './artifact';
 import { ContentBlocksPreview } from './content-blocks-preview';
 import { ContextChips } from './context-chips';
+import { Disclaimer } from './disclaimer';
 import { AssistantMessage, AssistantMessageLoading } from './messages/ai';
 import { HumanMessage } from './messages/human';
 import { RenameThreadDialog } from './rename-thread-dialog';
@@ -404,7 +405,7 @@ export function Thread() {
                       <div
                         ref={dropRef}
                         className={cn(
-                          'bg-background/90 relative z-10 mx-auto mb-8 w-full max-w-3xl rounded-2xl shadow-xs backdrop-blur-sm transition-all',
+                          'bg-background/90 relative z-10 mx-auto mb-2 w-full max-w-3xl rounded-2xl shadow-xs backdrop-blur-sm transition-all',
                           dragOver ? 'border-primary border-2 border-dotted' : 'border border-solid',
                         )}
                       >
@@ -461,6 +462,7 @@ export function Thread() {
                           </div>
                         </form>
                       </div>
+                      <Disclaimer className="mb-8" />
                     </div>
                   }
                 />

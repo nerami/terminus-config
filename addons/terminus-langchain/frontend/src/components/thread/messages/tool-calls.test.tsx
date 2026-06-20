@@ -32,6 +32,31 @@ describe('ToolCalls', () => {
     expect(screen.getByText('Paris')).toBeInTheDocument();
   });
 
+  it('exposes the tool call id through its own button without expanding the call', () => {
+    render(
+      <ToolCalls
+        toolCalls={[
+          {
+            name: 'get_weather',
+            id: 'call_1',
+            args: { city: 'Paris' },
+            type: 'tool_call',
+          },
+        ]}
+      />,
+    );
+
+    // The id lives in a dedicated button (labelled with the id), separate from
+    // the collapsible trigger that opens the call.
+    const idButton = screen.getByRole('button', { name: 'call_1' });
+    expect(idButton).toBeInTheDocument();
+
+    // Activating the id button reveals the id but does NOT expand the args.
+    fireEvent.click(idButton);
+    expect(screen.queryByText('city')).not.toBeInTheDocument();
+    expect(screen.queryByText('Paris')).not.toBeInTheDocument();
+  });
+
   it('renders without crashing when args are empty', () => {
     render(
       <ToolCalls
