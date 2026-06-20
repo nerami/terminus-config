@@ -1,24 +1,26 @@
-import { Button } from "@/components/ui/button";
-import { useThreads } from "@/providers/Thread";
-import { Thread } from "@langchain/langgraph-sdk";
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
-import { getContentString } from "../utils";
-import { useThreadId } from "@/hooks/use-thread-id";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
-import { Archive, MoreVertical } from "lucide-react";
-import { toast } from "sonner";
+import { Thread } from '@langchain/langgraph-sdk';
+import { Archive, MoreVertical } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { getContentString } from '../utils';
+
+import { Button } from '@/components/ui/button';
+import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useThreadId } from '@/hooks/use-thread-id';
+import { cn } from '@/lib/utils';
+import { useThreads } from '@/providers/Thread';
 
 const SCROLLBAR =
-  "overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent";
+  'overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent';
 
 function threadLabel(t: Thread): string {
   if (
-    typeof t.values === "object" &&
+    typeof t.values === 'object' &&
     t.values &&
-    "messages" in t.values &&
+    'messages' in t.values &&
     Array.isArray(t.values.messages) &&
     t.values.messages?.length > 0
   ) {
@@ -28,9 +30,9 @@ function threadLabel(t: Thread): string {
 }
 
 function ThreadList({
-  threads,
-  onThreadClick,
   onArchive,
+  onThreadClick,
+  threads,
 }: {
   threads: Thread[];
   onThreadClick?: (threadId: string) => void;
@@ -47,22 +49,14 @@ function ThreadList({
   }
 
   return (
-    <div
-      className={cn(
-        "flex h-full w-full flex-col items-start justify-start gap-1",
-        SCROLLBAR,
-      )}
-    >
+    <div className={cn('flex h-full w-full flex-col items-start justify-start gap-1', SCROLLBAR)}>
       {threads.map((t) => (
-        <div
-          key={t.thread_id}
-          className="group/thread relative flex w-full items-center px-1"
-        >
+        <div key={t.thread_id} className="group/thread relative flex w-full items-center px-1">
           <Button
             variant="ghost"
             className={cn(
-              "w-full items-start justify-start pr-9 text-left font-normal",
-              t.thread_id === threadId && "bg-muted",
+              'w-full items-start justify-start pr-9 text-left font-normal',
+              t.thread_id === threadId && 'bg-muted',
             )}
             onClick={(e) => {
               e.preventDefault();
@@ -103,38 +97,19 @@ function ThreadList({
 
 function ThreadHistoryLoading() {
   return (
-    <div
-      className={cn(
-        "flex h-full w-full flex-col items-start justify-start gap-2",
-        SCROLLBAR,
-      )}
-    >
+    <div className={cn('flex h-full w-full flex-col items-start justify-start gap-2', SCROLLBAR)}>
       {Array.from({ length: 20 }).map((_, i) => (
-        <Skeleton
-          key={`skeleton-${i}`}
-          className="h-10 w-full"
-        />
+        <Skeleton key={`skeleton-${i}`} className="h-10 w-full" />
       ))}
     </div>
   );
 }
 
-export default function ThreadHistory({
-  onThreadSelect,
-}: {
-  onThreadSelect?: (threadId: string) => void;
-}) {
-  const {
-    getThreads,
-    archiveThread,
-    threads,
-    setThreads,
-    threadsLoading,
-    setThreadsLoading,
-  } = useThreads();
+export default function ThreadHistory({ onThreadSelect }: { onThreadSelect?: (threadId: string) => void }) {
+  const { archiveThread, getThreads, setThreads, setThreadsLoading, threads, threadsLoading } = useThreads();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     setThreadsLoading(true);
     getThreads()
       .then(setThreads)
@@ -145,7 +120,7 @@ export default function ThreadHistory({
 
   const handleArchive = (id: string) => {
     archiveThread(id)
-      .then(() => toast.success("Conversation archived"))
+      .then(() => toast.success('Conversation archived'))
       .catch((err) => {
         console.error(err);
         toast.error("Couldn't archive conversation");
@@ -157,11 +132,7 @@ export default function ThreadHistory({
       {threadsLoading ? (
         <ThreadHistoryLoading />
       ) : (
-        <ThreadList
-          threads={threads}
-          onThreadClick={onThreadSelect}
-          onArchive={handleArchive}
-        />
+        <ThreadList threads={threads} onThreadClick={onThreadSelect} onArchive={handleArchive} />
       )}
     </div>
   );

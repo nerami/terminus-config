@@ -11,8 +11,8 @@
     <script>
       (function () {
         var m = location.pathname.match(/^.*?\/api\/hassio_ingress\/[^/]+\//);
-        var dir = m ? m[0] : "/";
-        var b = document.createElement("base");
+        var dir = m ? m[0] : '/';
+        var b = document.createElement('base');
         b.href = location.origin + dir;
         document.head.appendChild(b);
       })();

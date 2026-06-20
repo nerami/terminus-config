@@ -1,49 +1,38 @@
-import { useStreamContext } from "@/providers/Stream";
-import { END } from "@langchain/langgraph/web";
-import { Interrupt } from "@langchain/langgraph-sdk";
-import { toast } from "sonner";
-import {
-  Dispatch,
-  KeyboardEvent,
-  MutableRefObject,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { Decision, DecisionWithEdits, HITLRequest, SubmitType } from "../types";
-import { buildDecisionFromState, createDefaultHumanResponse } from "../utils";
+import { Dispatch, KeyboardEvent, MutableRefObject, SetStateAction, useEffect, useRef, useState } from 'react';
+
+import { END } from '@langchain/langgraph/web';
+import { Interrupt } from '@langchain/langgraph-sdk';
+import { toast } from 'sonner';
+
+import { Decision, DecisionWithEdits, HITLRequest, SubmitType } from '../types';
+import { buildDecisionFromState, createDefaultHumanResponse } from '../utils';
+
+import { useStreamContext } from '@/providers/Stream';
 
 interface UseInterruptedActionsInput {
   interrupt: Interrupt<HITLRequest>;
 }
 
 interface UseInterruptedActionsValue {
-  handleSubmit: (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent> | KeyboardEvent,
-  ) => Promise<void>;
-  handleResolve: (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => Promise<void>;
-  streaming: boolean;
-  streamFinished: boolean;
-  loading: boolean;
-  supportsMultipleMethods: boolean;
-  hasEdited: boolean;
-  hasAddedResponse: boolean;
   approveAllowed: boolean;
+  handleResolve: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => Promise<void>;
+  handleSubmit: (e: React.MouseEvent<HTMLButtonElement, MouseEvent> | KeyboardEvent) => Promise<void>;
+  hasAddedResponse: boolean;
+  hasEdited: boolean;
   humanResponse: DecisionWithEdits[];
+  initialHumanInterruptEditValue: MutableRefObject<Record<string, string>>;
+  loading: boolean;
   selectedSubmitType: SubmitType | undefined;
-  setSelectedSubmitType: Dispatch<SetStateAction<SubmitType | undefined>>;
-  setHumanResponse: Dispatch<SetStateAction<DecisionWithEdits[]>>;
   setHasAddedResponse: Dispatch<SetStateAction<boolean>>;
   setHasEdited: Dispatch<SetStateAction<boolean>>;
-  initialHumanInterruptEditValue: MutableRefObject<Record<string, string>>;
+  setHumanResponse: Dispatch<SetStateAction<DecisionWithEdits[]>>;
+  setSelectedSubmitType: Dispatch<SetStateAction<SubmitType | undefined>>;
+  streamFinished: boolean;
+  streaming: boolean;
+  supportsMultipleMethods: boolean;
 }
 
-export default function useInterruptedActions({
-  interrupt,
-}: UseInterruptedActionsInput): UseInterruptedActionsValue {
+export default function useInterruptedActions({ interrupt }: UseInterruptedActionsInput): UseInterruptedActionsValue {
   const thread = useStreamContext();
   const [humanResponse, setHumanResponse] = useState<DecisionWithEdits[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,15 +58,17 @@ export default function useInterruptedActions({
     }
 
     try {
-      const { responses, defaultSubmitType, hasApprove } =
-        createDefaultHumanResponse(hitlValue, initialHumanInterruptEditValue);
+      const { defaultSubmitType, hasApprove, responses } = createDefaultHumanResponse(
+        hitlValue,
+        initialHumanInterruptEditValue,
+      );
       setHumanResponse(responses);
       setSelectedSubmitType(defaultSubmitType);
       setApproveAllowed(hasApprove);
       setHasEdited(false);
       setHasAddedResponse(false);
     } catch (error) {
-      console.error("Error formatting and setting human response state", error);
+      console.error('Error formatting and setting human response state', error);
       setHumanResponse([]);
       setSelectedSubmitType(undefined);
       setApproveAllowed(false);
@@ -98,23 +89,18 @@ export default function useInterruptedActions({
       );
       return true;
     } catch (error) {
-      console.error("Error sending human response", error);
+      console.error('Error sending human response', error);
       return false;
     }
   };
 
-  const handleSubmit = async (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent> | KeyboardEvent,
-  ) => {
+  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent> | KeyboardEvent) => {
     e.preventDefault();
-    const { decision, error } = buildDecisionFromState(
-      humanResponse,
-      selectedSubmitType,
-    );
+    const { decision, error } = buildDecisionFromState(humanResponse, selectedSubmitType);
 
     if (!decision) {
-      toast.error("Error", {
-        description: error ?? "Unsupported response type.",
+      toast.error('Error', {
+        description: error ?? 'Unsupported response type.',
         duration: 5000,
         richColors: true,
         closeButton: true,
@@ -123,7 +109,7 @@ export default function useInterruptedActions({
     }
 
     if (error) {
-      toast.error("Error", {
+      toast.error('Error', {
         description: error,
         duration: 5000,
         richColors: true,
@@ -145,27 +131,27 @@ export default function useInterruptedActions({
         return;
       }
 
-      toast("Success", {
-        description: "Response submitted successfully.",
+      toast('Success', {
+        description: 'Response submitted successfully.',
         duration: 5000,
       });
 
       setStreamFinished(true);
     } catch (error: any) {
-      console.error("Error sending human response", error);
+      console.error('Error sending human response', error);
       errorOccurred = true;
 
-      if ("message" in error && error.message.includes("Invalid assistant")) {
-        toast("Error: Invalid assistant ID", {
+      if ('message' in error && error.message.includes('Invalid assistant')) {
+        toast('Error: Invalid assistant ID', {
           description:
-            "The provided assistant ID was not found in this graph. Please update the assistant ID in the settings and try again.",
+            'The provided assistant ID was not found in this graph. Please update the assistant ID in the settings and try again.',
           richColors: true,
           closeButton: true,
           duration: 5000,
         });
       } else {
-        toast.error("Error", {
-          description: "Failed to submit response.",
+        toast.error('Error', {
+          description: 'Failed to submit response.',
           richColors: true,
           closeButton: true,
           duration: 5000,
@@ -180,9 +166,7 @@ export default function useInterruptedActions({
     }
   };
 
-  const handleResolve = async (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => {
+  const handleResolve = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     setLoading(true);
     initialHumanInterruptEditValue.current = {};
@@ -197,14 +181,14 @@ export default function useInterruptedActions({
         },
       );
 
-      toast("Success", {
-        description: "Marked thread as resolved.",
+      toast('Success', {
+        description: 'Marked thread as resolved.',
         duration: 3000,
       });
     } catch (error) {
-      console.error("Error marking thread as resolved", error);
-      toast.error("Error", {
-        description: "Failed to mark thread as resolved.",
+      console.error('Error marking thread as resolved', error);
+      toast.error('Error', {
+        description: 'Failed to mark thread as resolved.',
         richColors: true,
         closeButton: true,
         duration: 3000,
@@ -215,9 +199,7 @@ export default function useInterruptedActions({
   };
 
   const supportsMultipleMethods =
-    humanResponse.filter((response) =>
-      ["edit", "approve", "reject"].includes(response.type),
-    ).length > 1;
+    humanResponse.filter((response) => ['edit', 'approve', 'reject'].includes(response.type)).length > 1;
 
   return {
     handleSubmit,

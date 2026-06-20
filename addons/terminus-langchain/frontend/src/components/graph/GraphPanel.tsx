@@ -1,31 +1,22 @@
-import "@xyflow/react/dist/style.css";
+import '@xyflow/react/dist/style.css';
 
-import { ReactFlowProvider } from "@xyflow/react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import {
-  LoaderCircle,
-  Maximize2,
-  Minimize2,
-  RefreshCw,
-  XIcon,
-} from "lucide-react";
+import { ReactFlowProvider } from '@xyflow/react';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { LoaderCircle, Maximize2, Minimize2, RefreshCw, XIcon } from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
-import { useTopology } from "@/hooks/use-topology";
-import {
-  graphFullscreenAtom,
-  graphPanelOpenAtom,
-  topologyAtom,
-} from "@/lib/ha-graph/atoms";
-import { Breadcrumbs } from "./Breadcrumbs";
-import { EntityDetailModal } from "./EntityDetailModal";
-import { GraphCanvas } from "./GraphCanvas";
+import { Breadcrumbs } from './Breadcrumbs';
+import { EntityDetailModal } from './EntityDetailModal';
+import { GraphCanvas } from './GraphCanvas';
+
+import { Button } from '@/components/ui/button';
+import { useTopology } from '@/hooks/use-topology';
+import { graphFullscreenAtom, graphPanelOpenAtom, topologyAtom } from '@/lib/ha-graph/atoms';
 
 export function GraphPanel() {
   const setOpen = useSetAtom(graphPanelOpenAtom);
   const [fullscreen, setFullscreen] = useAtom(graphFullscreenAtom);
   const topology = useAtomValue(topologyAtom);
-  const { loading, error, reload } = useTopology(true);
+  const { error, loading, reload } = useTopology(true);
 
   // The current view is owned by the URL (see TopologyUrlSync): a fresh toolbar
   // open resets it to the areas overview, while a deep-link/back restore keeps
@@ -35,32 +26,20 @@ export function GraphPanel() {
     <div className="flex h-full min-w-0 flex-col">
       <div className="flex items-center justify-between gap-3 border-b p-3">
         <div className="min-w-0">
-          <div className="text-sm font-semibold tracking-tight">
-            Home Topology
-          </div>
+          <div className="text-sm font-semibold tracking-tight">Home Topology</div>
           <Breadcrumbs />
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={reload}
-            title="Refresh"
-            disabled={loading}
-          >
-            <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
+          <Button variant="ghost" size="icon" onClick={reload} title="Refresh" disabled={loading}>
+            <RefreshCw className={loading ? 'size-4 animate-spin' : 'size-4'} />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setFullscreen((f) => !f)}
-            title={fullscreen ? "Exit full screen" : "Full screen"}
+            title={fullscreen ? 'Exit full screen' : 'Full screen'}
           >
-            {fullscreen ? (
-              <Minimize2 className="size-4" />
-            ) : (
-              <Maximize2 className="size-4" />
-            )}
+            {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </Button>
           <Button
             variant="ghost"
@@ -85,11 +64,7 @@ export function GraphPanel() {
         {error && !topology && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
             <p className="text-destructive text-sm">{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={reload}
-            >
+            <Button variant="outline" size="sm" onClick={reload}>
               Retry
             </Button>
           </div>

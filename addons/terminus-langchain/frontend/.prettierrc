@@ -1,0 +1,7 @@
+{
+  "singleQuote": true,
+  "tailwindFunctions": ["tv"],
+  "endOfLine": "auto",
+  "printWidth": 120,
+  "plugins": ["prettier-plugin-tailwindcss"]
+}

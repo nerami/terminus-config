@@ -1,52 +1,47 @@
-import type { Edge, Node } from "@xyflow/react";
+import { buildAutomationFlow } from './automation-flow';
+import { dagreLayout, gridLayout, NODE_H } from './layout';
+import { UNASSIGNED_AREA_ID } from './types';
 
-import { buildAutomationFlow } from "./automation-flow";
-import { dagreLayout, gridLayout, NODE_H } from "./layout";
-import type {
-  AutomationDetail,
-  HaAutomation,
-  HaScene,
-  Topology,
-} from "./types";
-import { UNASSIGNED_AREA_ID } from "./types";
+import type { AutomationDetail, HaAutomation, HaScene, Topology } from './types';
+import type { Edge, Node } from '@xyflow/react';
 
 export type NodeKind =
-  | "area"
-  | "group"
-  | "entity"
-  | "scene"
-  | "automation"
-  | "trigger"
-  | "condition"
-  | "logic"
-  | "action"
-  | "choose"
-  | "if"
-  | "repeat"
-  | "parallel"
-  | "sequence"
-  | "stop";
+  | 'area'
+  | 'group'
+  | 'entity'
+  | 'scene'
+  | 'automation'
+  | 'trigger'
+  | 'condition'
+  | 'logic'
+  | 'action'
+  | 'choose'
+  | 'if'
+  | 'repeat'
+  | 'parallel'
+  | 'sequence'
+  | 'stop';
 
 export interface GraphNodeData {
-  label: string;
-  kind: NodeKind;
-  /** Secondary line: domain, device, counts or trace-step type. */
-  sublabel?: string;
-  /** HA entity id for entity/scene/automation nodes. */
-  entityId?: string;
-  domain?: string;
+  [key: string]: unknown;
   /** Navigation payloads. */
   areaId?: string;
-  sceneId?: string;
   automationId?: string;
-  numericId?: string | null;
-  /** Whether clicking the node does something (drill-down / modal). */
-  interactive?: boolean;
   /** Decoration flags, filled in at render time by GraphCanvas. */
   dimmed?: boolean;
+  domain?: string;
   emphasized?: boolean;
+  /** HA entity id for entity/scene/automation nodes. */
+  entityId?: string;
+  /** Whether clicking the node does something (drill-down / modal). */
+  interactive?: boolean;
   isSelected?: boolean;
-  [key: string]: unknown;
+  kind: NodeKind;
+  label: string;
+  numericId?: string | null;
+  sceneId?: string;
+  /** Secondary line: domain, device, counts or trace-step type. */
+  sublabel?: string;
 }
 
 export type RFNode = Node<GraphNodeData>;
@@ -62,42 +57,29 @@ const edgeId = (a: string, b: string) => `${a}~${b}`;
  */
 export function automationHasStructure(detail: AutomationDetail): boolean {
   const config = detail.config ?? {};
-  return [
-    "trigger",
-    "triggers",
-    "condition",
-    "conditions",
-    "action",
-    "actions",
-  ].some((k) => k in config);
+  return ['trigger', 'triggers', 'condition', 'conditions', 'action', 'actions'].some((k) => k in config);
 }
 
 function domainOf(entityId: string): string {
-  return entityId.includes(".") ? entityId.split(".", 1)[0] : entityId;
+  return entityId.includes('.') ? entityId.split('.', 1)[0] : entityId;
 }
 
 // -- areas overview -------------------------------------------------------
 export function buildAreasGraph(topology: Topology): RFGraph {
-  const counts = new Map<
-    string,
-    { entities: number; scenes: number; automations: number }
-  >();
-  const bump = (
-    areaId: string | null,
-    key: "entities" | "scenes" | "automations",
-  ) => {
+  const counts = new Map<string, { entities: number; scenes: number; automations: number }>();
+  const bump = (areaId: string | null, key: 'entities' | 'scenes' | 'automations') => {
     const id = areaId ?? UNASSIGNED_AREA_ID;
     const c = counts.get(id) ?? { entities: 0, scenes: 0, automations: 0 };
     c[key] += 1;
     counts.set(id, c);
   };
-  topology.entities.forEach((e) => bump(e.area_id, "entities"));
-  topology.scenes.forEach((s) => bump(s.area_id, "scenes"));
-  topology.automations.forEach((a) => bump(a.area_id, "automations"));
+  topology.entities.forEach((e) => bump(e.area_id, 'entities'));
+  topology.scenes.forEach((s) => bump(s.area_id, 'scenes'));
+  topology.automations.forEach((a) => bump(a.area_id, 'automations'));
 
   const areas = [...topology.areas];
   if (counts.has(UNASSIGNED_AREA_ID)) {
-    areas.push({ area_id: UNASSIGNED_AREA_ID, name: "Unassigned" });
+    areas.push({ area_id: UNASSIGNED_AREA_ID, name: 'Unassigned' });
   }
 
   const ids = areas.map((a) => `area:${a.area_id}`);
@@ -107,11 +89,11 @@ export function buildAreasGraph(topology: Topology): RFGraph {
     const c = counts.get(a.area_id) ?? { entities: 0, scenes: 0, automations: 0 };
     return {
       id: `area:${a.area_id}`,
-      type: "area",
+      type: 'area',
       position: pos[`area:${a.area_id}`],
       data: {
         label: a.name,
-        kind: "area",
+        kind: 'area',
         areaId: a.area_id,
         sublabel: `${c.entities} entities · ${c.scenes} scenes · ${c.automations} automations`,
         interactive: true,
@@ -128,11 +110,11 @@ export function buildScenesGraph(topology: Topology): RFGraph {
   const pos = gridLayout(ids, { x: 0, y: 0 }, { columns: 4, cellW: 240, cellH: 110 });
   const nodes: RFNode[] = topology.scenes.map((s) => ({
     id: s.entity_id,
-    type: "scene",
+    type: 'scene',
     position: pos[s.entity_id],
     data: {
       label: s.name,
-      kind: "scene",
+      kind: 'scene',
       entityId: s.entity_id,
       sceneId: s.entity_id,
       sublabel: `${s.entities.length} entities`,
@@ -148,11 +130,11 @@ export function buildAutomationsGraph(topology: Topology): RFGraph {
   const pos = gridLayout(ids, { x: 0, y: 0 }, { columns: 4, cellW: 240, cellH: 110 });
   const nodes: RFNode[] = topology.automations.map((a) => ({
     id: a.entity_id,
-    type: "automation",
+    type: 'automation',
     position: pos[a.entity_id],
     data: {
       label: a.name,
-      kind: "automation",
+      kind: 'automation',
       entityId: a.entity_id,
       automationId: a.entity_id,
       numericId: a.numeric_id,
@@ -181,11 +163,11 @@ export function buildEntitiesGraph(topology: Topology): RFGraph {
     const origin = { x: 0, y: y + NODE_H + 16 };
     nodes.push({
       id: `group:domain:${domain}`,
-      type: "group",
+      type: 'group',
       position: { x: 0, y },
       draggable: false,
       selectable: false,
-      data: { label: domain, kind: "group", sublabel: `${entities.length}` },
+      data: { label: domain, kind: 'group', sublabel: `${entities.length}` },
     });
     const pos = gridLayout(
       entities.map((e) => e.entity_id),
@@ -195,11 +177,11 @@ export function buildEntitiesGraph(topology: Topology): RFGraph {
     entities.forEach((e) => {
       nodes.push({
         id: e.entity_id,
-        type: "entity",
+        type: 'entity',
         position: pos[e.entity_id],
         data: {
           label: e.name,
-          kind: "entity",
+          kind: 'entity',
           entityId: e.entity_id,
           domain: e.domain,
           sublabel: e.device_name ?? e.domain,
@@ -216,8 +198,7 @@ export function buildEntitiesGraph(topology: Topology): RFGraph {
 
 // -- single area: entities / scenes / automations triangle ----------------
 export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
-  const inArea = <T extends { area_id: string | null }>(item: T) =>
-    (item.area_id ?? UNASSIGNED_AREA_ID) === areaId;
+  const inArea = <T extends { area_id: string | null }>(item: T) => (item.area_id ?? UNASSIGNED_AREA_ID) === areaId;
 
   const entities = topology.entities.filter(inArea);
   const scenes = topology.scenes.filter(inArea);
@@ -235,25 +216,18 @@ export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   const ENT_ORIGIN = { x: 0, y: 560 };
   const SCN_ORIGIN = { x: 760, y: 320 };
 
-  const groupHeader = (
-    id: string,
-    label: string,
-    origin: { x: number; y: number },
-    count: number,
-  ): RFNode => ({
+  const groupHeader = (id: string, label: string, origin: { x: number; y: number }, count: number): RFNode => ({
     id,
-    type: "group",
+    type: 'group',
     position: { x: origin.x, y: origin.y - NODE_H - 16 },
     draggable: false,
     selectable: false,
-    data: { label, kind: "group", sublabel: `${count}` },
+    data: { label, kind: 'group', sublabel: `${count}` },
   });
 
-  nodes.push(groupHeader("group:entities", "Entities", ENT_ORIGIN, entities.length));
-  nodes.push(groupHeader("group:scenes", "Scenes", SCN_ORIGIN, scenes.length));
-  nodes.push(
-    groupHeader("group:automations", "Automations", AUT_ORIGIN, automations.length),
-  );
+  nodes.push(groupHeader('group:entities', 'Entities', ENT_ORIGIN, entities.length));
+  nodes.push(groupHeader('group:scenes', 'Scenes', SCN_ORIGIN, scenes.length));
+  nodes.push(groupHeader('group:automations', 'Automations', AUT_ORIGIN, automations.length));
 
   const entPos = gridLayout(
     entities.map((e) => e.entity_id),
@@ -263,11 +237,11 @@ export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   entities.forEach((e) => {
     nodes.push({
       id: e.entity_id,
-      type: "entity",
+      type: 'entity',
       position: entPos[e.entity_id],
       data: {
         label: e.name,
-        kind: "entity",
+        kind: 'entity',
         entityId: e.entity_id,
         domain: e.domain,
         sublabel: e.device_name ?? e.domain,
@@ -284,11 +258,11 @@ export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   scenes.forEach((s) => {
     nodes.push({
       id: s.entity_id,
-      type: "scene",
+      type: 'scene',
       position: scnPos[s.entity_id],
       data: {
         label: s.name,
-        kind: "scene",
+        kind: 'scene',
         entityId: s.entity_id,
         sceneId: s.entity_id,
         sublabel: `${s.entities.length} entities`,
@@ -315,11 +289,11 @@ export function buildAreaGraph(topology: Topology, areaId: string): RFGraph {
   automations.forEach((a) => {
     nodes.push({
       id: a.entity_id,
-      type: "automation",
+      type: 'automation',
       position: autPos[a.entity_id],
       data: {
         label: a.name,
-        kind: "automation",
+        kind: 'automation',
         entityId: a.entity_id,
         automationId: a.entity_id,
         numericId: a.numeric_id,
@@ -358,11 +332,11 @@ export function buildSceneGraph(topology: Topology, scene: HaScene): RFGraph {
   const nodes: RFNode[] = [
     {
       id: scene.entity_id,
-      type: "scene",
+      type: 'scene',
       position: { x: 0, y: 0 },
       data: {
         label: scene.name,
-        kind: "scene",
+        kind: 'scene',
         entityId: scene.entity_id,
         sceneId: scene.entity_id,
         sublabel: `${scene.entities.length} entities`,
@@ -375,11 +349,11 @@ export function buildSceneGraph(topology: Topology, scene: HaScene): RFGraph {
   scene.entities.forEach((eid) => {
     nodes.push({
       id: eid,
-      type: "entity",
+      type: 'entity',
       position: { x: 0, y: 0 },
       data: {
         label: nameById.get(eid) ?? eid,
-        kind: "entity",
+        kind: 'entity',
         entityId: eid,
         domain: domainOf(eid),
         sublabel: domainOf(eid),
@@ -389,7 +363,7 @@ export function buildSceneGraph(topology: Topology, scene: HaScene): RFGraph {
     edges.push({ id: edgeId(scene.entity_id, eid), source: scene.entity_id, target: eid });
   });
 
-  applyDagre(nodes, edges, "TB");
+  applyDagre(nodes, edges, 'TB');
   return { nodes, edges };
 }
 
@@ -401,11 +375,7 @@ export function buildSceneGraph(topology: Topology, scene: HaScene): RFGraph {
  * star of the entities/scenes the automation references so the view still
  * renders something useful.
  */
-export function buildAutomationGraph(
-  topology: Topology,
-  automation: HaAutomation,
-  detail: AutomationDetail,
-): RFGraph {
+export function buildAutomationGraph(topology: Topology, automation: HaAutomation, detail: AutomationDetail): RFGraph {
   const nameById = new Map<string, string>([
     ...topology.entities.map((e) => [e.entity_id, e.name] as const),
     ...topology.scenes.map((s) => [s.entity_id, s.name] as const),
@@ -418,14 +388,14 @@ export function buildAutomationGraph(
   const rootId = automation.entity_id;
   nodes.push({
     id: rootId,
-    type: "automation",
+    type: 'automation',
     position: { x: 0, y: 0 },
     data: {
       label: automation.name,
-      kind: "automation",
+      kind: 'automation',
       entityId: automation.entity_id,
       automationId: automation.entity_id,
-      sublabel: "automation",
+      sublabel: 'automation',
       interactive: true,
     },
   });
@@ -433,14 +403,14 @@ export function buildAutomationGraph(
   const addLeaf = (id: string) => {
     if (leafSeen.has(id)) return;
     leafSeen.add(id);
-    const isScene = id.startsWith("scene.");
+    const isScene = id.startsWith('scene.');
     nodes.push({
       id,
-      type: isScene ? "scene" : "entity",
+      type: isScene ? 'scene' : 'entity',
       position: { x: 0, y: 0 },
       data: {
         label: nameById.get(id) ?? id,
-        kind: isScene ? "scene" : "entity",
+        kind: isScene ? 'scene' : 'entity',
         entityId: id,
         sceneId: isScene ? id : undefined,
         domain: domainOf(id),
@@ -489,11 +459,11 @@ export function buildAutomationGraph(
     });
   }
 
-  applyDagre(nodes, edges, "TB");
+  applyDagre(nodes, edges, 'TB');
   return { nodes, edges };
 }
 
-function applyDagre(nodes: RFNode[], edges: Edge[], direction: "TB" | "LR") {
+function applyDagre(nodes: RFNode[], edges: Edge[], direction: 'TB' | 'LR') {
   const pos = dagreLayout(
     nodes.map((n) => ({ id: n.id })),
     edges.map((e) => ({ source: e.source, target: e.target })),

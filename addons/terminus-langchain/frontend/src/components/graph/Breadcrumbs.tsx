@@ -1,5 +1,6 @@
-import { useAtom, useAtomValue } from "jotai";
-import { Fragment } from "react";
+import { Fragment } from 'react';
+
+import { useAtom, useAtomValue } from 'jotai';
 
 import {
   Breadcrumb,
@@ -8,21 +9,15 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-  graphViewAtom,
-  groupingOf,
-  rootViewFor,
-  topologyAtom,
-  type GraphView,
-} from "@/lib/ha-graph/atoms";
-import { UNASSIGNED_AREA_ID } from "@/lib/ha-graph/types";
+} from '@/components/ui/breadcrumb';
+import { graphViewAtom, groupingOf, rootViewFor, topologyAtom, type GraphView } from '@/lib/ha-graph/atoms';
+import { UNASSIGNED_AREA_ID } from '@/lib/ha-graph/types';
 
 const ROOT_LABEL = {
-  area: "Areas",
-  scenes: "Scenes",
-  automations: "Automations",
-  entities: "Entities",
+  area: 'Areas',
+  scenes: 'Scenes',
+  automations: 'Automations',
+  entities: 'Entities',
 } as const;
 
 interface Crumb {
@@ -35,16 +30,11 @@ export function Breadcrumbs() {
   const topology = useAtomValue(topologyAtom);
 
   const areaName = (areaId: string) =>
-    areaId === UNASSIGNED_AREA_ID
-      ? "Unassigned"
-      : (topology?.areas.find((a) => a.area_id === areaId)?.name ?? areaId);
+    areaId === UNASSIGNED_AREA_ID ? 'Unassigned' : (topology?.areas.find((a) => a.area_id === areaId)?.name ?? areaId);
 
   const grouping = groupingOf(view);
   const isRoot =
-    view.kind === "areas" ||
-    view.kind === "scenes" ||
-    view.kind === "automations" ||
-    view.kind === "entities";
+    view.kind === 'areas' || view.kind === 'scenes' || view.kind === 'automations' || view.kind === 'entities';
   const crumbs: Crumb[] = [
     {
       label: ROOT_LABEL[grouping],
@@ -52,24 +42,20 @@ export function Breadcrumbs() {
     },
   ];
 
-  if (grouping === "area" && "areaId" in view) {
+  if (grouping === 'area' && 'areaId' in view) {
     const areaId = view.areaId;
     crumbs.push({
       label: areaName(areaId),
-      view: view.kind === "area" ? null : { kind: "area", areaId },
+      view: view.kind === 'area' ? null : { kind: 'area', areaId },
     });
   }
 
-  if (view.kind === "scene") {
-    const name =
-      topology?.scenes.find((s) => s.entity_id === view.sceneId)?.name ??
-      view.sceneId;
+  if (view.kind === 'scene') {
+    const name = topology?.scenes.find((s) => s.entity_id === view.sceneId)?.name ?? view.sceneId;
     crumbs.push({ label: name, view: null });
   }
-  if (view.kind === "automation") {
-    const name =
-      topology?.automations.find((a) => a.entity_id === view.automationId)
-        ?.name ?? view.automationId;
+  if (view.kind === 'automation') {
+    const name = topology?.automations.find((a) => a.entity_id === view.automationId)?.name ?? view.automationId;
     crumbs.push({ label: name, view: null });
   }
 
@@ -88,9 +74,7 @@ export function Breadcrumbs() {
                   {c.label}
                 </BreadcrumbLink>
               ) : (
-                <BreadcrumbPage className="max-w-[200px] truncate">
-                  {c.label}
-                </BreadcrumbPage>
+                <BreadcrumbPage className="max-w-[200px] truncate">{c.label}</BreadcrumbPage>
               )}
             </BreadcrumbItem>
           </Fragment>

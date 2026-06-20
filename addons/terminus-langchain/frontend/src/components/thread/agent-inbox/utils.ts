@@ -1,31 +1,19 @@
-import { BaseMessage, isBaseMessage } from "@langchain/core/messages";
-import { format } from "date-fns";
-import { startCase } from "lodash";
-import {
-  Action,
-  Decision,
-  DecisionWithEdits,
-  HITLRequest,
-  SubmitType,
-} from "./types";
+import { BaseMessage, isBaseMessage } from '@langchain/core/messages';
+import { format } from 'date-fns';
+import { startCase } from 'lodash';
+
+import { Action, Decision, DecisionWithEdits, HITLRequest, SubmitType } from './types';
 
 export function prettifyText(action: string) {
-  return startCase(action.replace(/_/g, " "));
+  return startCase(action.replace(/_/g, ' '));
 }
 
-export function isArrayOfMessages(
-  value: Record<string, any>[],
-): value is BaseMessage[] {
+export function isArrayOfMessages(value: Record<string, any>[]): value is BaseMessage[] {
   if (
     value.every(isBaseMessage) ||
     (Array.isArray(value) &&
       value.every(
-        (v) =>
-          typeof v === "object" &&
-          "id" in v &&
-          "type" in v &&
-          "content" in v &&
-          "additional_kwargs" in v,
+        (v) => typeof v === 'object' && 'id' in v && 'type' in v && 'content' in v && 'additional_kwargs' in v,
       ))
   ) {
     return true;
@@ -35,37 +23,26 @@ export function isArrayOfMessages(
 
 export function baseMessageObject(item: unknown): string {
   if (isBaseMessage(item)) {
-    const contentText =
-      typeof item.content === "string"
-        ? item.content
-        : JSON.stringify(item.content, null);
-    let toolCallText = "";
-    if ("tool_calls" in item) {
+    const contentText = typeof item.content === 'string' ? item.content : JSON.stringify(item.content, null);
+    let toolCallText = '';
+    if ('tool_calls' in item) {
       toolCallText = JSON.stringify(item.tool_calls, null);
     }
-    if ("type" in item) {
-      return `${item.type}:${contentText ? ` ${contentText}` : ""}${toolCallText ? ` - Tool calls: ${toolCallText}` : ""}`;
-    } else if ("getType" in item) {
-      return `${(item as BaseMessage).getType()}:${contentText ? ` ${contentText}` : ""}${toolCallText ? ` - Tool calls: ${toolCallText}` : ""}`;
+    if ('type' in item) {
+      return `${item.type}:${contentText ? ` ${contentText}` : ''}${toolCallText ? ` - Tool calls: ${toolCallText}` : ''}`;
+    } else if ('getType' in item) {
+      return `${(item as BaseMessage).getType()}:${contentText ? ` ${contentText}` : ''}${toolCallText ? ` - Tool calls: ${toolCallText}` : ''}`;
     }
-  } else if (
-    typeof item === "object" &&
-    item &&
-    "type" in item &&
-    "content" in item
-  ) {
-    const contentText =
-      typeof item.content === "string"
-        ? item.content
-        : JSON.stringify(item.content, null);
-    let toolCallText = "";
-    if ("tool_calls" in item) {
+  } else if (typeof item === 'object' && item && 'type' in item && 'content' in item) {
+    const contentText = typeof item.content === 'string' ? item.content : JSON.stringify(item.content, null);
+    let toolCallText = '';
+    if ('tool_calls' in item) {
       toolCallText = JSON.stringify(item.tool_calls, null);
     }
-    return `${item.type}:${contentText ? ` ${contentText}` : ""}${toolCallText ? ` - Tool calls: ${toolCallText}` : ""}`;
+    return `${item.type}:${contentText ? ` ${contentText}` : ''}${toolCallText ? ` - Tool calls: ${toolCallText}` : ''}`;
   }
 
-  if (typeof item === "object") {
+  if (typeof item === 'object') {
     return JSON.stringify(item, null);
   } else {
     return item as string;
@@ -74,11 +51,8 @@ export function baseMessageObject(item: unknown): string {
 
 export function unknownToPrettyDate(input: unknown): string | undefined {
   try {
-    if (
-      Object.prototype.toString.call(input) === "[object Date]" ||
-      new Date(input as string)
-    ) {
-      return format(new Date(input as string), "MM/dd/yyyy hh:mm a");
+    if (Object.prototype.toString.call(input) === '[object Date]' || new Date(input as string)) {
+      return format(new Date(input as string), 'MM/dd/yyyy hh:mm a');
     }
   } catch (_) {
     // failed to parse date. no-op
@@ -88,9 +62,7 @@ export function unknownToPrettyDate(input: unknown): string | undefined {
 
 export function createDefaultHumanResponse(
   hitlRequest: HITLRequest,
-  initialHumanInterruptEditValue: React.MutableRefObject<
-    Record<string, string>
-  >,
+  initialHumanInterruptEditValue: React.MutableRefObject<Record<string, string>>,
 ): {
   responses: DecisionWithEdits[];
   defaultSubmitType: SubmitType | undefined;
@@ -99,9 +71,8 @@ export function createDefaultHumanResponse(
   const responses: DecisionWithEdits[] = [];
   const actionRequest = hitlRequest.action_requests?.[0];
   const reviewConfig =
-    hitlRequest.review_configs?.find(
-      (config) => config.action_name === actionRequest?.name,
-    ) ?? hitlRequest.review_configs?.[0];
+    hitlRequest.review_configs?.find((config) => config.action_name === actionRequest?.name) ??
+    hitlRequest.review_configs?.[0];
 
   if (!actionRequest || !reviewConfig) {
     return { responses: [], defaultSubmitType: undefined, hasApprove: false };
@@ -109,12 +80,10 @@ export function createDefaultHumanResponse(
 
   const allowedDecisions = reviewConfig.allowed_decisions ?? [];
 
-  if (allowedDecisions.includes("edit")) {
+  if (allowedDecisions.includes('edit')) {
     Object.entries(actionRequest.args).forEach(([key, value]) => {
       const stringValue =
-        typeof value === "string" || typeof value === "number"
-          ? value.toString()
-          : JSON.stringify(value, null);
+        typeof value === 'string' || typeof value === 'number' ? value.toString() : JSON.stringify(value, null);
       initialHumanInterruptEditValue.current = {
         ...initialHumanInterruptEditValue.current,
         [key]: stringValue,
@@ -127,33 +96,33 @@ export function createDefaultHumanResponse(
     };
 
     responses.push({
-      type: "edit",
+      type: 'edit',
       edited_action: editedAction,
-      acceptAllowed: allowedDecisions.includes("approve"),
+      acceptAllowed: allowedDecisions.includes('approve'),
       editsMade: false,
     });
   }
 
-  if (allowedDecisions.includes("approve")) {
-    responses.push({ type: "approve" });
+  if (allowedDecisions.includes('approve')) {
+    responses.push({ type: 'approve' });
   }
 
-  if (allowedDecisions.includes("reject")) {
-    responses.push({ type: "reject", message: "" });
+  if (allowedDecisions.includes('reject')) {
+    responses.push({ type: 'reject', message: '' });
   }
 
   // Determine default submit type. Priority: approve > reject > edit
   let defaultSubmitType: SubmitType | undefined;
 
-  if (allowedDecisions.includes("approve")) {
-    defaultSubmitType = "approve";
-  } else if (allowedDecisions.includes("reject")) {
-    defaultSubmitType = "reject";
-  } else if (allowedDecisions.includes("edit")) {
-    defaultSubmitType = "edit";
+  if (allowedDecisions.includes('approve')) {
+    defaultSubmitType = 'approve';
+  } else if (allowedDecisions.includes('reject')) {
+    defaultSubmitType = 'reject';
+  } else if (allowedDecisions.includes('edit')) {
+    defaultSubmitType = 'edit';
   }
 
-  const hasApprove = allowedDecisions.includes("approve");
+  const hasApprove = allowedDecisions.includes('approve');
 
   return { responses, defaultSubmitType, hasApprove };
 }
@@ -163,76 +132,66 @@ export function buildDecisionFromState(
   selectedSubmitType: SubmitType | undefined,
 ): { decision?: Decision; error?: string } {
   if (!responses.length) {
-    return { error: "Please enter a response." };
+    return { error: 'Please enter a response.' };
   }
 
-  const selectedDecision = responses.find(
-    (response) => response.type === selectedSubmitType,
-  );
+  const selectedDecision = responses.find((response) => response.type === selectedSubmitType);
 
   if (!selectedDecision) {
-    return { error: "No response selected." };
+    return { error: 'No response selected.' };
   }
 
-  if (selectedDecision.type === "approve") {
-    return { decision: { type: "approve" } };
+  if (selectedDecision.type === 'approve') {
+    return { decision: { type: 'approve' } };
   }
 
-  if (selectedDecision.type === "reject") {
+  if (selectedDecision.type === 'reject') {
     const message = selectedDecision.message?.trim();
     if (!message) {
-      return { error: "Please provide a rejection reason." };
+      return { error: 'Please provide a rejection reason.' };
     }
-    return { decision: { type: "reject", message } };
+    return { decision: { type: 'reject', message } };
   }
 
-  if (selectedDecision.type === "edit") {
+  if (selectedDecision.type === 'edit') {
     if (selectedDecision.acceptAllowed && !selectedDecision.editsMade) {
-      return { decision: { type: "approve" } };
+      return { decision: { type: 'approve' } };
     }
 
     return {
       decision: {
-        type: "edit",
+        type: 'edit',
         edited_action: selectedDecision.edited_action,
       },
     };
   }
 
-  return { error: "Unsupported response type." };
+  return { error: 'Unsupported response type.' };
 }
 
-export function constructOpenInStudioURL(
-  deploymentUrl: string,
-  threadId?: string,
-) {
-  const smithStudioURL = new URL("https://smith.langchain.com/studio/thread");
+export function constructOpenInStudioURL(deploymentUrl: string, threadId?: string) {
+  const smithStudioURL = new URL('https://smith.langchain.com/studio/thread');
   // trim the trailing slash from deploymentUrl
-  const trimmedDeploymentUrl = deploymentUrl.replace(/\/$/, "");
+  const trimmedDeploymentUrl = deploymentUrl.replace(/\/$/, '');
 
   if (threadId) {
     smithStudioURL.pathname += `/${threadId}`;
   }
 
-  smithStudioURL.searchParams.append("baseUrl", trimmedDeploymentUrl);
+  smithStudioURL.searchParams.append('baseUrl', trimmedDeploymentUrl);
 
   return smithStudioURL.toString();
 }
 
-export function haveArgsChanged(
-  args: unknown,
-  initialValues: Record<string, string>,
-): boolean {
-  if (typeof args !== "object" || !args) {
+export function haveArgsChanged(args: unknown, initialValues: Record<string, string>): boolean {
+  if (typeof args !== 'object' || !args) {
     return false;
   }
 
   const currentValues = args as Record<string, string>;
 
   return Object.entries(currentValues).some(([key, value]) => {
-    const valueString = ["string", "number"].includes(typeof value)
-      ? value.toString()
-      : JSON.stringify(value, null);
+    const valueString = ['string', 'number'].includes(typeof value) ? value.toString() : JSON.stringify(value, null);
     return initialValues[key] !== valueString;
   });
 }

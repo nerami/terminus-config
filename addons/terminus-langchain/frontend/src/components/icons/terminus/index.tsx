@@ -1,18 +1,19 @@
-import { memo } from "react";
-import { CELLS, LETTER_GROUPS, WIDTH, CELL_H } from "./glyphs";
-import { PhosphorVariant } from "./variants/phosphor";
-import { GlitchVariant } from "./variants/glitch";
-import { WaveVariant } from "./variants/wave";
+import { memo } from 'react';
 
-export type TerminusVariant = "phosphor" | "glitch" | "wave";
-export type AnimationMode = "default" | "hover";
+import { CELLS, LETTER_GROUPS, WIDTH, CELL_H } from './glyphs';
+import { GlitchVariant } from './variants/glitch';
+import { PhosphorVariant } from './variants/phosphor';
+import { WaveVariant } from './variants/wave';
+
+export type TerminusVariant = 'phosphor' | 'glitch' | 'wave';
+export type AnimationMode = 'default' | 'hover';
 
 export const TerminusLogoSVG = memo(function TerminusLogoSVG({
+  animationMode,
   className,
-  width,
   height,
   variant,
-  animationMode,
+  width,
 }: {
   width?: number;
   height?: number;
@@ -20,10 +21,8 @@ export const TerminusLogoSVG = memo(function TerminusLogoSVG({
   variant?: TerminusVariant;
   animationMode?: AnimationMode;
 }) {
-  const hoverMode = animationMode === "hover";
-  const svgClass = [className, hoverMode ? "terminus-anim-hover" : ""]
-    .filter(Boolean)
-    .join(" ") || undefined;
+  const hoverMode = animationMode === 'hover';
+  const svgClass = [className, hoverMode ? 'terminus-anim-hover' : ''].filter(Boolean).join(' ') || undefined;
   return (
     <svg
       width={width}
@@ -37,12 +36,12 @@ export const TerminusLogoSVG = memo(function TerminusLogoSVG({
       xmlns="http://www.w3.org/2000/svg"
     >
       <title>Terminus</title>
-      {variant === "phosphor" && <PhosphorVariant cells={CELLS} />}
-      {variant === "glitch"   && <GlitchVariant cells={CELLS} />}
-      {variant === "wave"     && <WaveVariant letterGroups={LETTER_GROUPS} />}
+      {variant === 'phosphor' && <PhosphorVariant cells={CELLS} />}
+      {variant === 'glitch' && <GlitchVariant cells={CELLS} />}
+      {variant === 'wave' && <WaveVariant letterGroups={LETTER_GROUPS} />}
       {!variant && (
         <g>
-          {CELLS.map(({ x, y, key }) => (
+          {CELLS.map(({ key, x, y }) => (
             <rect key={key} x={x} y={y} width={1} height={1} />
           ))}
         </g>

@@ -1,19 +1,20 @@
 // Restore the iframe location from the parent (HA) URL hash BEFORE the router is
 // imported/evaluated. Must stay the first import.
-import "./lib/parent-url-restore"
+import './lib/parent-url-restore';
 
-import { StrictMode } from "react"
-import { createRoot } from "react-dom/client"
-import { RouterProvider } from "@tanstack/react-router"
-import { NuqsAdapter } from "nuqs/adapters/react"
-import { Provider as JotaiProvider } from "jotai"
-import { ThemeProvider } from "next-themes"
+import { StrictMode } from 'react';
 
-import { router } from "./router"
-import "@fontsource-variable/inter"
-import "./index.css"
+import { RouterProvider } from '@tanstack/react-router';
+import { Provider as JotaiProvider } from 'jotai';
+import { ThemeProvider } from 'next-themes';
+import { NuqsAdapter } from 'nuqs/adapters/react';
+import { createRoot } from 'react-dom/client';
 
-createRoot(document.getElementById("root")!).render(
+import { router } from './router';
+import '@fontsource-variable/inter';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <JotaiProvider>
@@ -23,4 +24,4 @@ createRoot(document.getElementById("root")!).render(
       </JotaiProvider>
     </ThemeProvider>
   </StrictMode>,
-)
+);

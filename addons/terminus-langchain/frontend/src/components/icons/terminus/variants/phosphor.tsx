@@ -1,5 +1,6 @@
-import type { Cell } from "../glyphs";
-import { BaseLayer } from "./base-layer";
+import { BaseLayer } from './base-layer';
+
+import type { Cell } from '../glyphs';
 
 const DUR = 4;
 
@@ -27,7 +28,7 @@ export function PhosphorVariant({ cells }: { cells: Cell[] }) {
       `}</style>
       <BaseLayer cells={cells} />
       <g>
-        {cells.map(({ x, y, key }, idx) => (
+        {cells.map(({ key, x, y }, idx) => (
           <rect
             key={key}
             x={x}

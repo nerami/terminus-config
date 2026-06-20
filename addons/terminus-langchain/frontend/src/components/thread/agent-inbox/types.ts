@@ -1,17 +1,17 @@
-import { BaseMessage } from "@langchain/core/messages";
-import { Interrupt, Thread, ThreadStatus } from "@langchain/langgraph-sdk";
+import { BaseMessage } from '@langchain/core/messages';
+import { Interrupt, Thread, ThreadStatus } from '@langchain/langgraph-sdk';
 
-export type DecisionType = "approve" | "edit" | "reject";
+export type DecisionType = 'approve' | 'edit' | 'reject';
 
 export interface Action {
-  name: string;
   args: Record<string, unknown>;
+  name: string;
 }
 
 export interface ActionRequest {
-  name: string;
   args: Record<string, unknown>;
   description?: string;
+  name: string;
 }
 
 export interface ReviewConfig {
@@ -26,15 +26,15 @@ export interface HITLRequest {
 }
 
 export type Decision =
-  | { type: "approve" }
-  | { type: "reject"; message?: string }
-  | { type: "edit"; edited_action: Action };
+  | { type: 'approve' }
+  | { type: 'reject'; message?: string }
+  | { type: 'edit'; edited_action: Action };
 
 export type DecisionWithEdits =
-  | { type: "approve" }
-  | { type: "reject"; message?: string }
+  | { type: 'approve' }
+  | { type: 'reject'; message?: string }
   | {
-      type: "edit";
+      type: 'edit';
       edited_action: Action;
       acceptAllowed?: boolean;
       editsMade?: boolean;
@@ -49,7 +49,7 @@ export type Email = {
   page_content: string;
   send_time: string | undefined;
   read?: boolean;
-  status?: "in-queue" | "processing" | "hitl" | "done";
+  status?: 'in-queue' | 'processing' | 'hitl' | 'done';
 };
 
 export interface ThreadValues {
@@ -61,38 +61,36 @@ export interface ThreadValues {
   };
 }
 
-export type ThreadData<
-  ThreadValues extends Record<string, any> = Record<string, any>,
-> = {
+export type ThreadData<ThreadValues extends Record<string, any> = Record<string, any>> = {
   thread: Thread<ThreadValues>;
 } & (
   | {
-      status: "interrupted";
+      status: 'interrupted';
       interrupts: Interrupt<HITLRequest>[] | undefined;
     }
   | {
-      status: "idle" | "busy" | "error";
+      status: 'idle' | 'busy' | 'error';
       interrupts?: never;
     }
 );
 
-export type ThreadStatusWithAll = ThreadStatus | "all";
+export type ThreadStatusWithAll = ThreadStatus | 'all';
 
 export type SubmitType = DecisionType;
 
 export interface AgentInbox {
   /**
-   * A unique identifier for the inbox.
+   * The URL of the deployment. Either a localhost URL, or a deployment URL.
    */
-  id: string;
+  deploymentUrl: string;
   /**
    * The ID of the graph.
    */
   graphId: string;
   /**
-   * The URL of the deployment. Either a localhost URL, or a deployment URL.
+   * A unique identifier for the inbox.
    */
-  deploymentUrl: string;
+  id: string;
   /**
    * Optional name for the inbox, used in the UI to label the inbox.
    */

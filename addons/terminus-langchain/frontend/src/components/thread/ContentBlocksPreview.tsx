@@ -1,13 +1,16 @@
-import React from "react";
-import { MultimodalPreview } from "./MultimodalPreview";
-import { cn } from "@/lib/utils";
-import { ContentBlock } from "@langchain/core/messages";
+import React from 'react';
+
+import { ContentBlock } from '@langchain/core/messages';
+
+import { MultimodalPreview } from './MultimodalPreview';
+
+import { cn } from '@/lib/utils';
 
 interface ContentBlocksPreviewProps {
   blocks: ContentBlock.Multimodal.Data[];
-  onRemove: (idx: number) => void;
-  size?: "sm" | "md" | "lg";
   className?: string;
+  onRemove: (idx: number) => void;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -16,21 +19,15 @@ interface ContentBlocksPreviewProps {
  */
 export const ContentBlocksPreview: React.FC<ContentBlocksPreviewProps> = ({
   blocks,
-  onRemove,
-  size = "md",
   className,
+  onRemove,
+  size = 'md',
 }) => {
   if (!blocks.length) return null;
   return (
-    <div className={cn("flex flex-wrap gap-2 p-3.5 pb-0", className)}>
+    <div className={cn('flex flex-wrap gap-2 p-3.5 pb-0', className)}>
       {blocks.map((block, idx) => (
-        <MultimodalPreview
-          key={idx}
-          block={block}
-          removable
-          onRemove={() => onRemove(idx)}
-          size={size}
-        />
+        <MultimodalPreview key={idx} block={block} removable onRemove={() => onRemove(idx)} size={size} />
       ))}
     </div>
   );

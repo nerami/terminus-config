@@ -1,4 +1,5 @@
 # Scene / Automation Modal Behavior — Design Spec
+
 Date: 2026-06-19
 
 ## Problem
@@ -11,15 +12,15 @@ When a user is already viewing a scene's or automation's detail graph (i.e., the
 
 ## Behavioral Rules
 
-| Context (view.kind) | Node clicked | Result |
-|---|---|---|
-| `"area"` / `"scenes"` / `"automations"` | scene node | navigate to scene drill-down (unchanged) |
-| `"area"` / `"scenes"` / `"automations"` | automation node | navigate to automation drill-down (unchanged) |
-| `"automation"` | leaf scene node (different id) | navigate to scene drill-down (unchanged) |
-| `"scene"` + `view.sceneId === data.sceneId` | scene root node | open EntityDetailModal |
-| `"automation"` + `view.automationId === data.automationId` | automation root node | open EntityDetailModal |
+| Context (view.kind)                                        | Node clicked                   | Result                                        |
+| ---------------------------------------------------------- | ------------------------------ | --------------------------------------------- |
+| `"area"` / `"scenes"` / `"automations"`                    | scene node                     | navigate to scene drill-down (unchanged)      |
+| `"area"` / `"scenes"` / `"automations"`                    | automation node                | navigate to automation drill-down (unchanged) |
+| `"automation"`                                             | leaf scene node (different id) | navigate to scene drill-down (unchanged)      |
+| `"scene"` + `view.sceneId === data.sceneId`                | scene root node                | open EntityDetailModal                        |
+| `"automation"` + `view.automationId === data.automationId` | automation root node           | open EntityDetailModal                        |
 
-The modal condition requires both the view kind AND the matching id — this ensures a scene node that references a *different* scene still navigates rather than opening the wrong modal.
+The modal condition requires both the view kind AND the matching id — this ensures a scene node that references a _different_ scene still navigates rather than opening the wrong modal.
 
 ## Changes Required
 

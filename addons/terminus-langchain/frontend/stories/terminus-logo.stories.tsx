@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { TerminusLogoSVG } from '@/components/icons/terminus';
-import { WaveVariant } from '@/components/icons/terminus/variants/wave';
 import { LETTER_GROUPS, WIDTH, CELL_H } from '@/components/icons/terminus/glyphs';
+import { WaveVariant } from '@/components/icons/terminus/variants/wave';
 
 const meta: Meta<typeof TerminusLogoSVG> = {
   title: 'Icons/TerminusLogo',
@@ -75,7 +76,7 @@ export const Wave: StoryObj<{
     pairGap: 3,
     dashWidth: 4,
   },
-  render: ({ width, dur, stepDivisor, intraPairGap, pairGap, dashWidth }) => (
+  render: ({ dashWidth, dur, intraPairGap, pairGap, stepDivisor, width }) => (
     <svg
       width={width}
       viewBox={`0 0 ${WIDTH} ${CELL_H}`}
@@ -122,7 +123,7 @@ export const ColorInheritance: Story = {
           { label: 'accent amber', color: '#f59e0b' },
           { label: 'destructive', color: '#ef4444' },
         ] as const
-      ).map(({ label, color }) => (
+      ).map(({ color, label }) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '1rem', color }}>
           <span style={{ fontFamily: 'monospace', fontSize: 11, width: 140, opacity: 0.8 }}>{label}</span>
           <TerminusLogoSVG width={160} />

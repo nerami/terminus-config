@@ -6,9 +6,9 @@
 // doesn't reload HA. Only works when the iframe is same-origin with the parent
 // (true for HA ingress); otherwise every entry point no-ops gracefully.
 
-import { resolveBasePath } from "@/runtime-config"
+import { resolveBasePath } from '@/runtime-config';
 
-const HASH_KEY = "app="
+const HASH_KEY = 'app=';
 
 /**
  * The iframe location relative to the served base directory, as `path[?search]`.
@@ -16,27 +16,24 @@ const HASH_KEY = "app="
  * e.g. ("/api/hassio_ingress/tok/c/abc", "?topology=1", "/api/hassio_ingress/tok/")
  *   -> "/c/abc?topology=1"
  */
-export function relativeLocation(
-  loc: { pathname: string; search: string },
-  basepath: string,
-): string {
-  let rel = loc.pathname
-  if (rel.startsWith(basepath)) rel = "/" + rel.slice(basepath.length)
-  if (!rel.startsWith("/")) rel = "/" + rel
-  rel = rel.replace(/^\/+/, "/")
-  return rel + (loc.search || "")
+export function relativeLocation(loc: { pathname: string; search: string }, basepath: string): string {
+  let rel = loc.pathname;
+  if (rel.startsWith(basepath)) rel = '/' + rel.slice(basepath.length);
+  if (!rel.startsWith('/')) rel = '/' + rel;
+  rel = rel.replace(/^\/+/, '/');
+  return rel + (loc.search || '');
 }
 
 /** Encode a relative location into the parent hash value (without the leading #). */
 export function encodeParentHash(rel: string): string {
-  return HASH_KEY + rel
+  return HASH_KEY + rel;
 }
 
 /** Parse a parent hash back into a relative location, or null if it isn't ours. */
 export function parseParentHash(hash: string): string | null {
-  const h = hash.startsWith("#") ? hash.slice(1) : hash
-  if (!h.startsWith(HASH_KEY)) return null
-  return h.slice(HASH_KEY.length)
+  const h = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (!h.startsWith(HASH_KEY)) return null;
+  return h.slice(HASH_KEY.length);
 }
 
 /**
@@ -46,13 +43,13 @@ export function parseParentHash(hash: string): string | null {
  */
 export function getParentWindow(): Window | null {
   try {
-    if (window.self === window.top) return null
-    const top = window.top
-    if (!top) return null
-    void top.location.href // throws if cross-origin
-    return top
+    if (window.self === window.top) return null;
+    const top = window.top;
+    if (!top) return null;
+    void top.location.href; // throws if cross-origin
+    return top;
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -61,11 +58,11 @@ export function getParentWindow(): Window | null {
  * so no HA history entry is added and no popstate/reload fires on the parent.
  */
 export function mirrorToParent(rel: string): void {
-  const p = getParentWindow()
-  if (!p) return
+  const p = getParentWindow();
+  if (!p) return;
   try {
-    const url = p.location.pathname + p.location.search + "#" + encodeParentHash(rel)
-    p.history.replaceState(p.history.state, "", url)
+    const url = p.location.pathname + p.location.search + '#' + encodeParentHash(rel);
+    p.history.replaceState(p.history.state, '', url);
   } catch {
     // Parent became unreachable; ignore.
   }
@@ -77,18 +74,18 @@ export function mirrorToParent(rel: string): void {
  * the restored location. Must run before the router module evaluates.
  */
 export function restoreFromParentHash(): void {
-  const p = getParentWindow()
-  if (!p) return
-  let rel: string | null = null
+  const p = getParentWindow();
+  if (!p) return;
+  let rel: string | null = null;
   try {
-    rel = parseParentHash(p.location.hash)
+    rel = parseParentHash(p.location.hash);
   } catch {
-    return
+    return;
   }
-  if (!rel) return
-  const basepath = resolveBasePath(window.location)
-  if (rel === relativeLocation(window.location, basepath)) return
+  if (!rel) return;
+  const basepath = resolveBasePath(window.location);
+  if (rel === relativeLocation(window.location, basepath)) return;
   // basepath ends with "/"; rel starts with "/" — join without doubling it.
-  const childUrl = basepath.replace(/\/$/, "") + rel
-  window.history.replaceState({}, "", childUrl)
+  const childUrl = basepath.replace(/\/$/, '') + rel;
+  window.history.replaceState({}, '', childUrl);
 }

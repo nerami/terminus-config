@@ -1,35 +1,28 @@
-import { validate } from "uuid";
-import { getApiKey } from "@/lib/api-key";
-import { Thread } from "@langchain/langgraph-sdk";
-import { useQueryState } from "nuqs";
-import { endpoints, ASSISTANT_ID } from "@/runtime-config";
-import {
-  createContext,
-  useContext,
-  ReactNode,
-  useCallback,
-  useState,
-  Dispatch,
-  SetStateAction,
-} from "react";
-import { createClient } from "./client";
-import { ARCHIVE_METADATA, filterActiveThreads } from "@/lib/thread-archive";
+import { createContext, useContext, ReactNode, useCallback, useState, Dispatch, SetStateAction } from 'react';
+
+import { Thread } from '@langchain/langgraph-sdk';
+import { useQueryState } from 'nuqs';
+import { validate } from 'uuid';
+
+import { createClient } from './client';
+
+import { getApiKey } from '@/lib/api-key';
+import { ARCHIVE_METADATA, filterActiveThreads } from '@/lib/thread-archive';
+import { endpoints, ASSISTANT_ID } from '@/runtime-config';
 
 interface ThreadContextType {
-  getThreads: () => Promise<Thread[]>;
   archiveThread: (threadId: string) => Promise<void>;
-  threads: Thread[];
+  getThreads: () => Promise<Thread[]>;
   setThreads: Dispatch<SetStateAction<Thread[]>>;
-  threadsLoading: boolean;
   setThreadsLoading: Dispatch<SetStateAction<boolean>>;
+  threads: Thread[];
+  threadsLoading: boolean;
 }
 
 const ThreadContext = createContext<ThreadContextType | undefined>(undefined);
 export { ThreadContext };
 
-function getThreadSearchMetadata(
-  assistantId: string,
-): { graph_id: string } | { assistant_id: string } {
+function getThreadSearchMetadata(assistantId: string): { graph_id: string } | { assistant_id: string } {
   if (validate(assistantId)) {
     return { assistant_id: assistantId };
   } else {
@@ -42,12 +35,12 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
   const envAssistantId: string | undefined = ASSISTANT_ID;
   const envAuthScheme: string | undefined = undefined;
 
-  const [apiUrl] = useQueryState("apiUrl", {
-    defaultValue: envApiUrl || "",
+  const [apiUrl] = useQueryState('apiUrl', {
+    defaultValue: envApiUrl || '',
   });
-  const [assistantId] = useQueryState("assistantId");
-  const [authScheme] = useQueryState("authScheme", {
-    defaultValue: envAuthScheme || "",
+  const [assistantId] = useQueryState('assistantId');
+  const [authScheme] = useQueryState('authScheme', {
+    defaultValue: envAuthScheme || '',
   });
   const [threads, setThreads] = useState<Thread[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
@@ -55,11 +48,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
   const getThreads = useCallback(async (): Promise<Thread[]> => {
     const resolvedAssistantId = assistantId || envAssistantId;
     if (!apiUrl || !resolvedAssistantId) return [];
-    const client = createClient(
-      apiUrl,
-      getApiKey() ?? undefined,
-      authScheme || undefined,
-    );
+    const client = createClient(apiUrl, getApiKey() ?? undefined, authScheme || undefined);
 
     const threads = await client.threads.search({
       metadata: {
@@ -75,11 +64,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
   const archiveThread = useCallback(
     async (threadId: string): Promise<void> => {
       if (!apiUrl) return;
-      const client = createClient(
-        apiUrl,
-        getApiKey() ?? undefined,
-        authScheme || undefined,
-      );
+      const client = createClient(apiUrl, getApiKey() ?? undefined, authScheme || undefined);
       await client.threads.update(threadId, { metadata: ARCHIVE_METADATA });
       // Optimistically drop it from the visible list.
       setThreads((prev) => prev.filter((t) => t.thread_id !== threadId));
@@ -96,15 +81,13 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     setThreadsLoading,
   };
 
-  return (
-    <ThreadContext.Provider value={value}>{children}</ThreadContext.Provider>
-  );
+  return <ThreadContext.Provider value={value}>{children}</ThreadContext.Provider>;
 }
 
 export function useThreads() {
   const context = useContext(ThreadContext);
   if (context === undefined) {
-    throw new Error("useThreads must be used within a ThreadProvider");
+    throw new Error('useThreads must be used within a ThreadProvider');
   }
   return context;
 }

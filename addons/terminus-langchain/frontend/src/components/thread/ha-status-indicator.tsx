@@ -1,27 +1,19 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  useHaStatus,
-  type HaConnectionStatus,
-} from "@/hooks/use-ha-status";
-import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useHaStatus, type HaConnectionStatus } from '@/hooks/use-ha-status';
+import { cn } from '@/lib/utils';
 
 const LABELS: Record<HaConnectionStatus, string> = {
-  connecting: "Connecting…",
-  connected: "Connected",
-  disconnected: "Disconnected",
-  auth_failed: "Authentication failed",
+  connecting: 'Connecting…',
+  connected: 'Connected',
+  disconnected: 'Disconnected',
+  auth_failed: 'Authentication failed',
 };
 
 const DOT: Record<HaConnectionStatus, string> = {
-  connecting: "bg-amber-400 animate-pulse",
-  connected: "bg-emerald-500",
-  disconnected: "bg-red-500",
-  auth_failed: "bg-red-600",
+  connecting: 'bg-amber-400 animate-pulse',
+  connected: 'bg-emerald-500',
+  disconnected: 'bg-red-500',
+  auth_failed: 'bg-red-600',
 };
 
 /**
@@ -30,9 +22,7 @@ const DOT: Record<HaConnectionStatus, string> = {
  */
 export function HaStatusIndicator() {
   const status = useHaStatus();
-  const label =
-    LABELS[status.status] +
-    (status.ha_version ? ` · v${status.ha_version}` : "");
+  const label = LABELS[status.status] + (status.ha_version ? ` · v${status.ha_version}` : '');
 
   return (
     <TooltipProvider>
@@ -46,10 +36,7 @@ export function HaStatusIndicator() {
             />
           }
         >
-          <span
-            className={cn("size-2 rounded-full", DOT[status.status])}
-            aria-hidden
-          />
+          <span className={cn('size-2 rounded-full', DOT[status.status])} aria-hidden />
         </TooltipTrigger>
         <TooltipContent side="bottom">Home Assistant: {label}</TooltipContent>
       </Tooltip>

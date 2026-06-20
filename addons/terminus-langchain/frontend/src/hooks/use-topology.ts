@@ -1,13 +1,15 @@
-import { useAtom, useAtomValue } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
-import { fetchAutomation, fetchTopology } from "@/lib/ha-graph/api";
-import { topologyAtom } from "@/lib/ha-graph/atoms";
-import type { AutomationDetail } from "@/lib/ha-graph/types";
+import { useAtom, useAtomValue } from 'jotai';
+
+import type { AutomationDetail } from '@/lib/ha-graph/types';
+
+import { fetchAutomation, fetchTopology } from '@/lib/ha-graph/api';
+import { topologyAtom } from '@/lib/ha-graph/atoms';
 
 export interface UseTopology {
-  loading: boolean;
   error: string | null;
+  loading: boolean;
   reload: () => void;
 }
 
@@ -25,9 +27,7 @@ export function useTopology(enabled: boolean): UseTopology {
     setError(null);
     fetchTopology()
       .then(setTopology)
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : String(err)),
-      )
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
       .finally(() => setLoading(false));
   }, [setTopology]);
 
@@ -54,9 +54,7 @@ export function useAutomationDetail(automationId: string | null) {
       setDetail(null);
       return;
     }
-    const meta = topology?.automations.find(
-      (a) => a.entity_id === automationId,
-    );
+    const meta = topology?.automations.find((a) => a.entity_id === automationId);
     const fallback: AutomationDetail = {
       config: {},
       referenced: meta?.references ?? { entities: [], scenes: [], devices: [] },
@@ -79,10 +77,8 @@ export function useAutomationDetail(automationId: string | null) {
         // relationship references already known from the topology so the
         // trace view still renders the automation's entities/scenes.
         const hasConfig = !!d.config && Object.keys(d.config).length > 0;
-        const hasRefs =
-          d.referenced.entities.length > 0 || d.referenced.scenes.length > 0;
-        const referenced =
-          hasConfig || hasRefs ? d.referenced : (meta.references ?? d.referenced);
+        const hasRefs = d.referenced.entities.length > 0 || d.referenced.scenes.length > 0;
+        const referenced = hasConfig || hasRefs ? d.referenced : (meta.references ?? d.referenced);
         setDetail({ ...d, referenced });
       })
       .catch((e: unknown) => {

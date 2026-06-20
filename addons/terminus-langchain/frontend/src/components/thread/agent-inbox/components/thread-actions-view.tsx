@@ -1,29 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Interrupt } from "@langchain/langgraph-sdk";
-import { Button } from "@/components/ui/button";
-import { ThreadIdCopyable } from "./thread-id";
-import { InboxItemInput } from "./inbox-item-input";
-import useInterruptedActions from "../hooks/use-interrupted-actions";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { useQueryState } from "nuqs";
-import { useThreadId } from "@/hooks/use-thread-id";
-import { constructOpenInStudioURL, buildDecisionFromState } from "../utils";
-import { Decision, HITLRequest, DecisionType, ActionRequest } from "../types";
-import { useStreamContext } from "@/providers/Stream";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { Interrupt } from '@langchain/langgraph-sdk';
+import { useQueryState } from 'nuqs';
+import { toast } from 'sonner';
+
+import useInterruptedActions from '../hooks/use-interrupted-actions';
+import { Decision, HITLRequest, DecisionType, ActionRequest } from '../types';
+import { constructOpenInStudioURL, buildDecisionFromState } from '../utils';
+
+import { InboxItemInput } from './inbox-item-input';
+import { ThreadIdCopyable } from './thread-id';
+
+import { Button } from '@/components/ui/button';
+import { useThreadId } from '@/hooks/use-thread-id';
+import { cn } from '@/lib/utils';
+import { useStreamContext } from '@/providers/Stream';
 
 interface ThreadActionsViewProps {
-  interrupt: Interrupt<HITLRequest>;
   handleShowSidePanel: (showState: boolean, showDescription: boolean) => void;
-  showState: boolean;
+  interrupt: Interrupt<HITLRequest>;
   showDescription: boolean;
+  showState: boolean;
 }
 
 function ButtonGroup({
-  handleShowState,
   handleShowDescription,
-  showingState,
+  handleShowState,
   showingDescription,
+  showingState,
 }: {
   handleShowState: () => void;
   handleShowDescription: () => void;
@@ -34,10 +38,7 @@ function ButtonGroup({
     <div className="flex flex-row items-center justify-center gap-0">
       <Button
         variant="outline"
-        className={cn(
-          "rounded-l-md rounded-r-none border-r-[0px]",
-          showingState ? "text-foreground" : "bg-background",
-        )}
+        className={cn('rounded-l-md rounded-r-none border-r-[0px]', showingState ? 'text-foreground' : 'bg-background')}
         size="sm"
         onClick={handleShowState}
       >
@@ -46,8 +47,8 @@ function ButtonGroup({
       <Button
         variant="outline"
         className={cn(
-          "rounded-l-none rounded-r-md border-l-[0px]",
-          showingDescription ? "text-foreground" : "bg-background",
+          'rounded-l-none rounded-r-md border-l-[0px]',
+          showingDescription ? 'text-foreground' : 'bg-background',
         )}
         size="sm"
         onClick={handleShowDescription}
@@ -70,48 +71,36 @@ function isValidHitlRequest(
   );
 }
 
-function getDecisionStatus(
-  decision: Decision | undefined,
-): DecisionType | null {
+function getDecisionStatus(decision: Decision | undefined): DecisionType | null {
   if (!decision) return null;
   return decision.type;
 }
 
 function getActionTitle(action?: ActionRequest) {
-  return action?.name ?? "Unknown interrupt";
+  return action?.name ?? 'Unknown interrupt';
 }
 
 export function ThreadActionsView({
-  interrupt,
   handleShowSidePanel,
+  interrupt,
   showDescription,
   showState,
 }: ThreadActionsViewProps) {
   const stream = useStreamContext();
   const [threadId] = useThreadId();
-  const [apiUrl] = useQueryState("apiUrl");
+  const [apiUrl] = useQueryState('apiUrl');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [addressedActions, setAddressedActions] = useState<
-    Map<number, Decision>
-  >(new Map());
+  const [addressedActions, setAddressedActions] = useState<Map<number, Decision>>(new Map());
   const [submittingAll, setSubmittingAll] = useState(false);
 
   const hitlValue = interrupt.value;
-  const actionRequests = useMemo(
-    () => hitlValue?.action_requests ?? [],
-    [hitlValue?.action_requests],
-  );
-  const reviewConfigs = useMemo(
-    () => hitlValue?.review_configs ?? [],
-    [hitlValue?.review_configs],
-  );
+  const actionRequests = useMemo(() => hitlValue?.action_requests ?? [], [hitlValue?.action_requests]);
+  const reviewConfigs = useMemo(() => hitlValue?.review_configs ?? [], [hitlValue?.review_configs]);
 
   const hasMultipleActions = actionRequests.length > 1;
   const currentAction = actionRequests[currentIndex];
   const matchingConfig =
-    reviewConfigs.find(
-      (config) => config.action_name === currentAction?.name,
-    ) ?? reviewConfigs[currentIndex];
+    reviewConfigs.find((config) => config.action_name === currentAction?.name) ?? reviewConfigs[currentIndex];
 
   const singleActionInterrupt = useMemo(() => {
     if (!currentAction || !matchingConfig) {
@@ -129,21 +118,21 @@ export function ThreadActionsView({
 
   const {
     approveAllowed,
-    hasEdited,
-    hasAddedResponse,
-    streaming,
-    supportsMultipleMethods,
-    streamFinished,
-    loading,
-    handleSubmit,
     handleResolve,
-    setSelectedSubmitType,
+    handleSubmit,
+    hasAddedResponse,
+    hasEdited,
+    humanResponse,
+    initialHumanInterruptEditValue,
+    loading,
+    selectedSubmitType,
     setHasAddedResponse,
     setHasEdited,
-    humanResponse,
     setHumanResponse,
-    selectedSubmitType,
-    initialHumanInterruptEditValue,
+    setSelectedSubmitType,
+    streamFinished,
+    streaming,
+    supportsMultipleMethods,
   } = useInterruptedActions({
     interrupt: singleActionInterrupt,
   });
@@ -155,8 +144,8 @@ export function ThreadActionsView({
 
   const handleOpenInStudio = () => {
     if (!apiUrl) {
-      toast.error("Error", {
-        description: "Please set the LangGraph deployment URL in settings.",
+      toast.error('Error', {
+        description: 'Please set the LangGraph deployment URL in settings.',
         duration: 5000,
         richColors: true,
         closeButton: true,
@@ -165,7 +154,7 @@ export function ThreadActionsView({
     }
 
     const studioUrl = constructOpenInStudioURL(apiUrl, threadId ?? undefined);
-    window.open(studioUrl, "_blank");
+    window.open(studioUrl, '_blank');
   };
 
   const handleApproveAll = useCallback(() => {
@@ -173,7 +162,7 @@ export function ThreadActionsView({
 
     try {
       const allDecisions: Decision[] = actionRequests.map(() => ({
-        type: "approve",
+        type: 'approve',
       }));
 
       stream.submit(
@@ -185,14 +174,14 @@ export function ThreadActionsView({
         },
       );
 
-      toast("Success", {
-        description: "All actions approved successfully.",
+      toast('Success', {
+        description: 'All actions approved successfully.',
         duration: 5000,
       });
     } catch (error) {
-      console.error("Error approving all actions", error);
-      toast.error("Error", {
-        description: "Failed to approve all actions.",
+      console.error('Error approving all actions', error);
+      toast.error('Error', {
+        description: 'Failed to approve all actions.',
         richColors: true,
         closeButton: true,
         duration: 5000,
@@ -204,7 +193,7 @@ export function ThreadActionsView({
     if (!hasMultipleActions) return;
 
     if (addressedActions.size !== actionRequests.length) {
-      toast.error("Error", {
+      toast.error('Error', {
         description: `Please address all ${actionRequests.length} actions before submitting.`,
         richColors: true,
         closeButton: true,
@@ -232,15 +221,15 @@ export function ThreadActionsView({
         },
       );
 
-      toast("Success", {
-        description: "All actions submitted successfully.",
+      toast('Success', {
+        description: 'All actions submitted successfully.',
         duration: 5000,
       });
       setAddressedActions(new Map());
     } catch (error) {
-      console.error("Error submitting all actions", error);
-      toast.error("Error", {
-        description: "Failed to submit actions.",
+      console.error('Error submitting all actions', error);
+      toast.error('Error', {
+        description: 'Failed to submit actions.',
         richColors: true,
         closeButton: true,
         duration: 5000,
@@ -253,22 +242,17 @@ export function ThreadActionsView({
   const allAllowApprove = useMemo(() => {
     if (!hasMultipleActions) return false;
     return actionRequests.every((actionRequest) => {
-      const matching = reviewConfigs.find(
-        (config) => config.action_name === actionRequest.name,
-      );
-      return matching?.allowed_decisions.includes("approve");
+      const matching = reviewConfigs.find((config) => config.action_name === actionRequest.name);
+      return matching?.allowed_decisions.includes('approve');
     });
   }, [actionRequests, reviewConfigs, hasMultipleActions]);
 
   const handleSaveDecision = () => {
-    const { decision, error } = buildDecisionFromState(
-      humanResponse,
-      selectedSubmitType,
-    );
+    const { decision, error } = buildDecisionFromState(humanResponse, selectedSubmitType);
 
     if (!decision || error) {
-      toast.error("Error", {
-        description: error ?? "Unable to determine decision.",
+      toast.error('Error', {
+        description: error ?? 'Unable to determine decision.',
         richColors: true,
         closeButton: true,
         duration: 5000,
@@ -282,7 +266,7 @@ export function ThreadActionsView({
       return next;
     });
 
-    toast("Success", {
+    toast('Success', {
       description: `Action ${currentIndex + 1} captured.`,
       duration: 3000,
     });
@@ -294,15 +278,13 @@ export function ThreadActionsView({
 
   const currentTitle = getActionTitle(currentAction);
   const actionsDisabled = loading || streaming || submittingAll;
-  const hasAllDecisions =
-    hasMultipleActions && addressedActions.size === actionRequests.length;
+  const hasAllDecisions = hasMultipleActions && addressedActions.size === actionRequests.length;
 
   if (!isValidHitlRequest(interrupt)) {
     return (
-      <div className="flex min-h-full w-full flex-col items-center justify-center rounded-2xl bg-muted/50 p-8">
-        <p className="text-sm text-muted-foreground">
-          Unable to render interrupt. The data provided is not in the expected
-          HITL format.
+      <div className="bg-muted/50 flex min-h-full w-full flex-col items-center justify-center rounded-2xl p-8">
+        <p className="text-muted-foreground text-sm">
+          Unable to render interrupt. The data provided is not in the expected HITL format.
         </p>
       </div>
     );
@@ -314,9 +296,7 @@ export function ThreadActionsView({
       <div className="flex w-full flex-wrap items-center justify-between gap-3">
         <div className="flex items-center justify-start gap-3">
           <p className="text-2xl tracking-tighter text-pretty">
-            {hasMultipleActions
-              ? `${currentTitle} (${currentIndex + 1}/${actionRequests.length})`
-              : currentTitle}
+            {hasMultipleActions ? `${currentTitle} (${currentIndex + 1}/${actionRequests.length})` : currentTitle}
           </p>
           {threadId && <ThreadIdCopyable threadId={threadId} />}
         </div>
@@ -325,7 +305,7 @@ export function ThreadActionsView({
             <Button
               size="sm"
               variant="outline"
-              className="flex items-center gap-1 bg-background"
+              className="bg-background flex items-center gap-1"
               onClick={handleOpenInStudio}
             >
               Studio
@@ -343,7 +323,7 @@ export function ThreadActionsView({
       <div className="flex w-full flex-row flex-wrap items-center justify-start gap-2">
         <Button
           variant="outline"
-          className="border-border bg-background font-normal text-foreground"
+          className="border-border bg-background text-foreground font-normal"
           onClick={handleResolve}
           disabled={actionsDisabled}
         >
@@ -352,7 +332,7 @@ export function ThreadActionsView({
         {hasMultipleActions && allAllowApprove && (
           <Button
             variant="outline"
-            className="border-border bg-background font-normal text-foreground"
+            className="border-border bg-background text-foreground font-normal"
             onClick={handleApproveAll}
             disabled={actionsDisabled}
           >
@@ -371,13 +351,12 @@ export function ThreadActionsView({
                 key={index}
                 onClick={() => setCurrentIndex(index)}
                 className={cn(
-                  "h-2 flex-1 rounded-full border transition-colors",
-                  "border-border bg-muted",
-                  status === "approve" && "border-emerald-500 bg-emerald-200",
-                  status === "reject" && "border-red-500 bg-red-200",
-                  status === "edit" && "border-amber-500 bg-amber-200",
-                  index === currentIndex &&
-                    "outline-primary outline-2 outline-offset-2",
+                  'h-2 flex-1 rounded-full border transition-colors',
+                  'border-border bg-muted',
+                  status === 'approve' && 'border-emerald-500 bg-emerald-200',
+                  status === 'reject' && 'border-red-500 bg-red-200',
+                  status === 'edit' && 'border-amber-500 bg-amber-200',
+                  index === currentIndex && 'outline-primary outline-2 outline-offset-2',
                 )}
               >
                 <span className="sr-only">Action {index + 1}</span>
@@ -419,31 +398,19 @@ export function ThreadActionsView({
               variant="outline"
               size="sm"
               disabled={currentIndex === actionRequests.length - 1}
-              onClick={() =>
-                setCurrentIndex((prev) =>
-                  Math.min(actionRequests.length - 1, prev + 1),
-                )
-              }
+              onClick={() => setCurrentIndex((prev) => Math.min(actionRequests.length - 1, prev + 1))}
             >
               Next
             </Button>
           </div>
-          <Button
-            variant="default"
-            disabled={!hasAllDecisions || submittingAll}
-            onClick={handleSubmitAll}
-          >
-            {submittingAll
-              ? "Submitting..."
-              : `Submit all ${actionRequests.length} decisions`}
+          <Button variant="default" disabled={!hasAllDecisions || submittingAll} onClick={handleSubmitAll}>
+            {submittingAll ? 'Submitting...' : `Submit all ${actionRequests.length} decisions`}
           </Button>
         </div>
       )}
 
       {!hasMultipleActions && streamFinished && (
-        <p className="text-base font-medium text-green-600">
-          Successfully finished Graph invocation.
-        </p>
+        <p className="text-base font-medium text-green-600">Successfully finished Graph invocation.</p>
       )}
     </div>
   );

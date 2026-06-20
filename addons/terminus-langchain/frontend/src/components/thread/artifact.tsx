@@ -9,8 +9,9 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-} from "react";
-import { createPortal } from "react-dom";
+} from 'react';
+
+import { createPortal } from 'react-dom';
 
 type Setter<T> = (value: T | ((value: T) => T)) => void;
 
@@ -29,11 +30,7 @@ const ArtifactSlotContext = createContext<{
  * and render them in place of the `ArtifactContent` and `ArtifactTitle` components via
  * React Portals.
  */
-const ArtifactSlot = (props: {
-  id: string;
-  children?: ReactNode;
-  title?: ReactNode;
-}) => {
+const ArtifactSlot = (props: { id: string; children?: ReactNode; title?: ReactNode }) => {
   const context = useContext(ArtifactSlotContext);
 
   const [ctxMounted, ctxSetMounted] = context.mounted;
@@ -65,18 +62,10 @@ export function ArtifactContent(props: HTMLAttributes<HTMLDivElement>) {
   const ref = useRef<HTMLDivElement>(null);
   const [, setStateRef] = context.content;
 
-  useLayoutEffect(
-    () => setStateRef?.(mounted ? ref.current : null),
-    [setStateRef, mounted],
-  );
+  useLayoutEffect(() => setStateRef?.(mounted ? ref.current : null), [setStateRef, mounted]);
 
   if (!mounted) return null;
-  return (
-    <div
-      {...props}
-      ref={ref}
-    />
-  );
+  return <div {...props} ref={ref} />;
 }
 
 export function ArtifactTitle(props: HTMLAttributes<HTMLDivElement>) {
@@ -87,12 +76,7 @@ export function ArtifactTitle(props: HTMLAttributes<HTMLDivElement>) {
 
   useLayoutEffect(() => setStateRef?.(ref.current), [setStateRef]);
 
-  return (
-    <div
-      {...props}
-      ref={ref}
-    />
-  );
+  return <div {...props} ref={ref} />;
 }
 
 export function ArtifactProvider(props: { children?: ReactNode }) {
@@ -104,9 +88,7 @@ export function ArtifactProvider(props: { children?: ReactNode }) {
   const context = useState<Record<string, unknown>>({});
 
   return (
-    <ArtifactSlotContext.Provider
-      value={{ open, mounted, title, content, context }}
-    >
+    <ArtifactSlotContext.Provider value={{ open, mounted, title, content, context }}>
       {props.children}
     </ArtifactSlotContext.Provider>
   );
@@ -127,7 +109,7 @@ export function useArtifact() {
   const open = ctxOpen === id;
   const setOpen = useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
-      if (typeof value === "boolean") {
+      if (typeof value === 'boolean') {
         ctxSetOpen(value ? id : null);
       } else {
         ctxSetOpen((open) => (open === id ? null : id));
@@ -141,10 +123,7 @@ export function useArtifact() {
   const ArtifactContent = useCallback(
     (props: { title?: React.ReactNode; children: React.ReactNode }) => {
       return (
-        <ArtifactSlot
-          id={id}
-          title={props.title}
-        >
+        <ArtifactSlot id={id} title={props.title}>
           {props.children}
         </ArtifactSlot>
       );
@@ -152,10 +131,7 @@ export function useArtifact() {
     [id],
   );
 
-  return [
-    ArtifactContent,
-    { open, setOpen, context: ctxContext, setContext: ctxSetContext },
-  ] as [
+  return [ArtifactContent, { open, setOpen, context: ctxContext, setContext: ctxSetContext }] as [
     typeof ArtifactContent,
     {
       open: typeof open;

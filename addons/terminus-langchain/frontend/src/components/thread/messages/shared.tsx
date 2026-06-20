@@ -1,25 +1,13 @@
-import {
-  XIcon,
-  SendHorizontal,
-  RefreshCcw,
-  Pencil,
-  Copy,
-  CopyCheck,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { TooltipIconButton } from "../tooltip-icon-button";
-import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
 
-function ContentCopyable({
-  content,
-  disabled,
-}: {
-  content: string;
-  disabled: boolean;
-}) {
+import { AnimatePresence, motion } from 'framer-motion';
+import { XIcon, SendHorizontal, RefreshCcw, Pencil, Copy, CopyCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { TooltipIconButton } from '../tooltip-icon-button';
+
+import { Button } from '@/components/ui/button';
+
+function ContentCopyable({ content, disabled }: { content: string; disabled: boolean }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -30,16 +18,8 @@ function ContentCopyable({
   };
 
   return (
-    <TooltipIconButton
-      onClick={(e) => handleCopy(e)}
-      variant="ghost"
-      tooltip="Copy content"
-      disabled={disabled}
-    >
-      <AnimatePresence
-        mode="wait"
-        initial={false}
-      >
+    <TooltipIconButton onClick={(e) => handleCopy(e)} variant="ghost" tooltip="Copy content" disabled={disabled}>
+      <AnimatePresence mode="wait" initial={false}>
         {copied ? (
           <motion.div
             key="check"
@@ -69,8 +49,8 @@ function ContentCopyable({
 export function BranchSwitcher({
   branch,
   branchOptions,
-  onSelect,
   isLoading,
+  onSelect,
 }: {
   branch: string | undefined;
   branchOptions: string[] | undefined;
@@ -117,13 +97,13 @@ export function BranchSwitcher({
 
 export function CommandBar({
   content,
-  isHumanMessage,
+  handleRegenerate,
+  handleSubmitEdit,
   isAiMessage,
   isEditing,
-  setIsEditing,
-  handleSubmitEdit,
-  handleRegenerate,
+  isHumanMessage,
   isLoading,
+  setIsEditing,
 }: {
   content: string;
   isHumanMessage?: boolean;
@@ -135,33 +115,18 @@ export function CommandBar({
   isLoading: boolean;
 }) {
   if (isHumanMessage && isAiMessage) {
-    throw new Error(
-      "Can only set one of isHumanMessage or isAiMessage to true, not both.",
-    );
+    throw new Error('Can only set one of isHumanMessage or isAiMessage to true, not both.');
   }
 
   if (!isHumanMessage && !isAiMessage) {
-    throw new Error(
-      "One of isHumanMessage or isAiMessage must be set to true.",
-    );
+    throw new Error('One of isHumanMessage or isAiMessage must be set to true.');
   }
 
-  if (
-    isHumanMessage &&
-    (isEditing === undefined ||
-      setIsEditing === undefined ||
-      handleSubmitEdit === undefined)
-  ) {
-    throw new Error(
-      "If isHumanMessage is true, all of isEditing, setIsEditing, and handleSubmitEdit must be set.",
-    );
+  if (isHumanMessage && (isEditing === undefined || setIsEditing === undefined || handleSubmitEdit === undefined)) {
+    throw new Error('If isHumanMessage is true, all of isEditing, setIsEditing, and handleSubmitEdit must be set.');
   }
 
-  const showEdit =
-    isHumanMessage &&
-    isEditing !== undefined &&
-    !!setIsEditing &&
-    !!handleSubmitEdit;
+  const showEdit = isHumanMessage && isEditing !== undefined && !!setIsEditing && !!handleSubmitEdit;
 
   if (isHumanMessage && isEditing && !!setIsEditing && !!handleSubmitEdit) {
     return (
@@ -176,12 +141,7 @@ export function CommandBar({
         >
           <XIcon />
         </TooltipIconButton>
-        <TooltipIconButton
-          disabled={isLoading}
-          tooltip="Submit"
-          variant="secondary"
-          onClick={handleSubmitEdit}
-        >
+        <TooltipIconButton disabled={isLoading} tooltip="Submit" variant="secondary" onClick={handleSubmitEdit}>
           <SendHorizontal />
         </TooltipIconButton>
       </div>
@@ -190,17 +150,9 @@ export function CommandBar({
 
   return (
     <div className="flex items-center gap-2">
-      <ContentCopyable
-        content={content}
-        disabled={isLoading}
-      />
+      <ContentCopyable content={content} disabled={isLoading} />
       {isAiMessage && !!handleRegenerate && (
-        <TooltipIconButton
-          disabled={isLoading}
-          tooltip="Refresh"
-          variant="ghost"
-          onClick={handleRegenerate}
-        >
+        <TooltipIconButton disabled={isLoading} tooltip="Refresh" variant="ghost" onClick={handleRegenerate}>
           <RefreshCcw />
         </TooltipIconButton>
       )}

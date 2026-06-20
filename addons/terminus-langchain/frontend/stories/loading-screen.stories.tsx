@@ -1,5 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RefreshCw } from 'lucide-react';
+
+import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { StatusCard } from '@/components/status-card';
 import { Button } from '@/components/ui/button';
 
@@ -27,8 +29,8 @@ export const Error: Story = {
     <StatusCard variant="glitch">
       <h1 className="text-lg font-semibold tracking-tight">Couldn't reach the agent server</h1>
       <p className="text-muted-foreground text-sm">
-        Please ensure the graph is running at <code>http://localhost:2025</code> and your API key
-        is correctly set (if connecting to a deployed graph).
+        Please ensure the graph is running at <code>http://localhost:2025</code> and your API key is correctly set (if
+        connecting to a deployed graph).
       </p>
       <Button variant="outline">
         <RefreshCw className="size-4" />

@@ -1,18 +1,14 @@
-import { useAtom, useAtomValue } from "jotai";
-import { useEffect, useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { useEffect, useState } from 'react';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { fetchEntity } from "@/lib/ha-graph/api";
-import { entityModalAtom, topologyAtom } from "@/lib/ha-graph/atoms";
-import type { EntityState } from "@/lib/ha-graph/types";
+import { useAtom, useAtomValue } from 'jotai';
+import { LoaderCircle } from 'lucide-react';
+
+import type { EntityState } from '@/lib/ha-graph/types';
+
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { fetchEntity } from '@/lib/ha-graph/api';
+import { entityModalAtom, topologyAtom } from '@/lib/ha-graph/atoms';
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -40,9 +36,7 @@ export function EntityDetailModal() {
     let active = true;
     fetchEntity(entityId)
       .then((s) => active && setState(s))
-      .catch((e: unknown) =>
-        active && setError(e instanceof Error ? e.message : String(e)),
-      )
+      .catch((e: unknown) => active && setError(e instanceof Error ? e.message : String(e)))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -55,21 +49,12 @@ export function EntityDetailModal() {
     <Dialog open={open} onOpenChange={(o) => !o && setEntityId(null)}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="break-words">
-            {meta?.name ?? entityId}
-          </DialogTitle>
-          <DialogDescription className="font-mono text-xs">
-            {entityId}
-          </DialogDescription>
+          <DialogTitle className="break-words">{meta?.name ?? entityId}</DialogTitle>
+          <DialogDescription className="font-mono text-xs">{entityId}</DialogDescription>
         </DialogHeader>
 
         <div className="divide-y">
-          {meta?.domain && (
-            <Row
-              label="Domain"
-              value={<Badge variant="secondary">{meta.domain}</Badge>}
-            />
-          )}
+          {meta?.domain && <Row label="Domain" value={<Badge variant="secondary">{meta.domain}</Badge>} />}
           {meta?.device_name && <Row label="Device" value={meta.device_name} />}
 
           {loading && (
@@ -77,26 +62,14 @@ export function EntityDetailModal() {
               <LoaderCircle className="size-4 animate-spin" /> Loading state…
             </div>
           )}
-          {error && (
-            <div className="text-destructive py-3 text-sm">{error}</div>
-          )}
+          {error && <div className="text-destructive py-3 text-sm">{error}</div>}
 
           {state && (
             <>
-              <Row
-                label="State"
-                value={<span className="font-medium">{state.state}</span>}
-              />
-              {state.last_changed && (
-                <Row
-                  label="Last changed"
-                  value={new Date(state.last_changed).toLocaleString()}
-                />
-              )}
+              <Row label="State" value={<span className="font-medium">{state.state}</span>} />
+              {state.last_changed && <Row label="Last changed" value={new Date(state.last_changed).toLocaleString()} />}
               <div className="py-2">
-                <div className="text-muted-foreground mb-1 text-sm">
-                  Attributes
-                </div>
+                <div className="text-muted-foreground mb-1 text-sm">Attributes</div>
                 <pre className="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs">
                   {JSON.stringify(state.attributes, null, 2)}
                 </pre>

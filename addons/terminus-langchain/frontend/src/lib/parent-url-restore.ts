@@ -4,6 +4,6 @@
 // read the initial location. Has no dependency on the router, so ES-module eval
 // order guarantees it runs first.
 
-import { restoreFromParentHash } from "./parent-url"
+import { restoreFromParentHash } from './parent-url';
 
-restoreFromParentHash()
+restoreFromParentHash();

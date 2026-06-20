@@ -1,6 +1,8 @@
-import React from "react";
-import type { Cell } from "../glyphs";
-import { BaseLayer } from "./base-layer";
+import React from 'react';
+
+import { BaseLayer } from './base-layer';
+
+import type { Cell } from '../glyphs';
 
 // Knuth multiplicative hash — deterministic, no Math.random(), stable across
 // renders. Two separate input shifts (idx vs idx+997) give independent streams
@@ -38,7 +40,7 @@ export function GlitchVariant({ cells }: { cells: Cell[] }) {
       `}</style>
       <BaseLayer cells={cells} />
       <g>
-        {cells.map(({ x, y, key }, idx) => {
+        {cells.map(({ key, x, y }, idx) => {
           const dur = 0.6 + hash(idx) * 1.8;
           const delay = -(hash(idx + 997) * dur);
           return (
@@ -49,10 +51,12 @@ export function GlitchVariant({ cells }: { cells: Cell[] }) {
               width={1}
               height={1}
               className="terminus-glitch-cell"
-              style={{
-                '--glitch-dur': `${dur.toFixed(2)}s`,
-                '--glitch-delay': `${delay.toFixed(2)}s`,
-              } as React.CSSProperties}
+              style={
+                {
+                  '--glitch-dur': `${dur.toFixed(2)}s`,
+                  '--glitch-delay': `${delay.toFixed(2)}s`,
+                } as React.CSSProperties
+              }
             />
           );
         })}

@@ -1,10 +1,10 @@
-import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
+import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 
-import type { Topology } from "./types";
+import type { Topology } from './types';
 
 /** Whether the diagram panel is open next to the chat. */
-export const graphPanelOpenAtom = atomWithStorage("terminus-graph-panel-open", false);
+export const graphPanelOpenAtom = atomWithStorage('terminus-graph-panel-open', false);
 
 /** Whether the topology panel is expanded full screen (hiding the chat). */
 export const graphFullscreenAtom = atom(false);
@@ -20,56 +20,56 @@ export const topologyAtom = atom<Topology | null>(null);
  * build the nodes and to derive the breadcrumb trail.
  */
 export type GraphView =
-  | { kind: "areas" }
-  | { kind: "area"; areaId: string }
-  | { kind: "scene"; areaId: string; sceneId: string; via?: "area" | "scenes" }
+  | { kind: 'areas' }
+  | { kind: 'area'; areaId: string }
+  | { kind: 'scene'; areaId: string; sceneId: string; via?: 'area' | 'scenes' }
   | {
-      kind: "automation";
+      kind: 'automation';
       areaId: string;
       automationId: string;
-      via?: "area" | "automations";
+      via?: 'area' | 'automations';
     }
-  | { kind: "scenes" }
-  | { kind: "automations" }
-  | { kind: "entities" };
+  | { kind: 'scenes' }
+  | { kind: 'automations' }
+  | { kind: 'entities' };
 
 /** Top-level dimension the canvas groups nodes by (the first dropdown). */
-export type GraphGrouping = "area" | "scenes" | "automations" | "entities";
+export type GraphGrouping = 'area' | 'scenes' | 'automations' | 'entities';
 
 /** Which grouping dimension a view belongs to (drives the first dropdown). */
 export function groupingOf(view: GraphView): GraphGrouping {
   switch (view.kind) {
-    case "areas":
-    case "area":
-      return "area";
-    case "scenes":
-      return "scenes";
-    case "automations":
-      return "automations";
-    case "entities":
-      return "entities";
-    case "scene":
-      return view.via === "scenes" ? "scenes" : "area";
-    case "automation":
-      return view.via === "automations" ? "automations" : "area";
+    case 'areas':
+    case 'area':
+      return 'area';
+    case 'scenes':
+      return 'scenes';
+    case 'automations':
+      return 'automations';
+    case 'entities':
+      return 'entities';
+    case 'scene':
+      return view.via === 'scenes' ? 'scenes' : 'area';
+    case 'automation':
+      return view.via === 'automations' ? 'automations' : 'area';
   }
 }
 
 /** The root view for a grouping dimension (selecting the first dropdown). */
 export function rootViewFor(grouping: GraphGrouping): GraphView {
   switch (grouping) {
-    case "area":
-      return { kind: "areas" };
-    case "scenes":
-      return { kind: "scenes" };
-    case "automations":
-      return { kind: "automations" };
-    case "entities":
-      return { kind: "entities" };
+    case 'area':
+      return { kind: 'areas' };
+    case 'scenes':
+      return { kind: 'scenes' };
+    case 'automations':
+      return { kind: 'automations' };
+    case 'entities':
+      return { kind: 'entities' };
   }
 }
 
-const graphViewBaseAtom = atomWithStorage<GraphView>("terminus-graph-view", { kind: "areas" });
+const graphViewBaseAtom = atomWithStorage<GraphView>('terminus-graph-view', { kind: 'areas' });
 
 /** Currently selected node id (drives highlight/dim). Null = nothing selected. */
 export const selectedNodeAtom = atom<string | null>(null);
@@ -96,40 +96,40 @@ export const graphViewAtom = atom(
  */
 export function viewKey(view: GraphView): string {
   switch (view.kind) {
-    case "areas":
-      return "areas";
-    case "area":
+    case 'areas':
+      return 'areas';
+    case 'area':
       return `area:${view.areaId}`;
-    case "scene":
-      return `scene:${view.via ?? "area"}:${view.areaId}:${view.sceneId}`;
-    case "automation":
-      return `automation:${view.via ?? "area"}:${view.areaId}:${view.automationId}`;
-    case "scenes":
-      return "scenes";
-    case "automations":
-      return "automations";
-    case "entities":
-      return "entities";
+    case 'scene':
+      return `scene:${view.via ?? 'area'}:${view.areaId}:${view.sceneId}`;
+    case 'automation':
+      return `automation:${view.via ?? 'area'}:${view.areaId}:${view.automationId}`;
+    case 'scenes':
+      return 'scenes';
+    case 'automations':
+      return 'automations';
+    case 'entities':
+      return 'entities';
   }
 }
 
 /** A stable string scope for the current view, used to key node positions. */
 export function viewScope(view: GraphView): string {
   switch (view.kind) {
-    case "areas":
-      return "areas";
-    case "area":
+    case 'areas':
+      return 'areas';
+    case 'area':
       return `area:${view.areaId}`;
-    case "scene":
+    case 'scene':
       return `scene:${view.sceneId}`;
-    case "automation":
+    case 'automation':
       return `automation:${view.automationId}`;
-    case "scenes":
-      return "scenes";
-    case "automations":
-      return "automations";
-    case "entities":
-      return "entities";
+    case 'scenes':
+      return 'scenes';
+    case 'automations':
+      return 'automations';
+    case 'entities':
+      return 'entities';
   }
 }
 
@@ -142,6 +142,7 @@ export interface XYPosition {
  * Persisted, user-adjusted node positions, keyed by view scope then node id.
  * `atomWithStorage` mirrors this to localStorage (requirement 7).
  */
-export const nodePositionsAtom = atomWithStorage<
-  Record<string, Record<string, XYPosition>>
->("terminus-graph-positions", {});
+export const nodePositionsAtom = atomWithStorage<Record<string, Record<string, XYPosition>>>(
+  'terminus-graph-positions',
+  {},
+);

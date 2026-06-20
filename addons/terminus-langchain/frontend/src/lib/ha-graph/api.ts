@@ -1,6 +1,6 @@
-import { endpoints } from "@/runtime-config";
+import type { AutomationDetail, EntityState, Topology } from './types';
 
-import type { AutomationDetail, EntityState, Topology } from "./types";
+import { endpoints } from '@/runtime-config';
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -23,13 +23,8 @@ export function fetchTopology(): Promise<Topology> {
 }
 
 /** Fetch a single automation's config plus the ids it references. */
-export function fetchAutomation(
-  numericId: string,
-  entityId?: string,
-): Promise<AutomationDetail> {
-  return getJson<AutomationDetail>(
-    endpoints().haAutomationUrl(numericId, entityId),
-  );
+export function fetchAutomation(numericId: string, entityId?: string): Promise<AutomationDetail> {
+  return getJson<AutomationDetail>(endpoints().haAutomationUrl(numericId, entityId));
 }
 
 /** Fetch a single entity's live state + attributes (for the detail modal). */

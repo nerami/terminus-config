@@ -1,15 +1,16 @@
+import '@xyflow/react/dist/style.css';
+
 import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { ReactFlowProvider } from '@xyflow/react';
 import { createStore } from 'jotai';
 import { Provider as JotaiProvider } from 'jotai';
 
-// Required: ReactFlow renders nothing without its own stylesheet.
-import '@xyflow/react/dist/style.css';
+import type { Topology } from '@/lib/ha-graph/types';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GraphCanvas } from '@/components/graph/GraphCanvas';
 import { topologyAtom, graphViewAtom } from '@/lib/ha-graph/atoms';
-import type { Topology } from '@/lib/ha-graph/types';
 
 const FIXTURE_TOPOLOGY: Topology = {
   areas: [

@@ -1,9 +1,10 @@
-import { parseAsBoolean, parseAsString, useQueryState } from "nuqs";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
-import { useThreadId } from "@/hooks/use-thread-id";
-import { mirrorToParent, relativeLocation } from "@/lib/parent-url";
-import { resolveBasePath } from "@/runtime-config";
+import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
+
+import { useThreadId } from '@/hooks/use-thread-id';
+import { mirrorToParent, relativeLocation } from '@/lib/parent-url';
+import { resolveBasePath } from '@/runtime-config';
 
 /**
  * Mirrors the iframe's current location (path + query) into the parent (Home
@@ -18,13 +19,10 @@ import { resolveBasePath } from "@/runtime-config";
 export function ParentUrlSync(): null {
   // Subscriptions: re-render when the meaningful URL state changes. Values unused.
   const [threadId] = useThreadId();
-  const [topology] = useQueryState(
-    "topology",
-    parseAsBoolean.withDefault(false),
-  );
-  const [area] = useQueryState("area", parseAsString);
-  const [scene] = useQueryState("scene", parseAsString);
-  const [automation] = useQueryState("automation", parseAsString);
+  const [topology] = useQueryState('topology', parseAsBoolean.withDefault(false));
+  const [area] = useQueryState('area', parseAsString);
+  const [scene] = useQueryState('scene', parseAsString);
+  const [automation] = useQueryState('automation', parseAsString);
   void threadId;
   void topology;
   void area;
@@ -33,10 +31,7 @@ export function ParentUrlSync(): null {
 
   const last = useRef<string | null>(null);
   useEffect(() => {
-    const rel = relativeLocation(
-      window.location,
-      resolveBasePath(window.location),
-    );
+    const rel = relativeLocation(window.location, resolveBasePath(window.location));
     if (rel === last.current) return;
     last.current = rel;
     mirrorToParent(rel);

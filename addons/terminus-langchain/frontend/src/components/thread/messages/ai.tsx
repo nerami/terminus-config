@@ -1,33 +1,28 @@
-import { parsePartialJson } from "@langchain/core/output_parsers";
-import { useStreamContext } from "@/providers/Stream";
-import { AIMessage, Checkpoint, Message } from "@langchain/langgraph-sdk";
-import { useStream } from "@langchain/langgraph-sdk/react";
-import { getContentString } from "../utils";
-import { BranchSwitcher, CommandBar } from "./shared";
-import { MarkdownText } from "../markdown-text";
-import { LoadExternalComponent } from "@langchain/langgraph-sdk/react-ui";
-import { cn } from "@/lib/utils";
-import { ToolCalls, ToolResult } from "./tool-calls";
-import { MessageContentComplex } from "@langchain/core/messages";
-import { Fragment } from "react/jsx-runtime";
-import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
-import { ThreadView } from "../agent-inbox";
-import { useQueryState, parseAsBoolean } from "nuqs";
-import { GenericInterruptView } from "./generic-interrupt";
-import { useArtifact } from "../artifact";
+import { MessageContentComplex } from '@langchain/core/messages';
+import { parsePartialJson } from '@langchain/core/output_parsers';
+import { AIMessage, Checkpoint, Message } from '@langchain/langgraph-sdk';
+import { useStream } from '@langchain/langgraph-sdk/react';
+import { LoadExternalComponent } from '@langchain/langgraph-sdk/react-ui';
+import { useQueryState, parseAsBoolean } from 'nuqs';
+import { Fragment } from 'react/jsx-runtime';
 
-function CustomComponent({
-  message,
-  thread,
-}: {
-  message: Message;
-  thread: ReturnType<typeof useStreamContext>;
-}) {
+import { ThreadView } from '../agent-inbox';
+import { useArtifact } from '../artifact';
+import { MarkdownText } from '../markdown-text';
+import { getContentString } from '../utils';
+
+import { GenericInterruptView } from './generic-interrupt';
+import { BranchSwitcher, CommandBar } from './shared';
+import { ToolCalls, ToolResult } from './tool-calls';
+
+import { isAgentInboxInterruptSchema } from '@/lib/agent-inbox-interrupt';
+import { cn } from '@/lib/utils';
+import { useStreamContext } from '@/providers/Stream';
+
+function CustomComponent({ message, thread }: { message: Message; thread: ReturnType<typeof useStreamContext> }) {
   const artifact = useArtifact();
   const { values } = useStreamContext();
-  const customComponents = values.ui?.filter(
-    (ui) => ui.metadata?.message_id === message.id,
-  );
+  const customComponents = values.ui?.filter((ui) => ui.metadata?.message_id === message.id);
 
   if (!customComponents?.length) return null;
   return (
@@ -44,10 +39,8 @@ function CustomComponent({
   );
 }
 
-function parseAnthropicStreamedToolCalls(
-  content: MessageContentComplex[],
-): AIMessage["tool_calls"] {
-  const toolCallContents = content.filter((c) => c.type === "tool_use" && c.id);
+function parseAnthropicStreamedToolCalls(content: MessageContentComplex[]): AIMessage['tool_calls'] {
+  const toolCallContents = content.filter((c) => c.type === 'tool_use' && c.id);
 
   return toolCallContents.map((tc) => {
     const toolCall = tc as Record<string, any>;
@@ -60,39 +53,31 @@ function parseAnthropicStreamedToolCalls(
       }
     }
     return {
-      name: toolCall.name ?? "",
-      id: toolCall.id ?? "",
+      name: toolCall.name ?? '',
+      id: toolCall.id ?? '',
       args: json,
-      type: "tool_call",
+      type: 'tool_call',
     };
   });
 }
 
 interface InterruptProps {
+  hasNoAIOrToolMessages: boolean;
   interrupt?: unknown;
   isLastMessage: boolean;
-  hasNoAIOrToolMessages: boolean;
 }
 
-function Interrupt({
-  interrupt,
-  isLastMessage,
-  hasNoAIOrToolMessages,
-}: InterruptProps) {
+function Interrupt({ hasNoAIOrToolMessages, interrupt, isLastMessage }: InterruptProps) {
   const fallbackValue = Array.isArray(interrupt)
     ? (interrupt as Record<string, any>[])
-    : (((interrupt as { value?: unknown } | undefined)?.value ??
-        interrupt) as Record<string, any>);
+    : (((interrupt as { value?: unknown } | undefined)?.value ?? interrupt) as Record<string, any>);
 
   return (
     <>
-      {isAgentInboxInterruptSchema(interrupt) &&
-        (isLastMessage || hasNoAIOrToolMessages) && (
-          <ThreadView interrupt={interrupt} />
-        )}
-      {interrupt &&
-      !isAgentInboxInterruptSchema(interrupt) &&
-      (isLastMessage || hasNoAIOrToolMessages) ? (
+      {isAgentInboxInterruptSchema(interrupt) && (isLastMessage || hasNoAIOrToolMessages) && (
+        <ThreadView interrupt={interrupt} />
+      )}
+      {interrupt && !isAgentInboxInterruptSchema(interrupt) && (isLastMessage || hasNoAIOrToolMessages) ? (
         <GenericInterruptView interrupt={fallbackValue} />
       ) : null}
     </>
@@ -100,9 +85,9 @@ function Interrupt({
 }
 
 export function AssistantMessage({
-  message,
-  isLoading,
   handleRegenerate,
+  isLoading,
+  message,
 }: {
   message: Message | undefined;
   isLoading: boolean;
@@ -110,37 +95,22 @@ export function AssistantMessage({
 }) {
   const content = message?.content ?? [];
   const contentString = getContentString(content);
-  const [hideToolCalls] = useQueryState(
-    "hideToolCalls",
-    parseAsBoolean.withDefault(false),
-  );
+  const [hideToolCalls] = useQueryState('hideToolCalls', parseAsBoolean.withDefault(false));
 
   const thread = useStreamContext();
-  const isLastMessage =
-    thread.messages[thread.messages.length - 1].id === message?.id;
-  const hasNoAIOrToolMessages = !thread.messages.find(
-    (m) => m.type === "ai" || m.type === "tool",
-  );
+  const isLastMessage = thread.messages[thread.messages.length - 1].id === message?.id;
+  const hasNoAIOrToolMessages = !thread.messages.find((m) => m.type === 'ai' || m.type === 'tool');
   const meta = message ? thread.getMessagesMetadata(message) : undefined;
   const threadInterrupt = thread.interrupt;
 
   const parentCheckpoint = meta?.firstSeenState?.parent_checkpoint;
-  const anthropicStreamedToolCalls = Array.isArray(content)
-    ? parseAnthropicStreamedToolCalls(content)
-    : undefined;
+  const anthropicStreamedToolCalls = Array.isArray(content) ? parseAnthropicStreamedToolCalls(content) : undefined;
 
-  const hasToolCalls =
-    message &&
-    "tool_calls" in message &&
-    message.tool_calls &&
-    message.tool_calls.length > 0;
+  const hasToolCalls = message && 'tool_calls' in message && message.tool_calls && message.tool_calls.length > 0;
   const toolCallsHaveContents =
-    hasToolCalls &&
-    message.tool_calls?.some(
-      (tc) => tc.args && Object.keys(tc.args).length > 0,
-    );
+    hasToolCalls && message.tool_calls?.some((tc) => tc.args && Object.keys(tc.args).length > 0);
   const hasAnthropicToolCalls = !!anthropicStreamedToolCalls?.length;
-  const isToolResult = message?.type === "tool";
+  const isToolResult = message?.type === 'tool';
 
   if (isToolResult && hideToolCalls) {
     return null;
@@ -168,24 +138,13 @@ export function AssistantMessage({
 
             {!hideToolCalls && (
               <>
-                {(hasToolCalls && toolCallsHaveContents && (
-                  <ToolCalls toolCalls={message.tool_calls} />
-                )) ||
-                  (hasAnthropicToolCalls && (
-                    <ToolCalls toolCalls={anthropicStreamedToolCalls} />
-                  )) ||
-                  (hasToolCalls && (
-                    <ToolCalls toolCalls={message.tool_calls} />
-                  ))}
+                {(hasToolCalls && toolCallsHaveContents && <ToolCalls toolCalls={message.tool_calls} />) ||
+                  (hasAnthropicToolCalls && <ToolCalls toolCalls={anthropicStreamedToolCalls} />) ||
+                  (hasToolCalls && <ToolCalls toolCalls={message.tool_calls} />)}
               </>
             )}
 
-            {message && (
-              <CustomComponent
-                message={message}
-                thread={thread}
-              />
-            )}
+            {message && <CustomComponent message={message} thread={thread} />}
             <Interrupt
               interrupt={threadInterrupt}
               isLastMessage={isLastMessage}
@@ -193,8 +152,8 @@ export function AssistantMessage({
             />
             <div
               className={cn(
-                "mr-auto flex items-center gap-2 transition-opacity",
-                "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
+                'mr-auto flex items-center gap-2 transition-opacity',
+                'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100',
               )}
             >
               <BranchSwitcher

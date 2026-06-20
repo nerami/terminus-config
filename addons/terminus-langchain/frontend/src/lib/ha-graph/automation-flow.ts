@@ -10,105 +10,101 @@
 // pure, so it can be unit-tested construct-by-construct.
 
 export type FlowNodeKind =
-  | "trigger"
-  | "condition" // a leaf condition
-  | "logic" // an and/or/not condition group
-  | "action" // any leaf action (service/device/event/scene/delay/wait/variables/...)
-  | "choose"
-  | "if"
-  | "repeat"
-  | "parallel"
-  | "sequence"
-  | "stop";
+  | 'trigger'
+  | 'condition' // a leaf condition
+  | 'logic' // an and/or/not condition group
+  | 'action' // any leaf action (service/device/event/scene/delay/wait/variables/...)
+  | 'choose'
+  | 'if'
+  | 'repeat'
+  | 'parallel'
+  | 'sequence'
+  | 'stop';
 
 export interface FlowNode {
+  /** Non-scene entity ids this step references (for relationship leaves). */
+  entities: string[];
   /** The HA trace path for this step; used directly as the graph node id. */
   id: string;
   kind: FlowNodeKind;
   label: string;
-  sublabel?: string;
-  /** Non-scene entity ids this step references (for relationship leaves). */
-  entities: string[];
   /** Scene ids this step references. */
   scenes: string[];
+  sublabel?: string;
 }
 
 export interface FlowEdge {
-  source: string;
-  target: string;
-  label?: string;
   /** Loop-back / informational edges are rendered dashed. */
   dashed?: boolean;
+  label?: string;
+  source: string;
+  target: string;
 }
 
 export interface FlowModel {
-  nodes: FlowNode[];
   edges: FlowEdge[];
+  nodes: FlowNode[];
 }
 
 type Dict = Record<string, unknown>;
 
-const isObj = (v: unknown): v is Dict =>
-  !!v && typeof v === "object" && !Array.isArray(v);
+const isObj = (v: unknown): v is Dict => !!v && typeof v === 'object' && !Array.isArray(v);
 
-const asArray = (v: unknown): unknown[] =>
-  Array.isArray(v) ? v : v == null ? [] : [v];
+const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : v == null ? [] : [v]);
 
-const str = (v: unknown): string | undefined =>
-  typeof v === "string" ? v : undefined;
+const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 
-const truncate = (s: string, n = 40) =>
-  s.length > n ? `${s.slice(0, n - 1)}…` : s;
+const truncate = (s: string, n = 40) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 // -- action type resolution (mirrors HA's determine_script_action) ---------
 // Order matters: when several identifying keys are present, the first wins.
 const ACTION_ORDER: ReadonlyArray<readonly [string, string]> = [
-  ["delay", "delay"],
-  ["wait_template", "wait_template"],
-  ["condition", "condition"],
-  ["and", "condition"],
-  ["or", "condition"],
-  ["not", "condition"],
-  ["event", "event"],
-  ["device_id", "device"],
-  ["scene", "scene"],
-  ["repeat", "repeat"],
-  ["choose", "choose"],
-  ["wait_for_trigger", "wait_for_trigger"],
-  ["variables", "variables"],
-  ["if", "if"],
-  ["action", "call_service"],
-  ["service", "call_service"],
-  ["service_template", "call_service"],
-  ["stop", "stop"],
-  ["parallel", "parallel"],
-  ["sequence", "sequence"],
-  ["set_conversation_response", "set_conversation_response"],
+  ['delay', 'delay'],
+  ['wait_template', 'wait_template'],
+  ['condition', 'condition'],
+  ['and', 'condition'],
+  ['or', 'condition'],
+  ['not', 'condition'],
+  ['event', 'event'],
+  ['device_id', 'device'],
+  ['scene', 'scene'],
+  ['repeat', 'repeat'],
+  ['choose', 'choose'],
+  ['wait_for_trigger', 'wait_for_trigger'],
+  ['variables', 'variables'],
+  ['if', 'if'],
+  ['action', 'call_service'],
+  ['service', 'call_service'],
+  ['service_template', 'call_service'],
+  ['stop', 'stop'],
+  ['parallel', 'parallel'],
+  ['sequence', 'sequence'],
+  ['set_conversation_response', 'set_conversation_response'],
 ];
 
 function determineStepType(step: Dict): string {
   for (const [key, type] of ACTION_ORDER) {
     if (key in step) return type;
   }
-  return "unknown";
+  return 'unknown';
 }
 
 // -- reference collection (shallow w.r.t. nested sub-sequences) ------------
 // Entity/scene ids are pulled from a single step *without* descending into
 // nested branch/sequence keys, since those nested steps get their own nodes.
 const REF_SKIP_KEYS = new Set([
-  "sequence",
-  "choose",
-  "default",
-  "then",
-  "else",
-  "parallel",
-  "repeat",
-  "conditions",
-  "if",
-  "and",
-  "or",
-  "not",
+  'sequence',
+  'choose',
+  'default',
+  'then',
+  'else',
+  'parallel',
+  'repeat',
+  'conditions',
+  'if',
+  'and',
+  'or',
+  'not',
 ]);
 
 function collectRefs(node: unknown): { entities: string[]; scenes: string[] } {
@@ -120,12 +116,12 @@ function collectRefs(node: unknown): { entities: string[]; scenes: string[] } {
     } else if (isObj(n)) {
       for (const [k, v] of Object.entries(n)) {
         if (REF_SKIP_KEYS.has(k)) continue;
-        if (k === "entity_id") {
+        if (k === 'entity_id') {
           asArray(v).forEach((x) => {
             const s = str(x);
-            if (s) (s.startsWith("scene.") ? scenes : entities).add(s);
+            if (s) (s.startsWith('scene.') ? scenes : entities).add(s);
           });
-        } else if (k === "scene" && typeof v === "string") {
+        } else if (k === 'scene' && typeof v === 'string') {
           scenes.add(v);
         } else {
           walk(v);
@@ -148,110 +144,112 @@ function targetSummary(step: Dict): string {
     const area = asArray(target.area_id);
     if (area.length) return area.length === 1 ? `area ${area[0]}` : `${area.length} areas`;
     const dev = asArray(target.device_id);
-    if (dev.length) return dev.length === 1 ? "1 device" : `${dev.length} devices`;
+    if (dev.length) return dev.length === 1 ? '1 device' : `${dev.length} devices`;
   }
-  return "";
+  return '';
 }
 
 function serviceLabel(step: Dict): string {
-  const svc = str(step.action) ?? str(step.service) ?? str(step.service_template) ?? "service";
+  const svc = str(step.action) ?? str(step.service) ?? str(step.service_template) ?? 'service';
   const tgt = targetSummary(step);
   return tgt ? `${svc} → ${tgt}` : svc;
 }
 
 function delayLabel(value: unknown): string {
-  if (typeof value === "number") return `delay ${value}s`;
-  if (typeof value === "string") return `delay ${value}`;
+  if (typeof value === 'number') return `delay ${value}s`;
+  if (typeof value === 'string') return `delay ${value}`;
   if (isObj(value)) {
-    const parts = ["hours", "minutes", "seconds", "milliseconds"]
+    const parts = ['hours', 'minutes', 'seconds', 'milliseconds']
       .map((k) => (value[k] != null ? `${value[k]}${k[0]}` : null))
       .filter(Boolean);
-    return `delay ${parts.join(" ") || "?"}`;
+    return `delay ${parts.join(' ') || '?'}`;
   }
-  return "delay";
+  return 'delay';
 }
 
 function repeatLabel(r: Dict): string {
   if (r.count != null) return `repeat ×${r.count}`;
-  if (r.while != null) return "repeat while";
-  if (r.until != null) return "repeat until";
-  if (r.for_each != null) return "for each";
-  return "repeat";
+  if (r.while != null) return 'repeat while';
+  if (r.until != null) return 'repeat until';
+  if (r.for_each != null) return 'for each';
+  return 'repeat';
 }
 
 function triggerLabel(t: unknown): string {
-  if (typeof t === "string") return truncate(t);
-  if (!isObj(t)) return "trigger";
-  const platform = str(t.platform) ?? str(t.trigger) ?? "trigger";
+  if (typeof t === 'string') return truncate(t);
+  if (!isObj(t)) return 'trigger';
+  const platform = str(t.platform) ?? str(t.trigger) ?? 'trigger';
   const entity = asArray(t.entity_id)[0];
   switch (platform) {
-    case "state": {
+    case 'state': {
       const to = str(t.to);
       const from = str(t.from);
-      const base = entity ? String(entity) : "state";
+      const base = entity ? String(entity) : 'state';
       if (to && from) return `${base}: ${from}→${to}`;
       if (to) return `${base} → ${to}`;
       return base;
     }
-    case "numeric_state": {
-      const base = entity ? String(entity) : "numeric_state";
+    case 'numeric_state': {
+      const base = entity ? String(entity) : 'numeric_state';
       if (t.above != null && t.below != null) return `${t.above} < ${base} < ${t.below}`;
       if (t.above != null) return `${base} > ${t.above}`;
       if (t.below != null) return `${base} < ${t.below}`;
       return base;
     }
-    case "time":
-      return `at ${asArray(t.at).join(", ") || "?"}`;
-    case "time_pattern":
-      return "time pattern";
-    case "template":
-      return `template: ${truncate(str(t.value_template) ?? "")}`;
-    case "event":
-      return `event: ${str(t.event_type) ?? "?"}`;
-    case "mqtt":
-      return `mqtt: ${str(t.topic) ?? "?"}`;
-    case "webhook":
-      return "webhook";
-    case "zone":
-      return `${entity ?? "person"} ${str(t.event) ?? "enters"} ${str(t.zone) ?? "zone"}`;
-    case "sun":
-      return `sun: ${str(t.event) ?? "?"}`;
-    case "homeassistant":
-      return `HA ${str(t.event) ?? "start"}`;
-    case "device":
-      return `device: ${str(t.type) ?? "trigger"}`;
-    case "calendar":
-      return `calendar: ${str(t.event) ?? "?"}`;
+    case 'time':
+      return `at ${asArray(t.at).join(', ') || '?'}`;
+    case 'time_pattern':
+      return 'time pattern';
+    case 'template':
+      return `template: ${truncate(str(t.value_template) ?? '')}`;
+    case 'event':
+      return `event: ${str(t.event_type) ?? '?'}`;
+    case 'mqtt':
+      return `mqtt: ${str(t.topic) ?? '?'}`;
+    case 'webhook':
+      return 'webhook';
+    case 'zone':
+      return `${entity ?? 'person'} ${str(t.event) ?? 'enters'} ${str(t.zone) ?? 'zone'}`;
+    case 'sun':
+      return `sun: ${str(t.event) ?? '?'}`;
+    case 'homeassistant':
+      return `HA ${str(t.event) ?? 'start'}`;
+    case 'device':
+      return `device: ${str(t.type) ?? 'trigger'}`;
+    case 'calendar':
+      return `calendar: ${str(t.event) ?? '?'}`;
     default:
       return platform;
   }
 }
 
 function conditionLabel(c: Dict): string {
-  const type = str(c.condition) ?? "condition";
+  const type = str(c.condition) ?? 'condition';
   const entity = asArray(c.entity_id)[0];
   switch (type) {
-    case "state":
-      return `${entity ?? "state"} == ${asArray(c.state).join("/") || "?"}`;
-    case "numeric_state": {
-      const base = entity ? String(entity) : "value";
+    case 'state':
+      return `${entity ?? 'state'} == ${asArray(c.state).join('/') || '?'}`;
+    case 'numeric_state': {
+      const base = entity ? String(entity) : 'value';
       if (c.above != null && c.below != null) return `${c.above} < ${base} < ${c.below}`;
       if (c.above != null) return `${base} > ${c.above}`;
       if (c.below != null) return `${base} < ${c.below}`;
       return base;
     }
-    case "template":
-      return truncate(str(c.value_template) ?? "template");
-    case "time":
-      return "time window";
-    case "zone":
-      return `${entity ?? "person"} in ${str(c.zone) ?? "zone"}`;
-    case "sun":
-      return `sun ${str(c.after) ? `after ${c.after}` : ""}${str(c.before) ? `before ${c.before}` : ""}`.trim() || "sun";
-    case "trigger":
-      return `triggered by ${asArray(c.id).join(", ") || "?"}`;
-    case "device":
-      return `device: ${str(c.type) ?? "condition"}`;
+    case 'template':
+      return truncate(str(c.value_template) ?? 'template');
+    case 'time':
+      return 'time window';
+    case 'zone':
+      return `${entity ?? 'person'} in ${str(c.zone) ?? 'zone'}`;
+    case 'sun':
+      return (
+        `sun ${str(c.after) ? `after ${c.after}` : ''}${str(c.before) ? `before ${c.before}` : ''}`.trim() || 'sun'
+      );
+    case 'trigger':
+      return `triggered by ${asArray(c.id).join(', ') || '?'}`;
+    case 'device':
+      return `device: ${str(c.type) ?? 'condition'}`;
     default:
       return type;
   }
@@ -277,38 +275,38 @@ class FlowBuilder {
 
   // A condition (possibly compound). Returns the node id to chain through.
   condition(cond: unknown, path: string): string {
-    if (typeof cond === "string") {
+    if (typeof cond === 'string') {
       // shorthand template condition
       this.add({
         id: path,
-        kind: "condition",
+        kind: 'condition',
         label: truncate(cond),
-        sublabel: "template",
+        sublabel: 'template',
         entities: [],
         scenes: [],
       });
       return path;
     }
     if (!isObj(cond)) {
-      this.add({ id: path, kind: "condition", label: "condition", entities: [], scenes: [] });
+      this.add({ id: path, kind: 'condition', label: 'condition', entities: [], scenes: [] });
       return path;
     }
 
     const logic =
-      str(cond.condition) === "and" || "and" in cond
-        ? "and"
-        : str(cond.condition) === "or" || "or" in cond
-          ? "or"
-          : str(cond.condition) === "not" || "not" in cond
-            ? "not"
+      str(cond.condition) === 'and' || 'and' in cond
+        ? 'and'
+        : str(cond.condition) === 'or' || 'or' in cond
+          ? 'or'
+          : str(cond.condition) === 'not' || 'not' in cond
+            ? 'not'
             : null;
 
     if (logic) {
       this.add({
         id: path,
-        kind: "logic",
+        kind: 'logic',
         label: logic.toUpperCase(),
-        sublabel: "condition group",
+        sublabel: 'condition group',
         entities: [],
         scenes: [],
       });
@@ -323,9 +321,9 @@ class FlowBuilder {
     const { entities, scenes } = this.refs(cond);
     this.add({
       id: path,
-      kind: "condition",
+      kind: 'condition',
       label: conditionLabel(cond),
-      sublabel: str(cond.condition) ?? "condition",
+      sublabel: str(cond.condition) ?? 'condition',
       entities,
       scenes,
     });
@@ -335,65 +333,65 @@ class FlowBuilder {
   // A leaf action node helper.
   leaf(path: string, label: string, sublabel: string, raw: unknown): StepResult {
     const { entities, scenes } = this.refs(raw);
-    this.add({ id: path, kind: "action", label, sublabel, entities, scenes });
+    this.add({ id: path, kind: 'action', label, sublabel, entities, scenes });
     return { head: path, exits: [path] };
   }
 
   // Build one action step at `path`, returning its entry node and exit nodes.
   step(step: unknown, path: string): StepResult {
-    if (typeof step === "string") {
-      return this.leaf(path, truncate(step), "template", step);
+    if (typeof step === 'string') {
+      return this.leaf(path, truncate(step), 'template', step);
     }
     if (!isObj(step)) {
-      return this.leaf(path, "(invalid)", "action", step);
+      return this.leaf(path, '(invalid)', 'action', step);
     }
 
     const type = determineStepType(step);
     switch (type) {
-      case "condition": {
+      case 'condition': {
         const id = this.condition(step, path);
         return { head: id, exits: [id] };
       }
-      case "choose":
+      case 'choose':
         return this.choose(step, path);
-      case "if":
+      case 'if':
         return this.ifThen(step, path);
-      case "repeat":
+      case 'repeat':
         return this.repeat(step, path);
-      case "parallel":
+      case 'parallel':
         return this.parallel(step, path);
-      case "sequence":
+      case 'sequence':
         return this.sequence(step, path);
-      case "stop": {
-        const label = step.error ? "stop (error)" : "stop";
-        this.add({ id: path, kind: "stop", label, sublabel: "stop", entities: [], scenes: [] });
+      case 'stop': {
+        const label = step.error ? 'stop (error)' : 'stop';
+        this.add({ id: path, kind: 'stop', label, sublabel: 'stop', entities: [], scenes: [] });
         return { head: path, exits: [] }; // terminates this branch
       }
-      case "call_service":
-        return this.leaf(path, serviceLabel(step), "service", step);
-      case "scene":
-        return this.leaf(path, `scene: ${str(step.scene) ?? "?"}`, "scene", step);
-      case "device":
-        return this.leaf(path, `device: ${str(step.type) ?? "action"}`, "device", step);
-      case "event":
-        return this.leaf(path, `fire: ${str(step.event) ?? "?"}`, "event", step);
-      case "delay":
-        return this.leaf(path, delayLabel(step.delay), "delay", step);
-      case "wait_template":
-        return this.leaf(path, "wait_template", "wait", step);
-      case "wait_for_trigger":
-        return this.leaf(path, "wait for trigger", "wait", step);
-      case "variables":
+      case 'call_service':
+        return this.leaf(path, serviceLabel(step), 'service', step);
+      case 'scene':
+        return this.leaf(path, `scene: ${str(step.scene) ?? '?'}`, 'scene', step);
+      case 'device':
+        return this.leaf(path, `device: ${str(step.type) ?? 'action'}`, 'device', step);
+      case 'event':
+        return this.leaf(path, `fire: ${str(step.event) ?? '?'}`, 'event', step);
+      case 'delay':
+        return this.leaf(path, delayLabel(step.delay), 'delay', step);
+      case 'wait_template':
+        return this.leaf(path, 'wait_template', 'wait', step);
+      case 'wait_for_trigger':
+        return this.leaf(path, 'wait for trigger', 'wait', step);
+      case 'variables':
         return this.leaf(
           path,
-          `set vars: ${Object.keys(isObj(step.variables) ? step.variables : {}).join(", ") || "?"}`,
-          "variables",
+          `set vars: ${Object.keys(isObj(step.variables) ? step.variables : {}).join(', ') || '?'}`,
+          'variables',
           step,
         );
-      case "set_conversation_response":
-        return this.leaf(path, "respond", "response", step);
+      case 'set_conversation_response':
+        return this.leaf(path, 'respond', 'response', step);
       default:
-        return this.leaf(path, "(action)", type, step);
+        return this.leaf(path, '(action)', type, step);
     }
   }
 
@@ -403,7 +401,7 @@ class FlowBuilder {
     let current = entries;
     let first = true;
     steps.forEach((step, i) => {
-      const { head, exits } = this.step(step, `${base}/${i}`);
+      const { exits, head } = this.step(step, `${base}/${i}`);
       current.forEach((e) => this.link(e, head, first ? entryLabel : undefined));
       current = exits;
       first = false;
@@ -415,9 +413,9 @@ class FlowBuilder {
     const options = asArray(step.choose);
     this.add({
       id: path,
-      kind: "choose",
-      label: "choose",
-      sublabel: `${options.length} option${options.length === 1 ? "" : "s"}`,
+      kind: 'choose',
+      label: 'choose',
+      sublabel: `${options.length} option${options.length === 1 ? '' : 's'}`,
       entities: [],
       scenes: [],
     });
@@ -446,7 +444,7 @@ class FlowBuilder {
 
     const def = asArray(step.default);
     if (def.length) {
-      exits.push(...this.walk(def, `${path}/default`, [path], "default"));
+      exits.push(...this.walk(def, `${path}/default`, [path], 'default'));
     } else {
       exits.push(path); // no option matched -> fall through
     }
@@ -456,9 +454,9 @@ class FlowBuilder {
   ifThen(step: Dict, path: string): StepResult {
     this.add({
       id: path,
-      kind: "if",
-      label: "if",
-      sublabel: "conditional",
+      kind: 'if',
+      label: 'if',
+      sublabel: 'conditional',
       entities: [],
       scenes: [],
     });
@@ -467,19 +465,19 @@ class FlowBuilder {
     let first = true;
     asArray(step.if).forEach((c, j) => {
       const cid = this.condition(c, `${path}/if/${j}`);
-      this.link(tail, cid, first ? "if" : undefined);
+      this.link(tail, cid, first ? 'if' : undefined);
       tail = cid;
       first = false;
     });
 
     const exits: string[] = [];
-    exits.push(...this.walk(asArray(step.then), `${path}/then`, [tail], "true"));
+    exits.push(...this.walk(asArray(step.then), `${path}/then`, [tail], 'true'));
 
     const elseSteps = asArray(step.else);
     if (elseSteps.length) {
-      exits.push(...this.walk(elseSteps, `${path}/else`, [tail], "false"));
+      exits.push(...this.walk(elseSteps, `${path}/else`, [tail], 'false'));
     } else {
-      this.link(tail, path, "false", true);
+      this.link(tail, path, 'false', true);
       exits.push(path);
     }
     return { head: path, exits };
@@ -489,9 +487,9 @@ class FlowBuilder {
     const r = isObj(step.repeat) ? step.repeat : {};
     this.add({
       id: path,
-      kind: "repeat",
+      kind: 'repeat',
       label: repeatLabel(r),
-      sublabel: "loop",
+      sublabel: 'loop',
       entities: [],
       scenes: [],
     });
@@ -500,21 +498,21 @@ class FlowBuilder {
     let first = true;
     asArray(r.while).forEach((c, j) => {
       const cid = this.condition(c, `${path}/repeat/while/${j}`);
-      this.link(entry, cid, first ? "while" : undefined);
+      this.link(entry, cid, first ? 'while' : undefined);
       entry = cid;
       first = false;
     });
 
-    let tail = this.walk(asArray(r.sequence), `${path}/repeat/sequence`, [entry], "loop");
+    let tail = this.walk(asArray(r.sequence), `${path}/repeat/sequence`, [entry], 'loop');
 
     asArray(r.until).forEach((c, j) => {
       const cid = this.condition(c, `${path}/repeat/until/${j}`);
-      tail.forEach((t) => this.link(t, cid, j === 0 ? "until" : undefined));
+      tail.forEach((t) => this.link(t, cid, j === 0 ? 'until' : undefined));
       tail = [cid];
     });
 
     // Loop-back edge to show iteration (dashed; informational only).
-    tail.forEach((t) => this.link(t, path, "repeat", true));
+    tail.forEach((t) => this.link(t, path, 'repeat', true));
     return { head: path, exits: [path] };
   }
 
@@ -522,9 +520,9 @@ class FlowBuilder {
     const branches = asArray(step.parallel);
     this.add({
       id: path,
-      kind: "parallel",
-      label: "parallel",
-      sublabel: `${branches.length} branch${branches.length === 1 ? "" : "es"}`,
+      kind: 'parallel',
+      label: 'parallel',
+      sublabel: `${branches.length} branch${branches.length === 1 ? '' : 'es'}`,
       entities: [],
       scenes: [],
     });
@@ -534,12 +532,10 @@ class FlowBuilder {
       // single action - HA traces all of them under parallel/<idx>/sequence/<i>.
       const seq = Array.isArray(branch)
         ? branch
-        : isObj(branch) && "sequence" in branch
+        : isObj(branch) && 'sequence' in branch
           ? asArray(branch.sequence)
           : [branch];
-      exits.push(
-        ...this.walk(seq, `${path}/parallel/${idx}/sequence`, [path], `branch ${idx + 1}`),
-      );
+      exits.push(...this.walk(seq, `${path}/parallel/${idx}/sequence`, [path], `branch ${idx + 1}`));
     });
     return { head: path, exits: exits.length ? exits : [path] };
   }
@@ -548,9 +544,9 @@ class FlowBuilder {
     const steps = asArray(step.sequence);
     this.add({
       id: path,
-      kind: "sequence",
-      label: "sequence",
-      sublabel: `${steps.length} step${steps.length === 1 ? "" : "s"}`,
+      kind: 'sequence',
+      label: 'sequence',
+      sublabel: `${steps.length} step${steps.length === 1 ? '' : 's'}`,
       entities: [],
       scenes: [],
     });
@@ -560,10 +556,10 @@ class FlowBuilder {
 }
 
 interface StepResult {
-  /** Node id that incoming edges should attach to. */
-  head: string;
   /** Node ids that the following step should attach from. */
   exits: string[];
+  /** Node id that incoming edges should attach to. */
+  head: string;
 }
 
 /**
@@ -571,10 +567,7 @@ interface StepResult {
  * automation root node (created by the caller); triggers feed into it and the
  * condition/action flow extends from it.
  */
-export function buildAutomationFlow(
-  config: Record<string, unknown>,
-  rootId: string,
-): FlowModel {
+export function buildAutomationFlow(config: Record<string, unknown>, rootId: string): FlowModel {
   const b = new FlowBuilder();
 
   // Triggers (any one fires) feed into the root.
@@ -583,9 +576,9 @@ export function buildAutomationFlow(
     const { entities } = collectRefs(t);
     b.add({
       id,
-      kind: "trigger",
+      kind: 'trigger',
       label: triggerLabel(t),
-      sublabel: "trigger",
+      sublabel: 'trigger',
       entities,
       scenes: [],
     });
@@ -601,7 +594,7 @@ export function buildAutomationFlow(
   });
 
   // Actions run in sequence (with branching) after the conditions.
-  b.walk(asArray(config.action ?? config.actions), "action", [prev]);
+  b.walk(asArray(config.action ?? config.actions), 'action', [prev]);
 
   return { nodes: b.nodes, edges: b.edges };
 }

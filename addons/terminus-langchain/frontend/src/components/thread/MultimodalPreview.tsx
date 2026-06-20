@@ -1,45 +1,43 @@
-import React from "react";
-import { File, X as XIcon } from "lucide-react";
-import { ContentBlock } from "@langchain/core/messages";
-import { cn } from "@/lib/utils";
+import React from 'react';
+
+import { ContentBlock } from '@langchain/core/messages';
+import { File, X as XIcon } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
 export interface MultimodalPreviewProps {
   block: ContentBlock.Multimodal.Data;
-  removable?: boolean;
-  onRemove?: () => void;
   className?: string;
-  size?: "sm" | "md" | "lg";
+  onRemove?: () => void;
+  removable?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
   block,
-  removable = false,
-  onRemove,
   className,
-  size = "md",
+  onRemove,
+  removable = false,
+  size = 'md',
 }) => {
   // Image block
-  if (
-    block.type === "image" &&
-    typeof block.mimeType === "string" &&
-    block.mimeType.startsWith("image/")
-  ) {
+  if (block.type === 'image' && typeof block.mimeType === 'string' && block.mimeType.startsWith('image/')) {
     const url = `data:${block.mimeType};base64,${block.data}`;
-    let imgClass: string = "rounded-md object-cover h-16 w-16 text-lg";
-    if (size === "sm") imgClass = "rounded-md object-cover h-10 w-10 text-base";
-    if (size === "lg") imgClass = "rounded-md object-cover h-24 w-24 text-xl";
+    let imgClass: string = 'rounded-md object-cover h-16 w-16 text-lg';
+    if (size === 'sm') imgClass = 'rounded-md object-cover h-10 w-10 text-base';
+    if (size === 'lg') imgClass = 'rounded-md object-cover h-24 w-24 text-xl';
     return (
-      <div className={cn("relative inline-block", className)}>
+      <div className={cn('relative inline-block', className)}>
         <img
           src={url}
-          alt={String(block.metadata?.name || "uploaded image")}
+          alt={String(block.metadata?.name || 'uploaded image')}
           className={imgClass}
-          width={size === "sm" ? 16 : size === "md" ? 32 : 48}
-          height={size === "sm" ? 16 : size === "md" ? 32 : 48}
+          width={size === 'sm' ? 16 : size === 'md' ? 32 : 48}
+          height={size === 'sm' ? 16 : size === 'md' ? 32 : 48}
         />
         {removable && (
           <button
             type="button"
-            className="absolute top-1 right-1 z-10 rounded-full bg-muted-foreground text-background hover:bg-foreground"
+            className="bg-muted-foreground text-background hover:bg-foreground absolute top-1 right-1 z-10 rounded-full"
             onClick={onRemove}
             aria-label="Remove image"
           >
@@ -51,34 +49,23 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
   }
 
   // PDF block
-  if (block.type === "file" && block.mimeType === "application/pdf") {
-    const filename =
-      block.metadata?.filename || block.metadata?.name || "PDF file";
+  if (block.type === 'file' && block.mimeType === 'application/pdf') {
+    const filename = block.metadata?.filename || block.metadata?.name || 'PDF file';
     return (
-      <div
-        className={cn(
-          "relative flex items-start gap-2 rounded-md border bg-muted px-3 py-2",
-          className,
-        )}
-      >
+      <div className={cn('bg-muted relative flex items-start gap-2 rounded-md border px-3 py-2', className)}>
         <div className="flex flex-shrink-0 flex-col items-start justify-start">
-          <File
-            className={cn(
-              "text-primary",
-              size === "sm" ? "h-5 w-5" : "h-7 w-7",
-            )}
-          />
+          <File className={cn('text-primary', size === 'sm' ? 'h-5 w-5' : 'h-7 w-7')} />
         </div>
         <span
-          className={cn("min-w-0 flex-1 text-sm break-all text-foreground")}
-          style={{ wordBreak: "break-all", whiteSpace: "pre-wrap" }}
+          className={cn('text-foreground min-w-0 flex-1 text-sm break-all')}
+          style={{ wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}
         >
           {String(filename)}
         </span>
         {removable && (
           <button
             type="button"
-            className="ml-2 self-start rounded-full bg-muted p-1 text-primary hover:bg-muted-foreground/30"
+            className="bg-muted text-primary hover:bg-muted-foreground/30 ml-2 self-start rounded-full p-1"
             onClick={onRemove}
             aria-label="Remove PDF"
           >
@@ -92,17 +79,14 @@ export const MultimodalPreview: React.FC<MultimodalPreviewProps> = ({
   // Fallback for unknown types
   return (
     <div
-      className={cn(
-        "flex items-center gap-2 rounded-md border bg-muted px-3 py-2 text-muted-foreground",
-        className,
-      )}
+      className={cn('bg-muted text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-2', className)}
     >
       <File className="h-5 w-5 flex-shrink-0" />
       <span className="truncate text-xs">Unsupported file type</span>
       {removable && (
         <button
           type="button"
-          className="ml-2 rounded-full bg-muted p-1 text-muted-foreground hover:bg-muted-foreground/30"
+          className="bg-muted text-muted-foreground hover:bg-muted-foreground/30 ml-2 rounded-full p-1"
           onClick={onRemove}
           aria-label="Remove file"
         >

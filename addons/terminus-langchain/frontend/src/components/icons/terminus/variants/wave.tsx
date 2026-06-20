@@ -1,6 +1,8 @@
-import { memo, useMemo } from "react";
-import type { Cell, LetterGroup } from "../glyphs";
-import { CELL_W, GAP, WIDTH } from "../glyphs";
+import { memo, useMemo } from 'react';
+
+import { CELL_W, GAP, WIDTH } from '../glyphs';
+
+import type { Cell, LetterGroup } from '../glyphs';
 
 // Defaults, overridable via props. The Wave story exposes these as temporary
 // numeric controls for tuning. DUR = squeeze cycle length; the particle's per-column
@@ -65,12 +67,12 @@ function buildRunnerCells(letterGroups: LetterGroup[]): Cell[][] {
 // shrink as i grows — hence the reversed index ((N-1-i)/N), not the naive (i/N) which
 // would sweep right-to-left.
 export const WaveVariant = memo(function WaveVariant({
-  letterGroups,
-  dur = DEFAULT_DUR,
-  stepDivisor = DEFAULT_STEP_DIVISOR,
-  intraPairGap = DEFAULT_INTRA_PAIR_GAP,
-  pairGap = DEFAULT_PAIR_GAP,
   dashWidth = DEFAULT_DASH_W,
+  dur = DEFAULT_DUR,
+  intraPairGap = DEFAULT_INTRA_PAIR_GAP,
+  letterGroups,
+  pairGap = DEFAULT_PAIR_GAP,
+  stepDivisor = DEFAULT_STEP_DIVISOR,
 }: {
   letterGroups: LetterGroup[];
   dur?: number;
@@ -95,7 +97,7 @@ export const WaveVariant = memo(function WaveVariant({
       const pct = (i * colPct).toFixed(3);
       const op = ((dashWidth - i) / dashWidth).toFixed(3);
       return `${pct}% { opacity: ${op}; animation-timing-function: step-end; }`;
-    }).join("\n          ");
+    }).join('\n          ');
   }, [dashWidth]);
   // Extra delay per particle: four dashes in two pairs. Within a pair the two are
   // intraPairGap apart; the second pair trails the first by pairGap.
@@ -144,15 +146,11 @@ export const WaveVariant = memo(function WaveVariant({
       {letterGroups.map((group, i) => {
         const delay = -(((n - 1 - i) / n) * dur);
         return (
-          <g
-            key={i}
-            className="terminus-wave"
-            style={{ animationDelay: `${delay.toFixed(2)}s` }}
-          >
-            {group.cells.map(({ x, y, key }) => (
+          <g key={i} className="terminus-wave" style={{ animationDelay: `${delay.toFixed(2)}s` }}>
+            {group.cells.map(({ key, x, y }) => (
               <rect key={key} x={x} y={y} width={1} height={1} />
             ))}
-            {runnerByLetter[i].flatMap(({ x, y, key }) =>
+            {runnerByLetter[i].flatMap(({ key, x, y }) =>
               particleOffsets.map((offset, p) => (
                 <rect
                   key={`${key}-${p}`}
@@ -165,7 +163,7 @@ export const WaveVariant = memo(function WaveVariant({
                     animationDelay: `${(-(maxX - x) * step - offset).toFixed(3)}s`,
                   }}
                 />
-              ))
+              )),
             )}
           </g>
         );

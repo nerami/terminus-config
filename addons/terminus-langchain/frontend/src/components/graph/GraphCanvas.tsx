@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import {
   Background,
   Controls,
@@ -8,12 +10,25 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
-} from "@xyflow/react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { LoaderCircle } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useCallback, useEffect, useMemo, useState } from "react";
+} from '@xyflow/react';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { LoaderCircle } from 'lucide-react';
+import { Info, X } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
+import { GroupByControls } from './GroupByControls';
+import { nodeTypes } from './nodes';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useAutomationDetail } from '@/hooks/use-topology';
+import {
+  entityModalAtom,
+  graphViewAtom,
+  nodePositionsAtom,
+  selectedNodeAtom,
+  topologyAtom,
+  viewScope,
+} from '@/lib/ha-graph/atoms';
 import {
   automationHasStructure,
   buildAreaGraph,
@@ -25,20 +40,7 @@ import {
   buildScenesGraph,
   type GraphNodeData,
   type RFGraph,
-} from "@/lib/ha-graph/build";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, X } from "lucide-react";
-import { GroupByControls } from "./GroupByControls";
-import {
-  entityModalAtom,
-  graphViewAtom,
-  nodePositionsAtom,
-  selectedNodeAtom,
-  topologyAtom,
-  viewScope,
-} from "@/lib/ha-graph/atoms";
-import { useAutomationDetail } from "@/hooks/use-topology";
-import { nodeTypes } from "./nodes";
+} from '@/lib/ha-graph/build';
 
 const EMPTY_GRAPH: RFGraph = { nodes: [], edges: [] };
 
@@ -52,62 +54,54 @@ export function GraphCanvas() {
   const { resolvedTheme } = useTheme();
   // React Flow's Background/Controls/MiniMap need an explicit colorMode to match
   // the app theme; without it they always render in light mode (req: dark bug).
-  const colorMode = resolvedTheme === "dark" ? "dark" : "light";
+  const colorMode = resolvedTheme === 'dark' ? 'dark' : 'light';
 
   const scope = viewScope(view);
 
   // Automation drill-down needs the config; falls back to topology references.
-  const { detail: automationDetail, loading: automationLoading } =
-    useAutomationDetail(view.kind === "automation" ? view.automationId : null);
+  const { detail: automationDetail, loading: automationLoading } = useAutomationDetail(
+    view.kind === 'automation' ? view.automationId : null,
+  );
 
   // Build the base graph for the current view, then overlay saved positions.
   const baseGraph = useMemo<RFGraph>(() => {
     if (!topology) return EMPTY_GRAPH;
     let graph: RFGraph = EMPTY_GRAPH;
-    if (view.kind === "areas") {
+    if (view.kind === 'areas') {
       graph = buildAreasGraph(topology);
-    } else if (view.kind === "area") {
+    } else if (view.kind === 'area') {
       graph = buildAreaGraph(topology, view.areaId);
-    } else if (view.kind === "scene") {
+    } else if (view.kind === 'scene') {
       const scene = topology.scenes.find((s) => s.entity_id === view.sceneId);
       graph = scene ? buildSceneGraph(topology, scene) : EMPTY_GRAPH;
-    } else if (view.kind === "automation") {
-      const automation = topology.automations.find(
-        (a) => a.entity_id === view.automationId,
-      );
+    } else if (view.kind === 'automation') {
+      const automation = topology.automations.find((a) => a.entity_id === view.automationId);
       if (automation && automationDetail) {
         graph = buildAutomationGraph(topology, automation, automationDetail);
       }
-    } else if (view.kind === "scenes") {
+    } else if (view.kind === 'scenes') {
       graph = buildScenesGraph(topology);
-    } else if (view.kind === "automations") {
+    } else if (view.kind === 'automations') {
       graph = buildAutomationsGraph(topology);
-    } else if (view.kind === "entities") {
+    } else if (view.kind === 'entities') {
       graph = buildEntitiesGraph(topology);
     }
 
     const saved = positions[scope] ?? {};
-    const nodes = graph.nodes.map((n) =>
-      saved[n.id] ? { ...n, position: saved[n.id] } : n,
-    );
+    const nodes = graph.nodes.map((n) => (saved[n.id] ? { ...n, position: saved[n.id] } : n));
     return { nodes, edges: graph.edges };
     // `positions` intentionally omitted: saved drags shouldn't rebuild/refit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topology, view, automationDetail, scope]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
-    baseGraph.nodes,
-  );
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(baseGraph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(baseGraph.edges);
 
   // Swap the canvas contents when the view changes, then gracefully refit.
   useEffect(() => {
     setNodes(baseGraph.nodes);
     setEdges(baseGraph.edges);
-    const id = window.setTimeout(
-      () => fitView({ duration: 600, padding: 0.2 }),
-      0,
-    );
+    const id = window.setTimeout(() => fitView({ duration: 600, padding: 0.2 }), 0);
     return () => window.clearTimeout(id);
   }, [baseGraph, setNodes, setEdges, fitView]);
 
@@ -118,7 +112,7 @@ export function GraphCanvas() {
   // source<-target, skipping dashed repeat loop-backs so a loop doesn't drag in
   // downstream siblings) - plus the selected node's own direct children
   // (targets). Other views keep simple direct-neighbour highlighting.
-  const isUpstreamMode = view.kind === "automation";
+  const isUpstreamMode = view.kind === 'automation';
   const highlightSet = useMemo(() => {
     if (!selected) return null;
     const set = new Set<string>([selected]);
@@ -151,14 +145,12 @@ export function GraphCanvas() {
   const decoratedNodes = useMemo(
     () =>
       nodes.map((n) => {
-        const isStructural = n.data.kind === "group";
+        const isStructural = n.data.kind === 'group';
         const data: GraphNodeData = {
           ...n.data,
           isSelected: selected === n.id,
-          emphasized:
-            !!highlightSet && highlightSet.has(n.id) && selected !== n.id,
-          dimmed:
-            !!highlightSet && !highlightSet.has(n.id) && !isStructural,
+          emphasized: !!highlightSet && highlightSet.has(n.id) && selected !== n.id,
+          dimmed: !!highlightSet && !highlightSet.has(n.id) && !isStructural,
         };
         return { ...n, data };
       }),
@@ -174,9 +166,7 @@ export function GraphCanvas() {
         // edge lights up only when it touches the selected node directly.
         const active = highlightSet
           ? isUpstreamMode
-            ? !dashed &&
-              highlightSet.has(e.source) &&
-              highlightSet.has(e.target)
+            ? !dashed && highlightSet.has(e.source) && highlightSet.has(e.target)
             : e.source === selected || e.target === selected
           : false;
         // Edges dimmed by default; highlighted edges light up (req 4.1/4.2).
@@ -187,23 +177,23 @@ export function GraphCanvas() {
           style: {
             opacity,
             strokeWidth: active ? 2 : 1.5,
-            stroke: active ? "var(--primary)" : "var(--muted-foreground)",
-            strokeDasharray: dashed ? "4 4" : undefined,
+            stroke: active ? 'var(--primary)' : 'var(--muted-foreground)',
+            strokeDasharray: dashed ? '4 4' : undefined,
           },
         };
       }),
     [edges, highlightSet, selected, isUpstreamMode],
   );
 
-  const currentAreaId = "areaId" in view ? view.areaId : undefined;
+  const currentAreaId = 'areaId' in view ? view.areaId : undefined;
 
   const onNodeClick = useCallback<NodeMouseHandler>(
     (_evt, node) => {
       const data = node.data as GraphNodeData;
 
       // Areas drill in on a single click; they have no relationships to show.
-      if (data.kind === "area" && data.areaId) {
-        setView({ kind: "area", areaId: data.areaId });
+      if (data.kind === 'area' && data.areaId) {
+        setView({ kind: 'area', areaId: data.areaId });
         return;
       }
 
@@ -216,28 +206,28 @@ export function GraphCanvas() {
 
       if (!data.interactive) return;
 
-      if (data.kind === "entity" && data.entityId) {
+      if (data.kind === 'entity' && data.entityId) {
         setEntityModal(data.entityId);
-      } else if (data.kind === "scene" && data.sceneId) {
-        if (view.kind === "scene" && view.sceneId === data.sceneId) {
+      } else if (data.kind === 'scene' && data.sceneId) {
+        if (view.kind === 'scene' && view.sceneId === data.sceneId) {
           if (data.entityId) setEntityModal(data.entityId);
         } else {
           setView({
-            kind: "scene",
-            areaId: currentAreaId ?? "",
+            kind: 'scene',
+            areaId: currentAreaId ?? '',
             sceneId: data.sceneId,
-            via: view.kind === "scenes" ? "scenes" : "area",
+            via: view.kind === 'scenes' ? 'scenes' : 'area',
           });
         }
-      } else if (data.kind === "automation" && data.automationId) {
-        if (view.kind === "automation" && view.automationId === data.automationId) {
+      } else if (data.kind === 'automation' && data.automationId) {
+        if (view.kind === 'automation' && view.automationId === data.automationId) {
           if (data.entityId) setEntityModal(data.entityId);
         } else {
           setView({
-            kind: "automation",
-            areaId: currentAreaId ?? "",
+            kind: 'automation',
+            areaId: currentAreaId ?? '',
             automationId: data.automationId,
-            via: view.kind === "automations" ? "automations" : "area",
+            via: view.kind === 'automations' ? 'automations' : 'area',
           });
         }
       }
@@ -259,20 +249,17 @@ export function GraphCanvas() {
     [setPositions, scope],
   );
 
-  const showSpinner = view.kind === "automation" && automationLoading;
+  const showSpinner = view.kind === 'automation' && automationLoading;
 
   // When an automation has no parsable structure (typically never run / HA
   // can't return its config) the flow is just a flat fallback, so nudge the
   // user to run it once to get the real diagram.
   const showAutomationHint =
-    view.kind === "automation" &&
-    !automationLoading &&
-    !!automationDetail &&
-    !automationHasStructure(automationDetail);
+    view.kind === 'automation' && !automationLoading && !!automationDetail && !automationHasStructure(automationDetail);
 
   // The hint is dismissible; reset the dismissal when the automation changes
   // so each automation gets its own chance to show the "run me" nudge.
-  const automationId = view.kind === "automation" ? view.automationId : null;
+  const automationId = view.kind === 'automation' ? view.automationId : null;
   const [hintDismissed, setHintDismissed] = useState(false);
   useEffect(() => setHintDismissed(false), [automationId]);
 
@@ -309,9 +296,8 @@ export function GraphCanvas() {
           <Info />
           <AlertTitle>Run this automation to see its real flow</AlertTitle>
           <AlertDescription>
-            The diagram below is a simplified view. Trigger the automation once
-            so Home Assistant records a trace, then refresh to see the actual
-            steps.
+            The diagram below is a simplified view. Trigger the automation once so Home Assistant records a trace, then
+            refresh to see the actual steps.
           </AlertDescription>
           <button
             type="button"

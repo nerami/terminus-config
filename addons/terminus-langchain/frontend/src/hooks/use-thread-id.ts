@@ -1,5 +1,6 @@
-import { useNavigate, useParams } from "@tanstack/react-router"
-import { useCallback } from "react"
+import { useCallback } from 'react';
+
+import { useNavigate, useParams } from '@tanstack/react-router';
 
 /**
  * Reads/writes the current chat session id from the URL path.
@@ -12,24 +13,24 @@ import { useCallback } from "react"
  */
 export function useThreadId(): [string | null, (id: string | null) => void] {
   // strict:false so this works on both the index ("/") and "/$threadId" routes.
-  const params = useParams({ strict: false }) as { threadId?: string }
-  const threadId = params.threadId ?? null
-  const navigate = useNavigate()
+  const params = useParams({ strict: false }) as { threadId?: string };
+  const threadId = params.threadId ?? null;
+  const navigate = useNavigate();
 
   const setThreadId = useCallback(
     (id: string | null) => {
       if (id) {
         navigate({
-          to: "/$threadId",
+          to: '/$threadId',
           params: { threadId: id },
           search: (prev) => prev,
-        })
+        });
       } else {
-        navigate({ to: "/", search: (prev) => prev })
+        navigate({ to: '/', search: (prev) => prev });
       }
     },
     [navigate],
-  )
+  );
 
-  return [threadId, setThreadId]
+  return [threadId, setThreadId];
 }

@@ -1,17 +1,14 @@
-import { AIMessage, ToolMessage } from "@langchain/langgraph-sdk";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from 'react';
+
+import { AIMessage, ToolMessage } from '@langchain/langgraph-sdk';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 function isComplexValue(value: any): boolean {
-  return Array.isArray(value) || (typeof value === "object" && value !== null);
+  return Array.isArray(value) || (typeof value === 'object' && value !== null);
 }
 
-export function ToolCalls({
-  toolCalls,
-}: {
-  toolCalls: AIMessage["tool_calls"];
-}) {
+export function ToolCalls({ toolCalls }: { toolCalls: AIMessage['tool_calls'] }) {
   if (!toolCalls || toolCalls.length === 0) return null;
 
   return (
@@ -20,31 +17,22 @@ export function ToolCalls({
         const args = tc.args as Record<string, any>;
         const hasArgs = Object.keys(args).length > 0;
         return (
-          <div
-            key={idx}
-            className="overflow-hidden rounded-lg border border-border"
-          >
-            <div className="border-b border-border bg-muted/50 px-4 py-2">
-              <h3 className="font-medium text-foreground">
+          <div key={idx} className="border-border overflow-hidden rounded-lg border">
+            <div className="border-border bg-muted/50 border-b px-4 py-2">
+              <h3 className="text-foreground font-medium">
                 {tc.name}
-                {tc.id && (
-                  <code className="ml-2 rounded bg-muted px-2 py-1 text-sm">
-                    {tc.id}
-                  </code>
-                )}
+                {tc.id && <code className="bg-muted ml-2 rounded px-2 py-1 text-sm">{tc.id}</code>}
               </h3>
             </div>
             {hasArgs ? (
-              <table className="min-w-full divide-y divide-border">
-                <tbody className="divide-y divide-border">
+              <table className="divide-border min-w-full divide-y">
+                <tbody className="divide-border divide-y">
                   {Object.entries(args).map(([key, value], argIdx) => (
                     <tr key={argIdx}>
-                      <td className="px-4 py-2 text-sm font-medium whitespace-nowrap text-foreground">
-                        {key}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-muted-foreground">
+                      <td className="text-foreground px-4 py-2 text-sm font-medium whitespace-nowrap">{key}</td>
+                      <td className="text-muted-foreground px-4 py-2 text-sm">
                         {isComplexValue(value) ? (
-                          <code className="rounded bg-muted/50 px-2 py-1 font-mono text-sm break-all">
+                          <code className="bg-muted/50 rounded px-2 py-1 font-mono text-sm break-all">
                             {JSON.stringify(value, null, 2)}
                           </code>
                         ) : (
@@ -56,7 +44,7 @@ export function ToolCalls({
                 </tbody>
               </table>
             ) : (
-              <code className="block p-3 text-sm">{"{}"}</code>
+              <code className="block p-3 text-sm">{'{}'}</code>
             )}
           </div>
         );
@@ -72,7 +60,7 @@ export function ToolResult({ message }: { message: ToolMessage }) {
   let isJsonContent = false;
 
   try {
-    if (typeof message.content === "string") {
+    if (typeof message.content === 'string') {
       parsedContent = JSON.parse(message.content);
       isJsonContent = isComplexValue(parsedContent);
     }
@@ -81,78 +69,64 @@ export function ToolResult({ message }: { message: ToolMessage }) {
     parsedContent = message.content;
   }
 
-  const contentStr = isJsonContent
-    ? JSON.stringify(parsedContent, null, 2)
-    : String(message.content);
-  const contentLines = contentStr.split("\n");
+  const contentStr = isJsonContent ? JSON.stringify(parsedContent, null, 2) : String(message.content);
+  const contentLines = contentStr.split('\n');
   const shouldTruncate = contentLines.length > 4 || contentStr.length > 500;
   const displayedContent =
     shouldTruncate && !isExpanded
       ? contentStr.length > 500
-        ? contentStr.slice(0, 500) + "..."
-        : contentLines.slice(0, 4).join("\n") + "\n..."
+        ? contentStr.slice(0, 500) + '...'
+        : contentLines.slice(0, 4).join('\n') + '\n...'
       : contentStr;
 
   return (
     <div className="mx-auto grid max-w-3xl grid-rows-[1fr_auto] gap-2">
-      <div className="overflow-hidden rounded-lg border border-border">
-        <div className="border-b border-border bg-muted/50 px-4 py-2">
+      <div className="border-border overflow-hidden rounded-lg border">
+        <div className="border-border bg-muted/50 border-b px-4 py-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             {message.name ? (
-              <h3 className="font-medium text-foreground">
-                Tool Result:{" "}
-                <code className="rounded bg-muted px-2 py-1">
-                  {message.name}
-                </code>
+              <h3 className="text-foreground font-medium">
+                Tool Result: <code className="bg-muted rounded px-2 py-1">{message.name}</code>
               </h3>
             ) : (
-              <h3 className="font-medium text-foreground">Tool Result</h3>
+              <h3 className="text-foreground font-medium">Tool Result</h3>
             )}
             {message.tool_call_id && (
-              <code className="ml-2 rounded bg-muted px-2 py-1 text-sm">
-                {message.tool_call_id}
-              </code>
+              <code className="bg-muted ml-2 rounded px-2 py-1 text-sm">{message.tool_call_id}</code>
             )}
           </div>
         </div>
         <motion.div
-          className="min-w-full bg-muted"
+          className="bg-muted min-w-full"
           initial={false}
-          animate={{ height: "auto" }}
+          animate={{ height: 'auto' }}
           transition={{ duration: 0.3 }}
         >
           <div className="p-3">
-            <AnimatePresence
-              mode="wait"
-              initial={false}
-            >
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                key={isExpanded ? "expanded" : "collapsed"}
+                key={isExpanded ? 'expanded' : 'collapsed'}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2 }}
               >
                 {isJsonContent ? (
-                  <table className="min-w-full divide-y divide-border">
-                    <tbody className="divide-y divide-border">
+                  <table className="divide-border min-w-full divide-y">
+                    <tbody className="divide-border divide-y">
                       {(Array.isArray(parsedContent)
                         ? isExpanded
                           ? parsedContent
                           : parsedContent.slice(0, 5)
                         : Object.entries(parsedContent)
                       ).map((item, argIdx) => {
-                        const [key, value] = Array.isArray(parsedContent)
-                          ? [argIdx, item]
-                          : [item[0], item[1]];
+                        const [key, value] = Array.isArray(parsedContent) ? [argIdx, item] : [item[0], item[1]];
                         return (
                           <tr key={argIdx}>
-                            <td className="px-4 py-2 text-sm font-medium whitespace-nowrap text-foreground">
-                              {key}
-                            </td>
-                            <td className="px-4 py-2 text-sm text-muted-foreground">
+                            <td className="text-foreground px-4 py-2 text-sm font-medium whitespace-nowrap">{key}</td>
+                            <td className="text-muted-foreground px-4 py-2 text-sm">
                               {isComplexValue(value) ? (
-                                <code className="rounded bg-muted/50 px-2 py-1 font-mono text-sm break-all">
+                                <code className="bg-muted/50 rounded px-2 py-1 font-mono text-sm break-all">
                                   {JSON.stringify(value, null, 2)}
                                 </code>
                               ) : (
@@ -171,12 +145,10 @@ export function ToolResult({ message }: { message: ToolMessage }) {
             </AnimatePresence>
           </div>
           {((shouldTruncate && !isJsonContent) ||
-            (isJsonContent &&
-              Array.isArray(parsedContent) &&
-              parsedContent.length > 5)) && (
+            (isJsonContent && Array.isArray(parsedContent) && parsedContent.length > 5)) && (
             <motion.button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex w-full cursor-pointer items-center justify-center border-t-[1px] border-border py-2 text-muted-foreground transition-all duration-200 ease-in-out hover:bg-muted hover:text-foreground"
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground flex w-full cursor-pointer items-center justify-center border-t-[1px] py-2 transition-all duration-200 ease-in-out"
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

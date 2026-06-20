@@ -1,15 +1,9 @@
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from 'jotai';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { graphViewAtom, topologyAtom } from "@/lib/ha-graph/atoms";
-import { navLevels } from "@/lib/ha-graph/group-nav";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { graphViewAtom, topologyAtom } from '@/lib/ha-graph/atoms';
+import { navLevels } from '@/lib/ha-graph/group-nav';
+import { cn } from '@/lib/utils';
 
 /**
  * Floating, top-left dropdown chain inside the canvas. The first dropdown
@@ -40,22 +34,17 @@ export function GroupByControls() {
           }}
         >
           <SelectTrigger
-            aria-label={
-              level.id === "grouping" ? "Group nodes by" : `Select ${level.id}`
-            }
+            aria-label={level.id === 'grouping' ? 'Group nodes by' : `Select ${level.id}`}
             className={cn(
-              "bg-card/95 cursor-pointer shadow-sm backdrop-blur",
-              level.id === "grouping" && "font-medium",
+              'bg-card/95 cursor-pointer shadow-sm backdrop-blur',
+              level.id === 'grouping' && 'font-medium',
             )}
           >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {level.options.map((o) => (
-              <SelectItem
-                key={o.value}
-                value={o.value}
-              >
+              <SelectItem key={o.value} value={o.value}>
                 {o.label}
               </SelectItem>
             ))}

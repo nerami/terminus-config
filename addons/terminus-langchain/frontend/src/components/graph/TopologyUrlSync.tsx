@@ -1,14 +1,9 @@
-import { useAtom } from "jotai";
-import { parseAsBoolean, parseAsString, useQueryState } from "nuqs";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
-import {
-  graphPanelOpenAtom,
-  graphViewAtom,
-  groupingOf,
-  viewKey,
-  type GraphView,
-} from "@/lib/ha-graph/atoms";
+import { useAtom } from 'jotai';
+import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
+
+import { graphPanelOpenAtom, graphViewAtom, groupingOf, viewKey, type GraphView } from '@/lib/ha-graph/atoms';
 
 /**
  * Derive a `GraphView` from the topology query params. `group` selects the
@@ -20,34 +15,33 @@ function viewFromParams(
   scene: string | null,
   automation: string | null,
 ): GraphView {
-  if (group === "scenes") {
-    if (scene) return { kind: "scene", areaId: "", sceneId: scene, via: "scenes" };
-    return { kind: "scenes" };
+  if (group === 'scenes') {
+    if (scene) return { kind: 'scene', areaId: '', sceneId: scene, via: 'scenes' };
+    return { kind: 'scenes' };
   }
-  if (group === "automations") {
+  if (group === 'automations') {
     if (automation)
       return {
-        kind: "automation",
-        areaId: "",
+        kind: 'automation',
+        areaId: '',
         automationId: automation,
-        via: "automations",
+        via: 'automations',
       };
-    return { kind: "automations" };
+    return { kind: 'automations' };
   }
-  if (group === "entities") return { kind: "entities" };
+  if (group === 'entities') return { kind: 'entities' };
 
   // Default: Area grouping.
-  if (scene && area)
-    return { kind: "scene", areaId: area, sceneId: scene, via: "area" };
+  if (scene && area) return { kind: 'scene', areaId: area, sceneId: scene, via: 'area' };
   if (automation && area)
     return {
-      kind: "automation",
+      kind: 'automation',
       areaId: area,
       automationId: automation,
-      via: "area",
+      via: 'area',
     };
-  if (area) return { kind: "area", areaId: area };
-  return { kind: "areas" };
+  if (area) return { kind: 'area', areaId: area };
+  return { kind: 'areas' };
 }
 
 /**
@@ -65,14 +59,11 @@ function viewFromParams(
  * Renders nothing; mount it once inside the chat tree.
  */
 export function TopologyUrlSync(): null {
-  const [open, setOpenParam] = useQueryState(
-    "topology",
-    parseAsBoolean.withDefault(false),
-  );
-  const [group, setGroup] = useQueryState("group", parseAsString);
-  const [area, setArea] = useQueryState("area", parseAsString);
-  const [scene, setScene] = useQueryState("scene", parseAsString);
-  const [automation, setAutomation] = useQueryState("automation", parseAsString);
+  const [open, setOpenParam] = useQueryState('topology', parseAsBoolean.withDefault(false));
+  const [group, setGroup] = useQueryState('group', parseAsString);
+  const [area, setArea] = useQueryState('area', parseAsString);
+  const [scene, setScene] = useQueryState('scene', parseAsString);
+  const [automation, setAutomation] = useQueryState('automation', parseAsString);
 
   const [panelOpen, setPanelOpen] = useAtom(graphPanelOpenAtom);
   const [view, setView] = useAtom(graphViewAtom);
@@ -108,12 +99,10 @@ export function TopologyUrlSync(): null {
     }
     const grouping = groupingOf(view);
     // Keep the default (Area) grouping out of the URL for clean links.
-    const wantGroup = panelOpen && grouping !== "area" ? grouping : null;
-    const wantArea =
-      panelOpen && "areaId" in view && view.areaId ? view.areaId : null;
-    const wantScene = panelOpen && view.kind === "scene" ? view.sceneId : null;
-    const wantAuto =
-      panelOpen && view.kind === "automation" ? view.automationId : null;
+    const wantGroup = panelOpen && grouping !== 'area' ? grouping : null;
+    const wantArea = panelOpen && 'areaId' in view && view.areaId ? view.areaId : null;
+    const wantScene = panelOpen && view.kind === 'scene' ? view.sceneId : null;
+    const wantAuto = panelOpen && view.kind === 'automation' ? view.automationId : null;
     if (open !== panelOpen) setOpenParam(panelOpen || null);
     if (group !== wantGroup) setGroup(wantGroup);
     if (area !== wantArea) setArea(wantArea);

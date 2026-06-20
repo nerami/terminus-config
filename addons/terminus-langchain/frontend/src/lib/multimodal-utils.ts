@@ -1,22 +1,13 @@
-import { ContentBlock } from "@langchain/core/messages";
-import { toast } from "sonner";
+import { ContentBlock } from '@langchain/core/messages';
+import { toast } from 'sonner';
 
 // Returns a Promise of a typed multimodal block for images or PDFs
-export async function fileToContentBlock(
-  file: File,
-): Promise<ContentBlock.Multimodal.Data> {
-  const supportedImageTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-  ];
-  const supportedFileTypes = [...supportedImageTypes, "application/pdf"];
+export async function fileToContentBlock(file: File): Promise<ContentBlock.Multimodal.Data> {
+  const supportedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const supportedFileTypes = [...supportedImageTypes, 'application/pdf'];
 
   if (!supportedFileTypes.includes(file.type)) {
-    toast.error(
-      `Unsupported file type: ${file.type}. Supported types are: ${supportedFileTypes.join(", ")}`,
-    );
+    toast.error(`Unsupported file type: ${file.type}. Supported types are: ${supportedFileTypes.join(', ')}`);
     return Promise.reject(new Error(`Unsupported file type: ${file.type}`));
   }
 
@@ -24,7 +15,7 @@ export async function fileToContentBlock(
 
   if (supportedImageTypes.includes(file.type)) {
     return {
-      type: "image",
+      type: 'image',
       mimeType: file.type,
       data,
       metadata: { name: file.name },
@@ -33,8 +24,8 @@ export async function fileToContentBlock(
 
   // PDF
   return {
-    type: "file",
-    mimeType: "application/pdf",
+    type: 'file',
+    mimeType: 'application/pdf',
     data,
     metadata: { filename: file.name },
   };
@@ -47,7 +38,7 @@ export async function fileToBase64(file: File): Promise<string> {
     reader.onloadend = () => {
       const result = reader.result as string;
       // Remove the data:...;base64, prefix
-      resolve(result.split(",")[1]);
+      resolve(result.split(',')[1]);
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
@@ -55,27 +46,24 @@ export async function fileToBase64(file: File): Promise<string> {
 }
 
 // Type guard for Base64ContentBlock
-export function isBase64ContentBlock(
-  block: unknown,
-): block is ContentBlock.Multimodal.Data {
-  if (typeof block !== "object" || block === null || !("type" in block))
-    return false;
+export function isBase64ContentBlock(block: unknown): block is ContentBlock.Multimodal.Data {
+  if (typeof block !== 'object' || block === null || !('type' in block)) return false;
   // file type (legacy)
   if (
-    (block as { type: unknown }).type === "file" &&
-    "mimeType" in block &&
-    typeof (block as { mimeType?: unknown }).mimeType === "string" &&
-    ((block as { mimeType: string }).mimeType.startsWith("image/") ||
-      (block as { mimeType: string }).mimeType === "application/pdf")
+    (block as { type: unknown }).type === 'file' &&
+    'mimeType' in block &&
+    typeof (block as { mimeType?: unknown }).mimeType === 'string' &&
+    ((block as { mimeType: string }).mimeType.startsWith('image/') ||
+      (block as { mimeType: string }).mimeType === 'application/pdf')
   ) {
     return true;
   }
   // image type (new)
   if (
-    (block as { type: unknown }).type === "image" &&
-    "mimeType" in block &&
-    typeof (block as { mimeType?: unknown }).mimeType === "string" &&
-    (block as { mimeType: string }).mimeType.startsWith("image/")
+    (block as { type: unknown }).type === 'image' &&
+    'mimeType' in block &&
+    typeof (block as { mimeType?: unknown }).mimeType === 'string' &&
+    (block as { mimeType: string }).mimeType.startsWith('image/')
   ) {
     return true;
   }

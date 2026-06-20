@@ -1,6 +1,6 @@
-import dagre from "@dagrejs/dagre";
+import dagre from '@dagrejs/dagre';
 
-import type { XYPosition } from "./atoms";
+import type { XYPosition } from './atoms';
 
 // Approximate rendered node footprints, used by the layout maths so nodes don't
 // overlap before the user rearranges them.
@@ -9,9 +9,9 @@ export const NODE_H = 56;
 export const GROUP_GAP = 90;
 
 export interface LayoutNode {
+  height?: number;
   id: string;
   width?: number;
-  height?: number;
 }
 
 export interface LayoutEdge {
@@ -19,7 +19,7 @@ export interface LayoutEdge {
   target: string;
 }
 
-export type Direction = "TB" | "LR" | "BT" | "RL";
+export type Direction = 'TB' | 'LR' | 'BT' | 'RL';
 
 /**
  * Directed layout via dagre. Returns top-left positions keyed by node id (dagre
@@ -33,7 +33,7 @@ export function dagreLayout(
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
-    rankdir: opts.direction ?? "TB",
+    rankdir: opts.direction ?? 'TB',
     nodesep: opts.nodesep ?? 50,
     ranksep: opts.ranksep ?? 90,
   });
