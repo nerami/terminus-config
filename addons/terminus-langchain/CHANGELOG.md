@@ -4,6 +4,23 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.9.0
+
+- New **3D home topology** view (beta), toggleable from Settings → Appearance.
+  It renders the same topology data as the 2D diagram but as an interactive,
+  force-directed 3D graph (reagraph/WebGL) with a rotating camera and curved
+  edges. Both renderers are lazy-loaded, so three.js only downloads when 3D is
+  enabled; the existing 2D React Flow view is unchanged.
+- The 3D view mirrors the 2D interactions: click a node to drill in / navigate /
+  open its detail modal, with the same selection + automation upstream-path
+  highlighting, and per-view dragged-node positions persist.
+- Each kind is distinguishable in 3D: per-kind colored nodes with the same lucide
+  glyph icons as 2D, a kind-colored ring, JetBrains Mono labels, directional
+  lighting, and a corner legend. Node sizes vary by kind (areas largest).
+- Shared zoom-in / zoom-out / fit-to-view controls now appear in both the 2D and
+  3D views (bottom-left) for visual consistency; the 3D wheel/pinch zoom is
+  faster.
+
 ## 0.8.0
 
 - Terminus has a new voice: a "warm terminal" persona — plain, calm, structured
