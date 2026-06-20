@@ -70,9 +70,9 @@ describe('GraphCanvas', () => {
     vi.clearAllMocks();
   });
 
-  it('renders edges as smooth step edges via defaultEdgeOptions', () => {
+  it('renders edges as bezier edges via defaultEdgeOptions', () => {
     render(<GraphCanvas />);
     expect(lastReactFlowProps).not.toBeNull();
-    expect(lastReactFlowProps?.defaultEdgeOptions).toEqual({ type: 'smoothstep' });
+    expect(lastReactFlowProps?.defaultEdgeOptions).toEqual({ type: 'bezier' });
   });
 });

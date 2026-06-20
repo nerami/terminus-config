@@ -275,7 +275,7 @@ export function GraphCanvas() {
         onNodeClick={onNodeClick}
         onNodeDragStop={onNodeDragStop}
         onPaneClick={onPaneClick}
-        defaultEdgeOptions={{ type: 'smoothstep' }}
+        defaultEdgeOptions={{ type: 'bezier' }}
         nodesConnectable={false}
         nodesFocusable={false}
         edgesFocusable={false}
