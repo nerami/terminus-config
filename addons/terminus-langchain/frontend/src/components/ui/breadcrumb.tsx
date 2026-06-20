@@ -14,17 +14,14 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
   return (
     <ol
       data-slot="breadcrumb-list"
-      className={cn(
-        'text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm wrap-break-word sm:gap-2.5',
-        className,
-      )}
+      className={cn('text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm wrap-break-word', className)}
       {...props}
     />
   );
 }
 
 function BreadcrumbItem({ className, ...props }: React.ComponentProps<'li'>) {
-  return <li data-slot="breadcrumb-item" className={cn('inline-flex items-center gap-1.5', className)} {...props} />;
+  return <li data-slot="breadcrumb-item" className={cn('inline-flex items-center gap-1', className)} {...props} />;
 }
 
 function BreadcrumbLink({ className, render, ...props }: useRender.ComponentProps<'a'>) {
@@ -32,7 +29,7 @@ function BreadcrumbLink({ className, render, ...props }: useRender.ComponentProp
     defaultTagName: 'a',
     props: mergeProps<'a'>(
       {
-        className: cn('hover:text-foreground transition-colors', className),
+        className: cn('transition-colors hover:text-foreground', className),
       },
       props,
     ),
