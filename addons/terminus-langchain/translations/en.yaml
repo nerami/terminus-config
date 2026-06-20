@@ -1,0 +1,33 @@
+configuration:
+  anthropic_api_key:
+    name: Anthropic API key
+    description: >-
+      API key used by the chat agent and the chat-title generator. Required for
+      the add-on to talk to Claude.
+  model:
+    name: Agent model
+    description: >-
+      Claude model the agent uses to answer (for example
+      claude-sonnet-4-6).
+  title_model:
+    name: Title model
+    description: >-
+      Cheaper, faster Claude model used only to auto-generate short chat titles
+      (for example claude-haiku-4-5). If no API key is set, titles fall back to a
+      trimmed first message.
+  ha_url:
+    name: Home Assistant URL (dev only)
+    description: >-
+      Development-only fallback for running the add-on outside Home Assistant.
+      Ignored when installed as an add-on — the Supervisor connects to Core
+      through its built-in proxy. Leave blank in normal installs.
+  ha_token:
+    name: Home Assistant token (dev only)
+    description: >-
+      Development-only long-lived access token paired with the dev URL above.
+      Ignored when installed as an add-on. Leave blank in normal installs.
+  auto_run_tools:
+    name: Auto-run home actions
+    description: >-
+      When enabled, scene and automation actions run without the manual approval
+      prompt. Leave off to review each action before it changes your home.

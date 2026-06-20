@@ -8,12 +8,11 @@ import { describe, expect, it } from 'vitest';
 // so they render correctly in both light and dark themes. Code blocks in
 // markdown-text.tsx are intentionally dark in both themes and are excluded.
 const THEMED_FILES = [
-  'components/thread/index.tsx',
-  'components/thread/history/index.tsx',
-  'components/thread/MultimodalPreview.tsx',
+  'components/thread/thread.tsx',
+  'components/thread/multimodal-preview.tsx',
   'components/thread/messages/tool-calls.tsx',
   'components/thread/messages/generic-interrupt.tsx',
-  'components/thread/agent-inbox/index.tsx',
+  'components/thread/agent-inbox/agent-inbox.tsx',
   'components/thread/agent-inbox/components/inbox-item-input.tsx',
   'components/thread/agent-inbox/components/state-view.tsx',
   'components/thread/agent-inbox/components/thread-actions-view.tsx',

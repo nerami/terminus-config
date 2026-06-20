@@ -4,6 +4,80 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.7.1
+
+- Tool calls and their results now collapse to a single line, expanding on click
+  to reveal the arguments/output (built on the shadcn **Item** + **Collapsible**
+  components). They are left-aligned with the rest of the chat, a long tool name
+  in the header truncates with an ellipsis, and wide argument/result values wrap
+  to the chat width instead of stretching it (no horizontal scrolling).
+- The full-width chat input bar now carries a translucent page background, so
+  messages no longer bleed through it while scrolling.
+- The chat top bar shows the conversation title next to the sidebar toggle, with
+  a three-dot **Rename** / **Archive** menu in place of the new-chat button.
+- Conversations get an auto-generated title: after the first exchange the backend
+  summarises the opening message into a short title via a LangChain LCEL chain
+  (`POST /api/title`), stored on the thread's metadata. Title generation uses a
+  cheaper/faster model (Haiku) by default — configurable via the new
+  `title_model` add-on option — and falls back to a trimmed first message when no
+  Anthropic key is set. Titles can also be renamed by hand.
+- Add-on options now show friendly names and descriptions in the configuration
+  UI (via `translations/en.yaml`), clarifying that `ha_url`/`ha_token` are
+  dev-only fallbacks ignored under the Supervisor.
+- Icon sizing is standardised on Tailwind's `size-*` utility (shadcn convention)
+  instead of mixed `h-*/w-*` classes.
+- Topology UX: opening the diagram from the sidebar shows it full screen, while
+  opening it from the chat top-bar button shows it as a side panel (split view).
+  An icon button with a tooltip (top-left, with a divider
+  before the "Home Topology" heading) returns to the split view on larger screens,
+  or back to the chat on small screens; in split view a **Close** button in the
+  chat panel re-expands the diagram to full screen. The topology header keeps
+  refresh and close controls — the breadcrumbs are gone (navigation is via the
+  grouping selectors) — and the chat top bar now matches the topology header.
+  Opening/closing the panel is instant (no width transition). The panel's
+  open/full-screen state persists across reloads, so leaving and returning to the
+  tab restores the same view.
+- The sidebar now uses the shadcn **inset** variant: the main content sits in a
+  rounded, inset card on desktop. The chat fills the inset via `h-full` (instead
+  of `h-screen`) so the inset margins don't push the page into an extra scrollbar.
+- Sidebar settings now persist in **localStorage** and are grouped by category
+  (**Chatbot**, **Appearance**). The tool-call toggle is relabelled **Show tool
+  calls**, and a new **Font size** stepper adjusts the base document size
+  (10–20px, default 16). The Home Assistant status dot sits next to the Settings
+  button in the footer.
+- Top-bar icon buttons across the chat and topology headers share one ghost style
+  and size. The sidebar toggle reflects open/closed state (`panel-left-open` /
+  `panel-left-close`), the topology "open chat" control uses a `bot-message-square`
+  icon, and `TooltipIconButton` no longer hard-codes its size.
+- The Terminus logo is tinted with the theme **primary** colour (passed as a
+  Tailwind class from each call site), and the error/glitch variant uses the
+  **destructive** colour.
+- On a cold load (opening Terminus from elsewhere, or refreshing), a loading
+  screen is shown until the backend `/ha/status` check returns — success or
+  error — then the app renders.
+
+## 0.7.0
+
+- Chat UI: introduce a shadcn **Sidebar** as the home for navigation and global
+  controls. The Terminus logo, **New Session**, the **Topology** toggle, and the
+  **Recent Sessions** list all move there, decluttering the chat column (the
+  Session/History tabs are gone). On mobile the sidebar collapses to a drawer.
+- The sidebar footer holds the Home Assistant status dot and a new **Settings**
+  dropdown whose **View tools** toggle replaces the old in-input "Hide Tool
+  Calls" switch (persisted in the URL as `viewTools`, defaulting to on).
+- Prompt input: context chips now use the shadcn **Badge** component, and the
+  input container uses a translucent page background.
+- Tool-call messages are rebuilt on the shadcn **Item** and **Collapsible**
+  components.
+- Topology: scene/entity/automation group nodes get a flat, distinct treatment
+  and all border-radius is removed to match the radius-free theme; edges now
+  render as **smooth step**.
+- Conventions: the frontend source is refactored to kebab-case file/folder
+  names with no index files and no default exports, enforced via
+  `eslint-plugin-unicorn` (`unicorn/filename-case`) and
+  `import-x/no-default-export`. Vendored shadcn `ui/` components are left
+  untouched.
+
 ## 0.6.2
 
 - Dev tooling: adopt the `terminus-ui` ESLint setup in the frontend

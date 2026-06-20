@@ -18,7 +18,7 @@ function ResetButton({ handleReset }: { handleReset: () => void }) {
       variant="ghost"
       className="text-muted-foreground hover:text-destructive flex items-center justify-center gap-2"
     >
-      <Undo2 className="h-4 w-4" />
+      <Undo2 className="size-4" />
       <span>Reset</span>
     </Button>
   );

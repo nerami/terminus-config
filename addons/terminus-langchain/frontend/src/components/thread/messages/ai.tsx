@@ -3,10 +3,9 @@ import { parsePartialJson } from '@langchain/core/output_parsers';
 import { AIMessage, Checkpoint, Message } from '@langchain/langgraph-sdk';
 import { useStream } from '@langchain/langgraph-sdk/react';
 import { LoadExternalComponent } from '@langchain/langgraph-sdk/react-ui';
-import { useQueryState, parseAsBoolean } from 'nuqs';
 import { Fragment } from 'react/jsx-runtime';
 
-import { ThreadView } from '../agent-inbox';
+import { ThreadView } from '../agent-inbox/agent-inbox';
 import { useArtifact } from '../artifact';
 import { MarkdownText } from '../markdown-text';
 import { getContentString } from '../utils';
@@ -15,9 +14,10 @@ import { GenericInterruptView } from './generic-interrupt';
 import { BranchSwitcher, CommandBar } from './shared';
 import { ToolCalls, ToolResult } from './tool-calls';
 
+import { useViewTools } from '@/hooks/use-view-tools';
 import { isAgentInboxInterruptSchema } from '@/lib/agent-inbox-interrupt';
 import { cn } from '@/lib/utils';
-import { useStreamContext } from '@/providers/Stream';
+import { useStreamContext } from '@/providers/stream';
 
 function CustomComponent({ message, thread }: { message: Message; thread: ReturnType<typeof useStreamContext> }) {
   const artifact = useArtifact();
@@ -95,7 +95,7 @@ export function AssistantMessage({
 }) {
   const content = message?.content ?? [];
   const contentString = getContentString(content);
-  const [hideToolCalls] = useQueryState('hideToolCalls', parseAsBoolean.withDefault(false));
+  const [viewTools] = useViewTools();
 
   const thread = useStreamContext();
   const isLastMessage = thread.messages[thread.messages.length - 1].id === message?.id;
@@ -112,7 +112,7 @@ export function AssistantMessage({
   const hasAnthropicToolCalls = !!anthropicStreamedToolCalls?.length;
   const isToolResult = message?.type === 'tool';
 
-  if (isToolResult && hideToolCalls) {
+  if (isToolResult && !viewTools) {
     return null;
   }
 
@@ -136,7 +136,7 @@ export function AssistantMessage({
               </div>
             )}
 
-            {!hideToolCalls && (
+            {viewTools && (
               <>
                 {(hasToolCalls && toolCallsHaveContents && <ToolCalls toolCalls={message.tool_calls} />) ||
                   (hasAnthropicToolCalls && <ToolCalls toolCalls={anthropicStreamedToolCalls} />) ||

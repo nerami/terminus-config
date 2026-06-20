@@ -18,6 +18,30 @@ backend; both ship in one Docker image (`Dockerfile`).
 - To release: edit `config.yaml` `version` (semver), add the matching
   `CHANGELOG.md` entry, commit, push.
 
+## Local development / testing
+
+This is a **local add-on** (it lives under the HA config dir's `addons/` folder and has
+no `image:` key, so the Supervisor builds it from the `Dockerfile`). Its full Supervisor
+slug is therefore `local_terminus`.
+
+- **Don't bump the version to test changes.** The add-on UI's **Update** button is
+  version-gated — it only appears when `config.yaml` `version` is higher than the installed
+  one. That gate is for *releasing* to users, not for iterating. Bumping per test iteration
+  would pollute `CHANGELOG.md`/version history. Reserve a bump for a real release.
+- **To pick up source changes, Rebuild** (not Restart). A plain Restart reuses the existing
+  image and will NOT include code changes:
+  - UI: add-on page → top-right **⋮ → Rebuild**.
+  - CLI (SSH/Terminal add-on or `ha`): `ha addons rebuild local_terminus`.
+  - Thanks to the manifest-before-source layering (see *Docker caching strategy*), a
+    source-only edit rebuilds fast — deps stay cached; only the `COPY frontend/` /
+    `COPY backend/` layers and downstream rebuild.
+- If you changed `config.yaml` options/schema or `translations/`, **Reload** first so the
+  Supervisor re-reads metadata: `ha addons reload` (or refresh the add-on store).
+- **Faster front-end loop:** the frontend is compiled into the image, so the Rebuild is the
+  slow part of UI testing. For rapid UI work run the Vite dev server against the backend
+  (`cd frontend && pnpm dev`) and only Rebuild the add-on to verify the integrated/ingress
+  build. Backend-only Python changes still need a Rebuild (or run the backend locally).
+
 ## Package manager
 
 - The frontend uses **pnpm** (`pnpm-lock.yaml` is the source of truth; the Docker build runs

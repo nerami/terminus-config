@@ -7,7 +7,7 @@ import type { Topology } from './types';
 export const graphPanelOpenAtom = atomWithStorage('terminus-graph-panel-open', false);
 
 /** Whether the topology panel is expanded full screen (hiding the chat). */
-export const graphFullscreenAtom = atom(false);
+export const graphFullscreenAtom = atomWithStorage('terminus-graph-fullscreen', false);
 
 /** Whether the thread history sidebar is open. */
 export const chatHistoryOpenAtom = atom(false);

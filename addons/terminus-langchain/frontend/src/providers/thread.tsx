@@ -12,11 +12,13 @@ import { endpoints, ASSISTANT_ID } from '@/runtime-config';
 
 interface ThreadContextType {
   archiveThread: (threadId: string) => Promise<void>;
+  generateThreadTitle: (threadId: string, message: string) => Promise<void>;
   getThreads: () => Promise<Thread[]>;
   setThreads: Dispatch<SetStateAction<Thread[]>>;
   setThreadsLoading: Dispatch<SetStateAction<boolean>>;
   threads: Thread[];
   threadsLoading: boolean;
+  updateThreadTitle: (threadId: string, title: string) => Promise<void>;
 }
 
 const ThreadContext = createContext<ThreadContextType | undefined>(undefined);
@@ -72,9 +74,48 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     [apiUrl, authScheme],
   );
 
+  // Persist a title to the thread's metadata (LangGraph merges metadata, so this
+  // coexists with the archive flag and the assistant/graph id). Used by both the
+  // manual rename flow and the auto-generated title below.
+  const updateThreadTitle = useCallback(
+    async (threadId: string, title: string): Promise<void> => {
+      if (!apiUrl) return;
+      const client = createClient(apiUrl, getApiKey() ?? undefined, authScheme || undefined);
+      await client.threads.update(threadId, { metadata: { title } });
+      setThreads((prev) =>
+        prev.map((t) => (t.thread_id === threadId ? { ...t, metadata: { ...t.metadata, title } } : t)),
+      );
+    },
+    [apiUrl, authScheme],
+  );
+
+  // Ask the backend to summarise the first user message into a short title, then
+  // persist it. Best-effort: failures leave the thread with its derived label.
+  const generateThreadTitle = useCallback(
+    async (threadId: string, message: string): Promise<void> => {
+      if (!apiUrl || !message.trim()) return;
+      let title = '';
+      try {
+        const res = await fetch(`${apiUrl}/title`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+        if (!res.ok) return;
+        title = ((await res.json())?.title ?? '').trim();
+      } catch {
+        return;
+      }
+      if (title) await updateThreadTitle(threadId, title);
+    },
+    [apiUrl, updateThreadTitle],
+  );
+
   const value = {
     getThreads,
     archiveThread,
+    updateThreadTitle,
+    generateThreadTitle,
     threads,
     setThreads,
     threadsLoading,

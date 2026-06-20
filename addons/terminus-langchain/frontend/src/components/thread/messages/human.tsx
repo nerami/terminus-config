@@ -6,11 +6,11 @@ import { getContentString } from '../utils';
 
 import { BranchSwitcher, CommandBar } from './shared';
 
-import { MultimodalPreview } from '@/components/thread/MultimodalPreview';
+import { MultimodalPreview } from '@/components/thread/multimodal-preview';
 import { Textarea } from '@/components/ui/textarea';
 import { isBase64ContentBlock } from '@/lib/multimodal-utils';
 import { cn } from '@/lib/utils';
-import { useStreamContext } from '@/providers/Stream';
+import { useStreamContext } from '@/providers/stream';
 
 function EditableContent({
   onSubmit,

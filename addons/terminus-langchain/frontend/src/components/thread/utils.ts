@@ -11,3 +11,12 @@ export function getContentString(content: Message['content']): string {
   const texts = content.filter((c): c is { type: 'text'; text: string } => c.type === 'text').map((c) => c.text);
   return texts.join(' ');
 }
+
+/**
+ * The chat's display title: the text of its first human message. Returns an
+ * empty string for an empty or not-yet-started conversation.
+ */
+export function chatTitleFromMessages(messages: Message[]): string {
+  const firstHuman = messages.find((m) => m.type === 'human');
+  return firstHuman ? getContentString(firstHuman.content).trim() : '';
+}

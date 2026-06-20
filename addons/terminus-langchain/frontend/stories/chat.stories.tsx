@@ -10,11 +10,12 @@ import {
 import type { Message } from '@langchain/langgraph-sdk';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { Thread } from '@/components/thread';
 import { ArtifactProvider } from '@/components/thread/artifact';
+import { Thread } from '@/components/thread/thread';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
-import StreamContext, { useStreamContext } from '@/providers/Stream';
-import { ThreadContext } from '@/providers/Thread';
+import { StreamContext, useStreamContext } from '@/providers/stream';
+import { ThreadContext } from '@/providers/thread';
 
 // Derive the exact stream context type from the exported hook's return type.
 type StreamContextType = ReturnType<typeof useStreamContext>;
@@ -86,6 +87,8 @@ const MOCK_STREAM = {
 const MOCK_THREADS = {
   getThreads: async () => [],
   archiveThread: async () => {},
+  updateThreadTitle: async () => {},
+  generateThreadTitle: async () => {},
   threads: [],
   setThreads: () => {},
   threadsLoading: false,
@@ -100,7 +103,11 @@ function ThreadWithProviders() {
       <StreamContext.Provider value={MOCK_STREAM}>
         <ArtifactProvider>
           <Toaster />
-          <Thread />
+          <SidebarProvider>
+            <SidebarInset>
+              <Thread />
+            </SidebarInset>
+          </SidebarProvider>
         </ArtifactProvider>
       </StreamContext.Provider>
     </ThreadContext.Provider>

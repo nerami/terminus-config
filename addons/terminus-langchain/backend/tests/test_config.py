@@ -85,3 +85,20 @@ def test_auto_run_tools_carried_in_supervisor_mode():
     )
     assert settings.use_supervisor is True
     assert settings.auto_run_tools is True
+
+
+def test_title_model_defaults_to_haiku():
+    assert load_settings(env={}, options={}).title_model == "claude-haiku-4-5"
+
+
+def test_title_model_from_options_and_env():
+    assert load_settings(env={}, options={"title_model": "x"}).title_model == "x"
+    assert load_settings(env={"TLC_TITLE_MODEL": "y"}, options={}).title_model == "y"
+
+
+def test_title_model_carried_in_supervisor_mode():
+    settings = load_settings(
+        env={"SUPERVISOR_TOKEN": "super"}, options={"title_model": "z"}
+    )
+    assert settings.use_supervisor is True
+    assert settings.title_model == "z"

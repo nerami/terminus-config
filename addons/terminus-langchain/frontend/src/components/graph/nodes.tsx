@@ -72,7 +72,7 @@ function NodeShell({
   return (
     <div
       className={cn(
-        'bg-card flex max-w-[220px] min-w-[150px] items-center gap-2 rounded-lg border px-3 py-2 shadow-sm transition-all',
+        'bg-card flex max-w-[220px] min-w-[150px] items-center gap-2 border px-3 py-2 shadow-sm transition-all',
         data.interactive && 'cursor-pointer hover:shadow-md',
         data.dimmed && 'opacity-25',
         data.emphasized && 'ring-2 ring-offset-1',
@@ -81,10 +81,7 @@ function NodeShell({
       )}
       style={data.emphasized && !data.isSelected ? ({ '--tw-ring-color': accent } as React.CSSProperties) : undefined}
     >
-      <span
-        className="flex size-7 shrink-0 items-center justify-center rounded-md text-white"
-        style={{ backgroundColor: accent }}
-      >
+      <span className="flex size-7 shrink-0 items-center justify-center text-white" style={{ backgroundColor: accent }}>
         <Icon className="size-4" />
       </span>
       <div className="min-w-0">
@@ -115,10 +112,14 @@ function makeNode(kind: NodeKind) {
 function GroupNode({ data }: NodeProps) {
   const d = data as GraphNodeData;
   return (
-    <div className="bg-muted flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold tracking-tight shadow-inner">
-      <Boxes className="text-muted-foreground size-4" />
-      {d.label}
-      <span className="text-muted-foreground font-normal">{d.sublabel}</span>
+    <div className="bg-muted text-foreground border-border border-l-foreground flex items-center gap-2 border border-b-2 border-l-4 px-3 py-1.5 shadow-sm">
+      <Boxes className="text-muted-foreground size-4 shrink-0" />
+      <span className="text-xs font-semibold tracking-wider uppercase">{d.label}</span>
+      {d.sublabel && (
+        <span className="bg-accent text-muted-foreground ml-auto px-1.5 py-0.5 text-xs font-medium tabular-nums">
+          {d.sublabel}
+        </span>
+      )}
     </div>
   );
 }

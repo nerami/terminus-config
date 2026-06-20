@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Decision, DecisionWithEdits, HITLRequest, SubmitType } from '../types';
 import { buildDecisionFromState, createDefaultHumanResponse } from '../utils';
 
-import { useStreamContext } from '@/providers/Stream';
+import { useStreamContext } from '@/providers/stream';
 
 interface UseInterruptedActionsInput {
   interrupt: Interrupt<HITLRequest>;
@@ -32,7 +32,7 @@ interface UseInterruptedActionsValue {
   supportsMultipleMethods: boolean;
 }
 
-export default function useInterruptedActions({ interrupt }: UseInterruptedActionsInput): UseInterruptedActionsValue {
+export function useInterruptedActions({ interrupt }: UseInterruptedActionsInput): UseInterruptedActionsValue {
   const thread = useStreamContext();
   const [humanResponse, setHumanResponse] = useState<DecisionWithEdits[]>([]);
   const [loading, setLoading] = useState(false);

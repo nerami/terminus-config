@@ -7,6 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import importX from 'eslint-plugin-import-x';
 import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys';
 import perfectionist from 'eslint-plugin-perfectionist';
+import unicorn from 'eslint-plugin-unicorn';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 export default defineConfig([
@@ -49,6 +50,20 @@ export default defineConfig([
   },
   eslintPluginPrettierRecommended,
   {
+    // Project conventions: kebab-case file/folder names and named (not default)
+    // exports across our own source. Scoped to src/ and excludes the vendored
+    // shadcn components under ui/ (kept byte-identical to upstream) and the
+    // vendored use-mobile hook. Storybook stories and root tooling configs keep
+    // their required default exports because they live outside src/.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/components/ui/**', 'src/hooks/use-mobile.ts'],
+    plugins: { unicorn },
+    rules: {
+      'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+      'import-x/no-default-export': 'error',
+    },
+  },
+  {
     // Vendored shadcn registry sources: kept byte-identical to the upstream preset
     // so they survive `shadcn` re-pulls. The preset ships variant/hook exports
     // alongside components and setState-in-effect patterns that this repo's
@@ -72,7 +87,7 @@ export default defineConfig([
       //   src/components/thread/agent-inbox/hooks/use-interrupted-actions.tsx
       //   src/components/thread/agent-inbox/types.ts
       //   src/components/thread/agent-inbox/utils.ts
-      //   src/components/thread/index.tsx
+      //   src/components/thread/thread.tsx
       //   src/components/thread/markdown-text.tsx
       //   src/components/thread/messages/ai.tsx
       //   src/components/thread/messages/generic-interrupt.tsx
@@ -81,27 +96,27 @@ export default defineConfig([
       // Offenders:
       //   src/components/thread/agent-inbox/components/tool-call-table.tsx
       //   src/components/thread/agent-inbox/utils.ts
-      //   src/components/thread/index.tsx
+      //   src/components/thread/thread.tsx
       //   src/hooks/use-file-upload.tsx
       '@typescript-eslint/no-unused-vars': 'off',
       // Offenders:
       //   src/components/thread/agent-inbox/components/inbox-item-input.tsx
-      //   src/components/thread/index.tsx
+      //   src/components/thread/thread.tsx
       'react-hooks/refs': 'off',
       // Offenders:
-      //   src/components/graph/EntityDetailModal.tsx
-      //   src/components/graph/GraphCanvas.tsx
+      //   src/components/graph/entity-detail-modal.tsx
+      //   src/components/graph/graph-canvas.tsx
       //   src/components/thread/agent-inbox/components/state-view.tsx
       //   src/components/thread/agent-inbox/components/thread-actions-view.tsx
       //   src/components/thread/agent-inbox/hooks/use-interrupted-actions.tsx
-      //   src/components/thread/agent-inbox/index.tsx
-      //   src/providers/Stream.tsx
+      //   src/components/thread/agent-inbox/agent-inbox.tsx
+      //   src/providers/stream.tsx
       'react-hooks/set-state-in-effect': 'off',
       // Offenders:
       //   src/components/graph/nodes.tsx
       //   src/components/thread/artifact.tsx
-      //   src/providers/Stream.tsx
-      //   src/providers/Thread.tsx
+      //   src/providers/stream.tsx
+      //   src/providers/thread.tsx
       'react-refresh/only-export-components': 'off',
     },
   },

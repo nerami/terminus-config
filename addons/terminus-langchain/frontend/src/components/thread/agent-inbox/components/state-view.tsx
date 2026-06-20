@@ -168,7 +168,7 @@ export function StateViewObject(props: StateViewProps) {
           onClick={() => setExpanded((prev) => !prev)}
           className="text-muted-foreground hover:bg-muted hover:text-foreground flex h-5 w-5 cursor-pointer items-center justify-center rounded-md transition-colors ease-in-out"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="size-4" />
         </div>
       </motion.div>
       <div className="flex w-full flex-col items-start justify-start gap-1">
@@ -237,7 +237,7 @@ export function StateView({ description, handleShowSidePanel, values, view }: St
             className="text-muted-foreground"
             size="sm"
           >
-            {expanded ? <ChevronsUpDown className="h-4 w-4" /> : <ChevronsDownUp className="h-4 w-4" />}
+            {expanded ? <ChevronsUpDown className="size-4" /> : <ChevronsDownUp className="size-4" />}
           </Button>
         )}
 
@@ -247,7 +247,7 @@ export function StateView({ description, handleShowSidePanel, values, view }: St
           className="text-muted-foreground"
           size="sm"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </Button>
       </div>
     </div>

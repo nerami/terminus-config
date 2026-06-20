@@ -2,32 +2,42 @@ import { ReactNode, useEffect, useRef } from 'react';
 import { useState, FormEvent } from 'react';
 
 import { Checkpoint, Message } from '@langchain/langgraph-sdk';
-import { useAtom, useAtomValue } from 'jotai';
-import { ArrowDown, LoaderCircle, SquarePen, XIcon, Plus, Network } from 'lucide-react';
-import { useQueryState, parseAsBoolean } from 'nuqs';
+import { useAtomValue, useSetAtom } from 'jotai';
+import {
+  Archive,
+  ArrowDown,
+  LoaderCircle,
+  MoreVertical,
+  Network,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Pencil,
+  XIcon,
+  Plus,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GraphPanel } from '../graph/GraphPanel';
-import { TopologyUrlSync } from '../graph/TopologyUrlSync';
-import { TerminusLogoSVG } from '../icons/terminus';
-import { ParentUrlSync } from '../ParentUrlSync';
+import { GraphPanel } from '../graph/graph-panel';
+import { TopologyUrlSync } from '../graph/topology-url-sync';
+import { ParentUrlSync } from '../parent-url-sync';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 import { useArtifactOpen, ArtifactContent, ArtifactTitle, useArtifactContext } from './artifact';
-import { ContentBlocksPreview } from './ContentBlocksPreview';
-import { ContextChips } from './ContextChips';
-import { HaStatusIndicator } from './ha-status-indicator';
-import ThreadHistory from './history';
+import { ContentBlocksPreview } from './content-blocks-preview';
+import { ContextChips } from './context-chips';
 import { AssistantMessage, AssistantMessageLoading } from './messages/ai';
 import { HumanMessage } from './messages/human';
+import { RenameThreadDialog } from './rename-thread-dialog';
 import { TooltipIconButton } from './tooltip-icon-button';
+import { chatTitleFromMessages, getContentString } from './utils';
 
+import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
+import { useSidebar } from '@/components/ui/sidebar';
 import { useFileUpload } from '@/hooks/use-file-upload';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useThreadId } from '@/hooks/use-thread-id';
 import { contextItems, formatContextBlock } from '@/lib/chat-context';
 import { DO_NOT_RENDER_ID_PREFIX, ensureToolCallsHaveResponses } from '@/lib/ensure-tool-responses';
@@ -38,8 +48,10 @@ import {
   selectedNodeAtom,
   topologyAtom,
 } from '@/lib/ha-graph/atoms';
+import { storedThreadTitle } from '@/lib/thread-title';
 import { cn } from '@/lib/utils';
-import { useStreamContext } from '@/providers/Stream';
+import { useStreamContext } from '@/providers/stream';
+import { useThreads } from '@/providers/thread';
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -65,7 +77,7 @@ function ScrollToBottom(props: { className?: string }) {
   if (isAtBottom) return null;
   return (
     <Button variant="outline" className={props.className} onClick={() => scrollToBottom()}>
-      <ArrowDown className="h-4 w-4" />
+      <ArrowDown className="size-4" />
       <span>Scroll to bottom</span>
     </Button>
   );
@@ -74,28 +86,30 @@ function ScrollToBottom(props: { className?: string }) {
 export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
-  const [graphPanelOpen, setGraphPanelOpen] = useAtom(graphPanelOpenAtom);
-  const [graphFullscreen, setGraphFullscreen] = useAtom(graphFullscreenAtom);
-  // The topology diagram and the artifact panel share the right column, so
-  // opening one closes the other. The chat itself is unaffected either way.
+  // The topology toggle lives in the sidebar now; here we only read the open
+  // state to size the right column. The diagram and the artifact panel share
+  // that column, so either one opening drives the layout.
+  const graphPanelOpen = useAtomValue(graphPanelOpenAtom);
+  const graphFullscreen = useAtomValue(graphFullscreenAtom);
+  const setGraphFullscreen = useSetAtom(graphFullscreenAtom);
+  const setGraphPanelOpen = useSetAtom(graphPanelOpenAtom);
+  const isMobile = useIsMobile();
+  const { isMobile: isSidebarMobile, open: sidebarOpen, openMobile: sidebarOpenMobile, toggleSidebar } = useSidebar();
+  const sidebarVisible = isSidebarMobile ? sidebarOpenMobile : sidebarOpen;
   const rightPanelOpen = artifactOpen || graphPanelOpen;
-  const toggleGraphPanel = () =>
-    setGraphPanelOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        closeArtifact();
-        // View is preserved from the last session (graphViewBaseAtom persists to
-        // localStorage; URL params restore it on deeplink via TopologyUrlSync).
-      } else {
-        // Leaving the panel always exits fullscreen so the chat comes back.
-        setGraphFullscreen(false);
-      }
-      return next;
-    });
+
+  // Open the topology as a side panel (split view) — the sidebar opens it full
+  // screen instead. The diagram and the artifact share the right column, so
+  // opening one closes the other.
+  const openTopology = () => {
+    closeArtifact();
+    setGraphFullscreen(false);
+    setGraphPanelOpen(true);
+  };
 
   const [threadId, _setThreadId] = useThreadId();
-  const [chatTab, setChatTab] = useState<'session' | 'history'>('session');
-  const [hideToolCalls, setHideToolCalls] = useQueryState('hideToolCalls', parseAsBoolean.withDefault(false));
+  const { archiveThread, generateThreadTitle, threads } = useThreads();
+  const [renameOpen, setRenameOpen] = useState(false);
   const [input, setInput] = useState('');
   const {
     contentBlocks,
@@ -235,73 +249,105 @@ export function Thread() {
   };
 
   const chatStarted = !!threadId || !!messages.length;
+  const currentThread = threads.find((t) => t.thread_id === threadId);
+  const chatTitle = (currentThread ? storedThreadTitle(currentThread) : undefined) ?? chatTitleFromMessages(messages);
   const hasNoAIOrToolMessages = !messages.find((m) => m.type === 'ai' || m.type === 'tool');
 
+  const handleArchiveCurrent = () => {
+    if (!threadId) return;
+    archiveThread(threadId)
+      .then(() => {
+        toast.success('Conversation archived');
+        setThreadId(null);
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Couldn't archive conversation");
+      });
+  };
+
+  // Once the first exchange completes, ask the backend to generate a concise
+  // title for a thread that doesn't have one yet (best-effort, once per thread).
+  const titledThreads = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!threadId || isLoading || titledThreads.current.has(threadId)) return;
+    const firstHuman = messages.find((m) => m.type === 'human');
+    const hasAi = messages.some((m) => m.type === 'ai');
+    if (!firstHuman || !hasAi) return;
+    titledThreads.current.add(threadId);
+    if (currentThread && storedThreadTitle(currentThread)) return;
+    void generateThreadTitle(threadId, getContentString(firstHuman.content));
+  }, [threadId, isLoading, messages, currentThread, generateThreadTitle]);
+
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       <TopologyUrlSync />
       <ParentUrlSync />
+      <RenameThreadDialog open={renameOpen} onOpenChange={setRenameOpen} threadId={threadId} initialTitle={chatTitle} />
 
       <div
         className={cn(
-          'grid w-full grid-cols-[1fr_0fr] transition-all duration-500',
-          // Open: equal split on large screens, give the panel more room on xl.
-          rightPanelOpen && 'grid-cols-[2fr_2fr] xl:grid-cols-[2fr_3fr]',
-          // Fullscreen topology hides the chat column entirely.
-          rightPanelOpen && graphFullscreen && 'grid-cols-[0fr_1fr] xl:grid-cols-[0fr_1fr]',
+          'grid w-full grid-cols-[1fr_0fr]',
+          // Panel open (mobile-first): the diagram/artifact takes the whole width
+          // on small screens — no split — and shares the row from md up (more
+          // room for the panel on xl).
+          rightPanelOpen && 'grid-cols-[0fr_1fr] md:grid-cols-[2fr_2fr] xl:grid-cols-[2fr_3fr]',
+          // Fullscreen topology hides the chat column entirely, at every width.
+          rightPanelOpen && graphFullscreen && 'grid-cols-[0fr_1fr] md:grid-cols-[0fr_1fr] xl:grid-cols-[0fr_1fr]',
         )}
       >
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Tabs
-            value={chatTab}
-            onValueChange={(v) => setChatTab(v as 'session' | 'history')}
-            className="flex h-full min-h-0 flex-col gap-0"
-          >
-            {/* 1. Top bar: the logo (always) + actions. */}
-            <div className="z-10 flex min-h-[52px] items-center justify-between gap-3 p-2">
-              <div className="flex items-center gap-3">
-                <button
-                  className="flex cursor-pointer items-center"
-                  aria-label="New chat"
-                  onClick={() => {
-                    setThreadId(null);
-                    setChatTab('session');
-                  }}
-                >
-                  <TerminusLogoSVG className="h-6" />
-                </button>
+          <div className="flex h-full min-h-0 flex-col">
+            {/* Top bar: same structure as the topology header. */}
+            <div className="flex items-center justify-between gap-3 border-b p-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <TooltipIconButton tooltip="Toggle sidebar" onClick={toggleSidebar}>
+                  {sidebarVisible ? <PanelLeftClose /> : <PanelLeftOpen />}
+                </TooltipIconButton>
+                <div className="min-w-0">
+                  {chatTitle && (
+                    <div className="truncate text-sm font-semibold tracking-tight" title={chatTitle}>
+                      {chatTitle}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <TooltipIconButton tooltip="Home topology" variant="ghost" onClick={toggleGraphPanel}>
-                  <Network className="size-5" />
-                </TooltipIconButton>
-                <HaStatusIndicator />
-                <TooltipIconButton
-                  size="lg"
-                  className="p-4"
-                  tooltip="New thread"
-                  variant="ghost"
-                  onClick={() => {
-                    setThreadId(null);
-                    setChatTab('session');
-                  }}
-                >
-                  <SquarePen className="size-5" />
-                </TooltipIconButton>
+              <div className="flex items-center gap-1">
+                {/* Topology can be opened from here as well as the sidebar. */}
+                {!graphPanelOpen && (
+                  <TooltipIconButton tooltip="Home topology" onClick={openTopology}>
+                    <Network />
+                  </TooltipIconButton>
+                )}
+                {/* In split view, closing the chat expands the topology to full screen. */}
+                {graphPanelOpen && !graphFullscreen && !isMobile && (
+                  <TooltipIconButton tooltip="Close chat" onClick={() => setGraphFullscreen(true)}>
+                    <XIcon />
+                  </TooltipIconButton>
+                )}
+                {threadId && (
+                  <Menu>
+                    <MenuTrigger aria-label="Chat options" render={<Button variant="ghost" size="icon" />}>
+                      <MoreVertical />
+                    </MenuTrigger>
+                    <MenuContent>
+                      <MenuItem onClick={() => setRenameOpen(true)}>
+                        <Pencil />
+                        Rename
+                      </MenuItem>
+                      <MenuItem variant="destructive" onClick={handleArchiveCurrent}>
+                        <Archive />
+                        Archive
+                      </MenuItem>
+                    </MenuContent>
+                  </Menu>
+                )}
               </div>
             </div>
 
-            {/* 2. Tabs navigation. */}
-            <div className="px-2 pb-2">
-              <TabsList>
-                <TabsTrigger value="session">Session</TabsTrigger>
-                <TabsTrigger value="history">History</TabsTrigger>
-              </TabsList>
-            </div>
-
-            {/* 3. Tabs container. */}
-            <TabsContent value="session" className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+            {/* Active session. */}
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
               <StickToBottom className="relative flex-1 overflow-hidden">
                 <StickyToBottomContent
                   className={cn(
@@ -344,7 +390,7 @@ export function Thread() {
                     </>
                   }
                   footer={
-                    <div className="sticky bottom-0 flex flex-col items-center gap-8">
+                    <div className="bg-background/90 sticky bottom-0 flex flex-col items-center gap-8 backdrop-blur-sm">
                       {!chatStarted && (
                         <div className="flex flex-col items-center gap-2 text-center">
                           <h1 className="text-2xl font-semibold tracking-tight">Welcome to Terminus</h1>
@@ -359,7 +405,7 @@ export function Thread() {
                       <div
                         ref={dropRef}
                         className={cn(
-                          'bg-muted relative z-10 mx-auto mb-8 w-full max-w-3xl rounded-2xl shadow-xs transition-all',
+                          'bg-background/90 relative z-10 mx-auto mb-8 w-full max-w-3xl rounded-2xl shadow-xs backdrop-blur-sm transition-all',
                           dragOver ? 'border-primary border-2 border-dotted' : 'border border-solid',
                         )}
                       >
@@ -387,18 +433,6 @@ export function Thread() {
                           />
 
                           <div className="flex items-center gap-6 p-2 pt-4">
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  id="render-tool-calls"
-                                  checked={hideToolCalls ?? false}
-                                  onCheckedChange={(checked) => setHideToolCalls(checked)}
-                                />
-                                <Label htmlFor="render-tool-calls" className="text-muted-foreground text-sm">
-                                  Hide Tool Calls
-                                </Label>
-                              </div>
-                            </div>
                             <Label htmlFor="file-input" className="flex cursor-pointer items-center gap-2">
                               <Plus className="text-muted-foreground size-5" />
                               <span className="text-muted-foreground text-sm">Upload PDF or Image</span>
@@ -413,7 +447,7 @@ export function Thread() {
                             />
                             {stream.isLoading ? (
                               <Button key="stop" onClick={() => stream.stop()} className="ml-auto">
-                                <LoaderCircle className="h-4 w-4 animate-spin" />
+                                <LoaderCircle className="size-4 animate-spin" />
                                 Cancel
                               </Button>
                             ) : (
@@ -432,12 +466,8 @@ export function Thread() {
                   }
                 />
               </StickToBottom>
-            </TabsContent>
-
-            <TabsContent value="history" className="min-h-0 flex-1 overflow-hidden p-2">
-              <ThreadHistory onThreadSelect={() => setChatTab('session')} />
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">

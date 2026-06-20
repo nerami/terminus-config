@@ -20,6 +20,7 @@ from typing import Optional
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from pydantic import BaseModel
 from starlette.background import BackgroundTask
 
 from .config import Settings, load_settings
@@ -48,6 +49,12 @@ _NOT_CONFIGURED = {
 
 _NOT_CONFIGURED_ERROR = {"error": "Home Assistant connection not configured"}
 
+
+class _TitleRequest(BaseModel):
+    """Body for ``POST /api/title``: the chat's first user message."""
+
+    message: str
+
 # Topology snapshots are relatively expensive (four registry/state list calls),
 # so cache the last result briefly to absorb rapid view switches in the UI.
 _TOPOLOGY_TTL = 15.0
@@ -67,6 +74,7 @@ def create_app(
     proxy_transport: Optional[httpx.BaseTransport] = None,
     registry_connect: Optional[ha_registry.ConnectFn] = None,
     ha_rest_transport: Optional[httpx.BaseTransport] = None,
+    title_chain=None,
 ) -> FastAPI:
     settings = settings or load_settings()
     registry_connect = registry_connect or _ws_connect
@@ -96,6 +104,8 @@ def create_app(
             await app.state.http.aclose()
 
     app = FastAPI(title="Terminus LangChain", lifespan=lifespan)
+    # Optional injected title chain (tests pass a fake); None => lazy default.
+    app.state.title_chain = title_chain
 
     @app.get("/ha/status")
     async def ha_status():
@@ -151,6 +161,16 @@ def create_app(
                 {"error": f"{type(exc).__name__}: {exc}"}, status_code=502
             )
         return JSONResponse(data)
+
+    # Registered BEFORE the /api/{path} proxy so it is handled locally.
+    # /api/title is not a real LangGraph resource, so intercepting it here
+    # (rather than forwarding it upstream) is safe.
+    @app.post("/api/title")
+    async def generate_title(req: _TitleRequest):
+        from .title import agenerate_title
+
+        title = await agenerate_title(req.message, chain=app.state.title_chain)
+        return JSONResponse({"title": title})
 
     @app.api_route(
         "/api/{path:path}",

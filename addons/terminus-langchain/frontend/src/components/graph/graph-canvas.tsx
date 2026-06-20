@@ -16,7 +16,7 @@ import { LoaderCircle } from 'lucide-react';
 import { Info, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-import { GroupByControls } from './GroupByControls';
+import { GroupByControls } from './group-by-controls';
 import { nodeTypes } from './nodes';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -275,6 +275,7 @@ export function GraphCanvas() {
         onNodeClick={onNodeClick}
         onNodeDragStop={onNodeDragStop}
         onPaneClick={onPaneClick}
+        defaultEdgeOptions={{ type: 'smoothstep' }}
         nodesConnectable={false}
         nodesFocusable={false}
         edgesFocusable={false}

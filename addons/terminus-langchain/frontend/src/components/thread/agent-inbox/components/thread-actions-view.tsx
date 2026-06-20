@@ -4,7 +4,7 @@ import { Interrupt } from '@langchain/langgraph-sdk';
 import { useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 
-import useInterruptedActions from '../hooks/use-interrupted-actions';
+import { useInterruptedActions } from '../hooks/use-interrupted-actions';
 import { Decision, HITLRequest, DecisionType, ActionRequest } from '../types';
 import { constructOpenInStudioURL, buildDecisionFromState } from '../utils';
 
@@ -14,7 +14,7 @@ import { ThreadIdCopyable } from './thread-id';
 import { Button } from '@/components/ui/button';
 import { useThreadId } from '@/hooks/use-thread-id';
 import { cn } from '@/lib/utils';
-import { useStreamContext } from '@/providers/Stream';
+import { useStreamContext } from '@/providers/stream';
 
 interface ThreadActionsViewProps {
   handleShowSidePanel: (showState: boolean, showDescription: boolean) => void;

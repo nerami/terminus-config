@@ -17,8 +17,9 @@ const DOT: Record<HaConnectionStatus, string> = {
 };
 
 /**
- * A subtle Home Assistant connection indicator for the chat header: a small
- * status dot with a tooltip. Reuses the polling `useHaStatus` hook.
+ * A subtle Home Assistant connection indicator: a small status dot with a
+ * tooltip carrying the full status (incl. version). Reuses the polling
+ * `useHaStatus` hook.
  */
 export function HaStatusIndicator() {
   const status = useHaStatus();

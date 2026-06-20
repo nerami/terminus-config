@@ -1,8 +1,8 @@
-import { MapPin, Boxes, Check } from 'lucide-react';
+import { Boxes, Check, MapPin } from 'lucide-react';
 
 import type { ContextItem } from '@/lib/chat-context';
 
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 /**
  * Toggleable chips shown in the chat input that attach Home-topology context
@@ -26,22 +26,22 @@ export function ContextChips({
         const active = activeIds.has(item.id);
         const Icon = item.kind === 'node' ? Boxes : MapPin;
         return (
-          <button
+          <Badge
             key={item.id}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onToggle(item.id)}
-            title={active ? 'Remove from message context' : 'Add to message context'}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
-              active
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border text-muted-foreground hover:bg-muted',
-            )}
+            variant={active ? 'default' : 'outline'}
+            className="cursor-pointer gap-1.5"
+            render={
+              <button
+                type="button"
+                aria-pressed={active}
+                onClick={() => onToggle(item.id)}
+                title={active ? 'Remove from message context' : 'Add to message context'}
+              />
+            }
           >
-            {active ? <Check className="size-3.5" /> : <Icon className="size-3.5" />}
+            {active ? <Check /> : <Icon />}
             <span className="max-w-[160px] truncate">{item.label}</span>
-          </button>
+          </Badge>
         );
       })}
     </div>

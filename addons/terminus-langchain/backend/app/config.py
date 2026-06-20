@@ -17,6 +17,9 @@ from typing import Mapping
 OPTIONS_PATH = Path("/data/options.json")
 SUPERVISOR_WS_URL = "ws://supervisor/core/websocket"
 DEFAULT_MODEL = "claude-sonnet-4-6"
+# Chat titles are tiny, throwaway generations, so they default to a cheaper,
+# faster model than the agent itself.
+DEFAULT_TITLE_MODEL = "claude-haiku-4-5"
 
 
 @dataclass(frozen=True)
@@ -27,6 +30,7 @@ class Settings:
     model: str
     use_supervisor: bool
     auto_run_tools: bool = False
+    title_model: str = DEFAULT_TITLE_MODEL
 
 
 def _as_bool(value: object) -> bool:
@@ -93,6 +97,11 @@ def load_settings(
         options.get("anthropic_api_key") or env.get("ANTHROPIC_API_KEY", "")
     )
     model = str(options.get("model") or env.get("TLC_MODEL") or DEFAULT_MODEL)
+    title_model = str(
+        options.get("title_model")
+        or env.get("TLC_TITLE_MODEL")
+        or DEFAULT_TITLE_MODEL
+    )
 
     auto_run_tools = _as_bool(
         options.get("auto_run_tools")
@@ -109,6 +118,7 @@ def load_settings(
             model=model,
             use_supervisor=True,
             auto_run_tools=auto_run_tools,
+            title_model=title_model,
         )
 
     raw_url = str(
@@ -127,4 +137,5 @@ def load_settings(
         model=model,
         use_supervisor=False,
         auto_run_tools=auto_run_tools,
+        title_model=title_model,
     )

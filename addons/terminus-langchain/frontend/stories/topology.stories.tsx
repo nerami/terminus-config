@@ -9,7 +9,7 @@ import { Provider as JotaiProvider } from 'jotai';
 import type { Topology } from '@/lib/ha-graph/types';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { GraphCanvas } from '@/components/graph/GraphCanvas';
+import { GraphCanvas } from '@/components/graph/graph-canvas';
 import { topologyAtom, graphViewAtom } from '@/lib/ha-graph/atoms';
 
 const FIXTURE_TOPOLOGY: Topology = {

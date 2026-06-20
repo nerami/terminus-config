@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ContentBlock } from '@langchain/core/messages';
 
-import { MultimodalPreview } from './MultimodalPreview';
+import { MultimodalPreview } from './multimodal-preview';
 
 import { cn } from '@/lib/utils';
 

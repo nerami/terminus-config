@@ -18,7 +18,13 @@ function ContentCopyable({ content, disabled }: { content: string; disabled: boo
   };
 
   return (
-    <TooltipIconButton onClick={(e) => handleCopy(e)} variant="ghost" tooltip="Copy content" disabled={disabled}>
+    <TooltipIconButton
+      onClick={(e) => handleCopy(e)}
+      variant="ghost"
+      tooltip="Copy content"
+      disabled={disabled}
+      className="size-6 p-1"
+    >
       <AnimatePresence mode="wait" initial={false}>
         {copied ? (
           <motion.div
@@ -135,13 +141,20 @@ export function CommandBar({
           disabled={isLoading}
           tooltip="Cancel edit"
           variant="ghost"
+          className="size-6 p-1"
           onClick={() => {
             setIsEditing(false);
           }}
         >
           <XIcon />
         </TooltipIconButton>
-        <TooltipIconButton disabled={isLoading} tooltip="Submit" variant="secondary" onClick={handleSubmitEdit}>
+        <TooltipIconButton
+          disabled={isLoading}
+          tooltip="Submit"
+          variant="secondary"
+          className="size-6 p-1"
+          onClick={handleSubmitEdit}
+        >
           <SendHorizontal />
         </TooltipIconButton>
       </div>
@@ -152,7 +165,13 @@ export function CommandBar({
     <div className="flex items-center gap-2">
       <ContentCopyable content={content} disabled={isLoading} />
       {isAiMessage && !!handleRegenerate && (
-        <TooltipIconButton disabled={isLoading} tooltip="Refresh" variant="ghost" onClick={handleRegenerate}>
+        <TooltipIconButton
+          disabled={isLoading}
+          tooltip="Refresh"
+          variant="ghost"
+          className="size-6 p-1"
+          onClick={handleRegenerate}
+        >
           <RefreshCcw />
         </TooltipIconButton>
       )}
@@ -161,6 +180,7 @@ export function CommandBar({
           disabled={isLoading}
           tooltip="Edit"
           variant="ghost"
+          className="size-6 p-1"
           onClick={() => {
             setIsEditing?.(true);
           }}

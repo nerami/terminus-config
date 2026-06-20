@@ -1,6 +1,5 @@
 import '../src/index.css';
 
-/* eslint-disable react-refresh/only-export-components */
 import React, { useEffect } from 'react';
 
 import { DocsContainer } from '@storybook/addon-docs/blocks';

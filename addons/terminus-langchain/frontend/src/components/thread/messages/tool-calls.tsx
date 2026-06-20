@@ -1,60 +1,81 @@
 import { useState } from 'react';
 
 import { AIMessage, ToolMessage } from '@langchain/langgraph-sdk';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Item, ItemContent, ItemGroup } from '@/components/ui/item';
 
 function isComplexValue(value: any): boolean {
   return Array.isArray(value) || (typeof value === 'object' && value !== null);
+}
+
+function ArgRow({ name, value }: { name: React.ReactNode; value: any }) {
+  return (
+    <div className="border-border flex min-w-0 flex-col gap-1 border-b py-2 last:border-b-0 sm:flex-row sm:gap-4">
+      <div className="text-foreground shrink-0 text-sm font-medium sm:w-40 sm:whitespace-nowrap">{name}</div>
+      <div className="text-muted-foreground min-w-0 text-sm break-words">
+        {isComplexValue(value) ? (
+          <code className="bg-muted/50 block px-2 py-1 font-mono text-sm break-all whitespace-pre-wrap">
+            {JSON.stringify(value, null, 2)}
+          </code>
+        ) : (
+          String(value)
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ToolCallItem({ toolCall }: { toolCall: NonNullable<AIMessage['tool_calls']>[number] }) {
+  const [open, setOpen] = useState(false);
+  const args = toolCall.args as Record<string, any>;
+  const hasArgs = Object.keys(args).length > 0;
+
+  return (
+    <Item variant="outline" className="min-w-0 flex-col items-stretch p-0">
+      <Collapsible className="min-w-0" open={open} onOpenChange={setOpen}>
+        {/* The tool name is the trigger; the call's details stay collapsed so a
+            tool reads as a single line until the user opens it. */}
+        <CollapsibleTrigger className="hover:bg-muted/50 data-[panel-open]:bg-muted/50 flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left transition-colors">
+          <span className="text-foreground min-w-0 flex-1 truncate font-medium">{toolCall.name}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            {toolCall.id && <code className="bg-muted px-2 py-1 text-sm">{toolCall.id}</code>}
+            {open ? (
+              <ChevronUp className="text-muted-foreground size-4" />
+            ) : (
+              <ChevronDown className="text-muted-foreground size-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <ItemContent className="border-border min-w-0 gap-0 border-t px-4 py-2">
+            {hasArgs ? (
+              Object.entries(args).map(([key, value], argIdx) => <ArgRow key={argIdx} name={key} value={value} />)
+            ) : (
+              <code className="text-muted-foreground text-sm">{'{}'}</code>
+            )}
+          </ItemContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Item>
+  );
 }
 
 export function ToolCalls({ toolCalls }: { toolCalls: AIMessage['tool_calls'] }) {
   if (!toolCalls || toolCalls.length === 0) return null;
 
   return (
-    <div className="mx-auto grid max-w-3xl grid-rows-[1fr_auto] gap-2">
-      {toolCalls.map((tc, idx) => {
-        const args = tc.args as Record<string, any>;
-        const hasArgs = Object.keys(args).length > 0;
-        return (
-          <div key={idx} className="border-border overflow-hidden rounded-lg border">
-            <div className="border-border bg-muted/50 border-b px-4 py-2">
-              <h3 className="text-foreground font-medium">
-                {tc.name}
-                {tc.id && <code className="bg-muted ml-2 rounded px-2 py-1 text-sm">{tc.id}</code>}
-              </h3>
-            </div>
-            {hasArgs ? (
-              <table className="divide-border min-w-full divide-y">
-                <tbody className="divide-border divide-y">
-                  {Object.entries(args).map(([key, value], argIdx) => (
-                    <tr key={argIdx}>
-                      <td className="text-foreground px-4 py-2 text-sm font-medium whitespace-nowrap">{key}</td>
-                      <td className="text-muted-foreground px-4 py-2 text-sm">
-                        {isComplexValue(value) ? (
-                          <code className="bg-muted/50 rounded px-2 py-1 font-mono text-sm break-all">
-                            {JSON.stringify(value, null, 2)}
-                          </code>
-                        ) : (
-                          String(value)
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <code className="block p-3 text-sm">{'{}'}</code>
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <ItemGroup className="min-w-0 gap-2">
+      {toolCalls.map((tc, idx) => (
+        <ToolCallItem key={idx} toolCall={tc} />
+      ))}
+    </ItemGroup>
   );
 }
 
 export function ToolResult({ message }: { message: ToolMessage }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
 
   let parsedContent: any;
   let isJsonContent = false;
@@ -70,94 +91,40 @@ export function ToolResult({ message }: { message: ToolMessage }) {
   }
 
   const contentStr = isJsonContent ? JSON.stringify(parsedContent, null, 2) : String(message.content);
-  const contentLines = contentStr.split('\n');
-  const shouldTruncate = contentLines.length > 4 || contentStr.length > 500;
-  const displayedContent =
-    shouldTruncate && !isExpanded
-      ? contentStr.length > 500
-        ? contentStr.slice(0, 500) + '...'
-        : contentLines.slice(0, 4).join('\n') + '\n...'
-      : contentStr;
+  const isArray = isJsonContent && Array.isArray(parsedContent);
+
+  const rows = isArray
+    ? (parsedContent as any[]).map((value, argIdx) => <ArgRow key={argIdx} name={argIdx} value={value} />)
+    : Object.entries(parsedContent).map(([key, value], argIdx) => <ArgRow key={argIdx} name={key} value={value} />);
 
   return (
-    <div className="mx-auto grid max-w-3xl grid-rows-[1fr_auto] gap-2">
-      <div className="border-border overflow-hidden rounded-lg border">
-        <div className="border-border bg-muted/50 border-b px-4 py-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {message.name ? (
-              <h3 className="text-foreground font-medium">
-                Tool Result: <code className="bg-muted rounded px-2 py-1">{message.name}</code>
-              </h3>
+    <Item variant="outline" className="min-w-0 flex-col items-stretch p-0">
+      <Collapsible className="min-w-0" open={open} onOpenChange={setOpen}>
+        {/* Like a tool call, the result reads as a single line until opened. */}
+        <CollapsibleTrigger className="hover:bg-muted/50 data-[panel-open]:bg-muted/50 flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left transition-colors">
+          <span className="text-foreground min-w-0 flex-1 truncate font-medium">
+            Tool Result{message.name ? ': ' : ''}
+            {message.name && <code className="bg-muted px-2 py-1">{message.name}</code>}
+          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            {message.tool_call_id && <code className="bg-muted px-2 py-1 text-sm">{message.tool_call_id}</code>}
+            {open ? (
+              <ChevronUp className="text-muted-foreground size-4" />
             ) : (
-              <h3 className="text-foreground font-medium">Tool Result</h3>
-            )}
-            {message.tool_call_id && (
-              <code className="bg-muted ml-2 rounded px-2 py-1 text-sm">{message.tool_call_id}</code>
+              <ChevronDown className="text-muted-foreground size-4" />
             )}
           </div>
-        </div>
-        <motion.div
-          className="bg-muted min-w-full"
-          initial={false}
-          animate={{ height: 'auto' }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="p-3">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={isExpanded ? 'expanded' : 'collapsed'}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {isJsonContent ? (
-                  <table className="divide-border min-w-full divide-y">
-                    <tbody className="divide-border divide-y">
-                      {(Array.isArray(parsedContent)
-                        ? isExpanded
-                          ? parsedContent
-                          : parsedContent.slice(0, 5)
-                        : Object.entries(parsedContent)
-                      ).map((item, argIdx) => {
-                        const [key, value] = Array.isArray(parsedContent) ? [argIdx, item] : [item[0], item[1]];
-                        return (
-                          <tr key={argIdx}>
-                            <td className="text-foreground px-4 py-2 text-sm font-medium whitespace-nowrap">{key}</td>
-                            <td className="text-muted-foreground px-4 py-2 text-sm">
-                              {isComplexValue(value) ? (
-                                <code className="bg-muted/50 rounded px-2 py-1 font-mono text-sm break-all">
-                                  {JSON.stringify(value, null, 2)}
-                                </code>
-                              ) : (
-                                String(value)
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                ) : (
-                  <code className="block text-sm">{displayedContent}</code>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          {((shouldTruncate && !isJsonContent) ||
-            (isJsonContent && Array.isArray(parsedContent) && parsedContent.length > 5)) && (
-            <motion.button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground flex w-full cursor-pointer items-center justify-center border-t-[1px] py-2 transition-all duration-200 ease-in-out"
-              initial={{ scale: 1 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isExpanded ? <ChevronUp /> : <ChevronDown />}
-            </motion.button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          {isJsonContent ? (
+            <ItemContent className="border-border min-w-0 gap-0 border-t px-4 py-2">{rows}</ItemContent>
+          ) : (
+            <ItemContent className="bg-muted border-border min-w-0 border-t px-4 py-2">
+              <code className="text-foreground block text-sm break-all whitespace-pre-wrap">{contentStr}</code>
+            </ItemContent>
           )}
-        </motion.div>
-      </div>
-    </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </Item>
   );
 }

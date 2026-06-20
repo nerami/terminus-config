@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { TerminusLogoSVG } from './terminus';
+import { TerminusLogoSVG } from './terminus/terminus-logo';
 
 describe('TerminusLogoSVG', () => {
   it("renders an accessible 'terminus' wordmark", () => {
