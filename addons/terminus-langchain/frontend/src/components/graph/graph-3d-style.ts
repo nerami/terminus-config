@@ -78,7 +78,8 @@ export const KIND_ORDER: NodeKind[] = [
 
 export function sizeForKind(kind: NodeKind): number {
   if (kind === 'area') return 12;
-  if (kind === 'automation' || kind === 'scene') return 9;
+  if (kind === 'automation') return 9;
+  if (kind === 'scene') return 8;
   return 7;
 }
 

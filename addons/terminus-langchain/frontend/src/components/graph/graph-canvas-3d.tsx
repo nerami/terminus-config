@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 // reagraph renders labels in WebGL via troika-three-text, which needs a real
 // font *file* URL (it can't read CSS font-family, and can't parse the variable
@@ -8,10 +8,12 @@ import { useAtom } from 'jotai';
 import { useTheme } from 'next-themes';
 import {
   GraphCanvas,
+  type GraphCanvasRef,
   type GraphEdge,
   type GraphNode,
   Icon,
   type InternalGraphNode,
+  Label,
   type NodeRenderer,
   Ring,
   Sphere,
@@ -26,6 +28,19 @@ import { KIND_FILL, KIND_ICON_URI, KIND_ORDER, sizeForKind } from './graph-3d-st
 import { nodePositions3dAtom } from '@/lib/ha-graph/atoms';
 import { type GraphNodeData, type NodeKind } from '@/lib/ha-graph/build';
 import { useTopologyGraph } from '@/lib/ha-graph/use-topology-graph';
+
+// Icon glyph size as a fraction of the node sphere diameter (diameter = 2*size).
+const ICON_SCALE = 1.3;
+
+// reagraph hardcodes the node name to fontSize 7 with a fixed sub-label offset,
+// which overlaps on small nodes. We render our own labels (smaller, spaced) and
+// set labelType="edges" so reagraph only draws edge labels.
+const NAME_FONT_SIZE = 5;
+const META_FONT_SIZE = 4;
+
+// Wheel / pinch zoom speed. camera-controls defaults to 1; reagraph exposes no
+// prop, so we set it on the controls instance. Higher = faster zoom.
+const ZOOM_SPEED = 8;
 
 export function GraphCanvas3D() {
   const {
@@ -43,6 +58,20 @@ export function GraphCanvas3D() {
   const [positions, setPositions] = useAtom(nodePositions3dAtom);
   const { resolvedTheme } = useTheme();
   const theme = resolvedTheme === 'dark' ? darkTheme : lightTheme;
+
+  // Speed up wheel/pinch zoom. The camera-controls instance is created after
+  // mount, so retry on rAF until getControls() returns it, then bump dollySpeed.
+  const graphRef = useRef<GraphCanvasRef>(null);
+  useEffect(() => {
+    let raf = 0;
+    const apply = () => {
+      const controls = graphRef.current?.getControls();
+      if (controls) controls.dollySpeed = ZOOM_SPEED;
+      else raf = requestAnimationFrame(apply);
+    };
+    apply();
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   // Adapt the shared RFGraph into reagraph's node/edge shape. `group` nodes are
   // non-interactive section headers with no edges, so they're dropped (they'd
@@ -108,14 +137,17 @@ export function GraphCanvas3D() {
   }, [baseGraph]);
 
   // Custom node symbol: the colored sphere + a kind-colored billboard ring (so
-  // each kind reads as a visual family) + the white glyph. The ring turns into
-  // the selection/active highlight color when the node is selected or on the
-  // highlighted path, preserving the 2D highlight feedback.
+  // each kind reads as a visual family) + the white glyph, plus our own name and
+  // metadata labels (smaller and explicitly spaced to avoid overlap). The ring
+  // and labels switch to the highlight color when selected/on the active path.
   const renderNode = useCallback<NodeRenderer>(
     ({ active, animated, color, id, node, opacity, selected: sel, size }) => {
       const kind = (node.data as GraphNodeData).kind;
-      const ringColor = sel || active ? color : KIND_FILL[kind];
-      const ringOpacity = sel || active ? opacity : opacity * 0.55;
+      const hot = sel || active;
+      const ringColor = hot ? color : KIND_FILL[kind];
+      const ringOpacity = opacity * (hot ? 0.8 : 0.25);
+      const nameY = -(size + 4);
+      const metaY = nameY - (NAME_FONT_SIZE / 2 + META_FONT_SIZE / 2 + 1.5);
       return (
         <group>
           <Sphere
@@ -133,7 +165,9 @@ export function GraphCanvas3D() {
             <Icon
               id={id}
               image={node.icon}
-              size={size + 8}
+              // Sphere diameter is 2*size; ~0.65x of that reads as an inset glyph
+              // and scales with the node (unlike reagraph's default size + 8).
+              size={size * ICON_SCALE}
               opacity={opacity}
               animated={animated}
               color={color}
@@ -142,10 +176,37 @@ export function GraphCanvas3D() {
               selected={sel}
             />
           )}
+          <group position={[0, nameY, 0]}>
+            <Label
+              text={node.label ?? ''}
+              fontUrl={jetbrainsMonoUrl}
+              fontSize={NAME_FONT_SIZE}
+              color={hot ? theme.node.label.activeColor : theme.node.label.color}
+              stroke={theme.node.label.stroke}
+              opacity={opacity}
+              active={hot}
+            />
+          </group>
+          {node.subLabel && (
+            <group position={[0, metaY, 0]}>
+              <Label
+                text={node.subLabel}
+                fontUrl={jetbrainsMonoUrl}
+                fontSize={META_FONT_SIZE}
+                color={
+                  hot
+                    ? (theme.node.subLabel?.activeColor ?? color)
+                    : (theme.node.subLabel?.color ?? theme.node.label.color)
+                }
+                opacity={opacity}
+                active={hot}
+              />
+            </group>
+          )}
         </group>
       );
     },
-    [],
+    [theme],
   );
 
   const onNodeClick = useCallback(
@@ -167,13 +228,14 @@ export function GraphCanvas3D() {
   return (
     <div className="relative h-full w-full">
       <GraphCanvas
+        ref={graphRef}
         nodes={nodes}
         edges={edges}
         theme={theme}
         layoutType="forceDirected3d"
         cameraMode="rotate"
         edgeInterpolation="curved"
-        labelType="auto"
+        labelType="edges"
         labelFontUrl={jetbrainsMonoUrl}
         draggable
         actives={actives}
