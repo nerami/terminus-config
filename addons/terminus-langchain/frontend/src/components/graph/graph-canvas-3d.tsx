@@ -6,41 +6,26 @@ import { useCallback, useMemo } from 'react';
 import jetbrainsMonoUrl from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff?url';
 import { useAtom } from 'jotai';
 import { useTheme } from 'next-themes';
-import { GraphCanvas, type GraphEdge, type GraphNode, type InternalGraphNode, darkTheme, lightTheme } from 'reagraph';
+import {
+  GraphCanvas,
+  type GraphEdge,
+  type GraphNode,
+  Icon,
+  type InternalGraphNode,
+  type NodeRenderer,
+  Ring,
+  Sphere,
+  darkTheme,
+  lightTheme,
+} from 'reagraph';
 
 import { AutomationHint, CanvasSpinner } from './canvas-overlays';
+import { Graph3dLegend } from './graph-3d-legend';
+import { KIND_FILL, KIND_ICON_URI, KIND_ORDER, sizeForKind } from './graph-3d-style';
 
 import { nodePositions3dAtom } from '@/lib/ha-graph/atoms';
 import { type GraphNodeData, type NodeKind } from '@/lib/ha-graph/build';
 import { useTopologyGraph } from '@/lib/ha-graph/use-topology-graph';
-
-// Concrete hex palette keyed by node kind. The 2D view uses CSS custom
-// properties (var(--chart-*)) which three.js can't parse, so the 3D nodes use a
-// parallel fixed palette in the same spirit (areas warm, entities blue, scenes
-// violet, automations/triggers green, stops red).
-const KIND_FILL: Record<NodeKind, string> = {
-  area: '#f59e0b',
-  group: '#94a3b8',
-  entity: '#3b82f6',
-  scene: '#a855f7',
-  automation: '#22c55e',
-  trigger: '#22c55e',
-  condition: '#a855f7',
-  logic: '#94a3b8',
-  action: '#3b82f6',
-  choose: '#22c55e',
-  if: '#22c55e',
-  repeat: '#f59e0b',
-  parallel: '#f59e0b',
-  sequence: '#94a3b8',
-  stop: '#ef4444',
-};
-
-function sizeForKind(kind: NodeKind): number {
-  if (kind === 'area') return 12;
-  if (kind === 'automation' || kind === 'scene') return 9;
-  return 7;
-}
 
 export function GraphCanvas3D() {
   const {
@@ -74,6 +59,7 @@ export function GraphCanvas3D() {
           label: data.label,
           subLabel: data.sublabel,
           fill: KIND_FILL[data.kind],
+          icon: KIND_ICON_URI[data.kind],
           size: sizeForKind(data.kind),
           data,
           ...(pos ? { fx: pos.x, fy: pos.y, fz: pos.z } : {}),
@@ -114,6 +100,54 @@ export function GraphCanvas3D() {
 
   const selections = useMemo(() => (selected ? [selected] : []), [selected]);
 
+  // Kinds present in the current view, in a stable order, for the legend.
+  const legendKinds = useMemo(() => {
+    const present = new Set<NodeKind>();
+    for (const n of baseGraph.nodes) if (n.data.kind !== 'group') present.add(n.data.kind);
+    return KIND_ORDER.filter((k) => present.has(k));
+  }, [baseGraph]);
+
+  // Custom node symbol: the colored sphere + a kind-colored billboard ring (so
+  // each kind reads as a visual family) + the white glyph. The ring turns into
+  // the selection/active highlight color when the node is selected or on the
+  // highlighted path, preserving the 2D highlight feedback.
+  const renderNode = useCallback<NodeRenderer>(
+    ({ active, animated, color, id, node, opacity, selected: sel, size }) => {
+      const kind = (node.data as GraphNodeData).kind;
+      const ringColor = sel || active ? color : KIND_FILL[kind];
+      const ringOpacity = sel || active ? opacity : opacity * 0.55;
+      return (
+        <group>
+          <Sphere
+            id={id}
+            size={size}
+            opacity={opacity}
+            animated={animated}
+            color={color}
+            node={node}
+            active={active}
+            selected={sel}
+          />
+          <Ring color={ringColor} size={size} opacity={ringOpacity} animated={animated} />
+          {node.icon && (
+            <Icon
+              id={id}
+              image={node.icon}
+              size={size + 8}
+              opacity={opacity}
+              animated={animated}
+              color={color}
+              node={node}
+              active={active}
+              selected={sel}
+            />
+          )}
+        </group>
+      );
+    },
+    [],
+  );
+
   const onNodeClick = useCallback(
     (node: InternalGraphNode) => activate({ id: node.id, data: node.data as GraphNodeData }),
     [activate],
@@ -144,6 +178,7 @@ export function GraphCanvas3D() {
         draggable
         actives={actives}
         selections={selections}
+        renderNode={renderNode}
         onNodeClick={onNodeClick}
         onNodeDragged={onNodeDragged}
         onCanvasClick={clearSelection}
@@ -154,6 +189,7 @@ export function GraphCanvas3D() {
         <directionalLight position={[0, 5, 4]} intensity={1.5} />
         <directionalLight position={[-3, -2, -4]} intensity={0.4} />
       </GraphCanvas>
+      <Graph3dLegend kinds={legendKinds} />
       {showAutomationHint && <AutomationHint key={automationId} />}
       {automationLoading && <CanvasSpinner />}
     </div>
