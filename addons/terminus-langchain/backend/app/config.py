@@ -9,6 +9,7 @@ plus a long-lived access token.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +21,9 @@ DEFAULT_MODEL = "claude-sonnet-4-6"
 # Chat titles are tiny, throwaway generations, so they default to a cheaper,
 # faster model than the agent itself.
 DEFAULT_TITLE_MODEL = "claude-haiku-4-5"
+DEFAULT_RAG_URL = "http://local-terminus-rag:9000/mcp"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -31,6 +35,8 @@ class Settings:
     use_supervisor: bool
     auto_run_tools: bool = False
     title_model: str = DEFAULT_TITLE_MODEL
+    rag_url: str = DEFAULT_RAG_URL
+    rag_token: str | None = None
 
 
 def _as_bool(value: object) -> bool:
@@ -40,20 +46,39 @@ def _as_bool(value: object) -> bool:
     return str(value).strip().lower() in ("true", "1", "yes", "on")
 
 
+_WS_SCHEMES = ("https://", "http://", "wss://", "ws://")
+
+
 def _normalize_ws_url(raw: str) -> str:
-    """Turn any HA URL form into a ``ws(s)://host/api/websocket`` endpoint."""
-    url = raw.strip().rstrip("/")
+    """Turn any HA URL form into a ``ws(s)://host/api/websocket`` endpoint.
+
+    Scheme matching is case-insensitive; ``user:pass@`` credentials are
+    preserved. A scheme-only / empty input (no host) is logged (a misconfigured
+    dev URL) but still returns a string rather than raising.
+    """
+    stripped = raw.strip()
+    # Detect "no host" BEFORE slash-stripping (which would collapse ``https://``
+    # into ``https:`` and make the host indistinguishable from a real one).
+    no_host = stripped == "" or stripped.lower() in _WS_SCHEMES
+
+    url = stripped.rstrip("/")
     if url.endswith("/api/websocket"):
         url = url[: -len("/api/websocket")]
 
-    if url.startswith("https://"):
+    lower = url.lower()
+    if lower.startswith("https://"):
         base = "wss://" + url[len("https://") :]
-    elif url.startswith("http://"):
+    elif lower.startswith("http://"):
         base = "ws://" + url[len("http://") :]
-    elif url.startswith(("ws://", "wss://")):
-        base = url
+    elif lower.startswith("wss://"):
+        base = "wss://" + url[len("wss://") :]
+    elif lower.startswith("ws://"):
+        base = "ws://" + url[len("ws://") :]
     else:
         base = "ws://" + url
+
+    if no_host:
+        logger.warning("ws url has no host: %r", raw)
 
     return base + "/api/websocket"
 
@@ -72,17 +97,27 @@ def rest_target(settings: "Settings") -> tuple[str | None, str | None]:
     base = settings.ws_url
     if base.endswith("/api/websocket"):
         base = base[: -len("/api/websocket")]
-    if base.startswith("wss://"):
+    lower = base.lower()
+    if lower.startswith("wss://"):
         base = "https://" + base[len("wss://") :]
-    elif base.startswith("ws://"):
+    elif lower.startswith("ws://"):
         base = "http://" + base[len("ws://") :]
     return base, settings.ha_token
 
 
 def load_options(path: Path = OPTIONS_PATH) -> dict:
+    """Load add-on options from ``/data/options.json``.
+
+    A missing file is expected (dev / first run) and silent. A present-but-
+    unparseable file is a real misconfiguration and is logged before degrading
+    to ``{}``.
+    """
     try:
         return json.loads(path.read_text())
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
+    except FileNotFoundError:
+        return {}
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("failed to parse options at %s: %s", path, exc)
         return {}
 
 
@@ -109,6 +144,14 @@ def load_settings(
         else env.get("AUTO_RUN_TOOLS", "")
     )
 
+    rag_url = str(
+        options.get("rag_url") or env.get("RAG_URL") or DEFAULT_RAG_URL
+    )
+    rag_token_raw = (
+        options.get("rag_token") or env.get("RAG_TOKEN") or None
+    )
+    rag_token = str(rag_token_raw) if rag_token_raw else None
+
     supervisor_token = env.get("SUPERVISOR_TOKEN")
     if supervisor_token:
         return Settings(
@@ -119,6 +162,8 @@ def load_settings(
             use_supervisor=True,
             auto_run_tools=auto_run_tools,
             title_model=title_model,
+            rag_url=rag_url,
+            rag_token=rag_token,
         )
 
     raw_url = str(
@@ -138,4 +183,28 @@ def load_settings(
         use_supervisor=False,
         auto_run_tools=auto_run_tools,
         title_model=title_model,
+        rag_url=rag_url,
+        rag_token=rag_token,
     )
+
+
+# Add-on options live in /data/options.json and only change on add-on
+# restart, so a process-lifetime cache of the resolved Settings is safe.
+# Tools/agent call get_settings() for the cached value; tests (and any code
+# that needs a fresh read) call reset_settings_cache() first. Changing options
+# in the UI requires an add-on restart/rebuild to take effect — documented.
+_SETTINGS_CACHE: Settings | None = None
+
+
+def get_settings() -> Settings:
+    """Return the process-cached Settings, loading once on first call."""
+    global _SETTINGS_CACHE
+    if _SETTINGS_CACHE is None:
+        _SETTINGS_CACHE = load_settings()
+    return _SETTINGS_CACHE
+
+
+def reset_settings_cache() -> None:
+    """Clear the cached Settings (process restart equivalent; test hook)."""
+    global _SETTINGS_CACHE
+    _SETTINGS_CACHE = None

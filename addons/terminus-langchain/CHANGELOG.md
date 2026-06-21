@@ -4,6 +4,61 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.13.0
+
+- Mount terminus-rag's MCP knowledge tools into the agent: semantic search
+  (search_ha), full enumeration (list_records / list_kinds), exact lookup
+  (get_record), and on-demand history (get_automation_trace / get_logbook /
+  get_history). The agent can now discover what exists instead of relying on
+  the user to supply exact ids.
+- Add `rag_url` (default http://local-terminus-rag:9000/mcp) and `rag_token`
+  options for the terminus-rag connection.
+- Graceful degradation: if terminus-rag is unreachable, the agent keeps
+  actuation (run_scene / trigger_automation) and instance status
+  (ha_basic_info) and tells you knowledge tools are offline.
+
+## 0.12.0
+
+### Security & hardening — proxy & endpoints (Spec B)
+
+- **H1 — LangGraph proxy allowlist.** `/api/*` now forwards only the explicit
+  `(method, path)` pairs the frontend actually calls (thread create/get/update/
+  search/state/history; run stream/get/cancel/join/joinStream; `GET /info`).
+  Everything else — thread delete/prune/count, store, crons, assistants — is
+  rejected with `403` **before** any upstream call.
+- **H2 — request hygiene + bounded timeouts.** Forwarded requests now strip
+  `authorization`, `content-length`, `host`, `connection`, and other hop-by-hop
+  headers. The proxy `httpx.AsyncClient` replaces `timeout=None` with a bounded
+  `httpx.Timeout` (finite connect/read), so a wedged upstream can't pin a
+  connection forever.
+- **M1 — topology cache single-flight.** Concurrent `/ha/topology` misses now
+  run `fetch_topology` exactly once behind an `asyncio.Lock` instead of each
+  opening its own websocket and running the full 4-call + enrichment fetch.
+- **M2 — websocket command timeouts.** Each Home Assistant websocket command is
+  wrapped in `asyncio.wait_for` (raises `HARegistryError` on timeout instead of
+  hanging), and the per-automation enrichment loop is bounded by a wall-clock
+  budget so a slow Core can't stall the topology request indefinitely.
+
+## 0.11.0
+
+- **Observability:** the backend now logs to stdout (captured by
+  `ha apps logs local_terminus`) at every degradation point. A new `log_level`
+  add-on option (debug|info|warning|error, default info) sets the root level.
+- **P0 fix:** the agent tools (`ha_basic_info`, `run_scene`, `trigger_automation`)
+  now catch malformed-body (`json.JSONDecodeError`) and bad-URL
+  (`httpx.InvalidURL`) failures and return a structured error instead of
+  crashing the agent loop on the state-changing path.
+- **Empty ≠ failed:** an automation drill-down now propagates a real
+  websocket/auth failure as a 502 (surfaced in the UI) instead of returning an
+  empty-but-successful 200; the REST 404→trace→related fallback ladder is each
+  logged.
+- **Hardening:** `referenced_ids` recursion is depth-bounded; the topology area
+  sort tolerates non-string names; ws/REST URL parsing tolerates uppercase
+  schemes and credentials; a corrupt `/data/options.json` is now logged.
+- **Startup:** a missing `ANTHROPIC_API_KEY` now fails the agent graph with a
+  clear, logged error instead of opaque proxy 502s.
+- Python floor raised to `>=3.12` (matches the `3.12-alpine3.18` runtime).
+
 ## 0.10.0
 
 - The **3D topology** nodes are now kind-specific, slowly-rotating Platonic

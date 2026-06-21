@@ -7,6 +7,7 @@ by path by the LangGraph server.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -17,29 +18,65 @@ from langchain_core.messages import SystemMessage
 from langchain_anthropic import ChatAnthropic
 
 from app.config import load_settings
+from app.mcp_client import get_rag_tools
 from app.tools import ha_basic_info, run_scene, trigger_automation
 
-# The base prompt carries a ``{approval}`` slot so the approval sentence can match
-# the runtime: with auto-run on, the state-changing tools fire immediately, so the
-# prompt must not promise an approval pause that won't happen. _system_prompt()
-# fills the slot from the resolved ``auto_run`` flag in build_graph.
+logger = logging.getLogger(__name__)
+
+# The base prompt carries two runtime slots:
+#   {approval}  - the approval sentence matches auto_run (gated pause vs runs
+#                 immediately) so the prompt never promises a pause that won't
+#                 happen.
+#   {knowledge} - the knowledge-tools clause matches whether terminus-rag is
+#                 reachable: full discovery copy when available, a degraded
+#                 fallback when its tools are offline.
+# _system_prompt() fills both slots from the resolved flags in build_graph.
 _BASE_PROMPT = (
     "You are TERMINUS, a friendly process running inside a Home Assistant smart "
     "home. You speak plainly and keep things calm - terse, but never cold. You "
     "never overpromise.\n\n"
-    "Available operations - three, no more:\n"
+    "Your local operations (always available):\n"
     "  ha_basic_info        read instance metadata (version, config, entity counts)\n"
     "  run_scene            activate a scene by scene.* id\n"
     "  trigger_automation   execute an automation by automation.* id\n\n"
-    "That's the whole toolbox. You can't dim a single lamp, read a sensor, or "
-    "list what exists - when someone asks for that, just let them know it's out "
-    "of reach, no fuss.\n\n"
-    "For questions about the home, query ha_basic_info and answer from its JSON. "
-    "To set a mood, run_scene with a scene.* id; to kick off a routine, "
-    "trigger_automation with an automation.* id. You don't fabricate ids - if the "
-    "target is ambiguous, ask which one they mean before executing. {approval}\n\n"
+    "{knowledge}\n\n"
+    "For questions about the instance itself (version, counts, config), query "
+    "ha_basic_info and answer from its JSON. To set a mood, run_scene with a "
+    "scene.* id; to kick off a routine, trigger_automation with an automation.* "
+    "id. {approval}\n\n"
     "If a tool returns an error, report it plainly and kindly; never claim a "
     "success you didn't receive. Keep output minimal and human."
+)
+
+# Knowledge-tools clause when terminus-rag is reachable: advertise discovery,
+# enumeration, exact lookup and history; instruct discover-before-act.
+_KNOWLEDGE_AVAILABLE = (
+    "Knowledge tools (from the home's shared index) - use these to find and "
+    "inspect what exists:\n"
+    "  search_ha            semantically find entities/scenes/automations/etc. "
+    "by description (e.g. 'the bedroom lamp')\n"
+    "  list_records         enumerate everything of a kind (every scene, every "
+    "automation, ...)\n"
+    "  list_kinds           what kinds are indexed, with counts\n"
+    "  get_record           full details for one id once you know it\n"
+    "  get_automation_trace why an automation did or didn't fire (latest trace)\n"
+    "  get_logbook          human-readable 'what happened' events in a time range\n"
+    "  get_history          state history for an entity in a time range\n"
+    "Discover before you act: when a target id is unknown or ambiguous, call "
+    "search_ha or list_records to find it rather than guessing or fabricating "
+    "an id. If several candidates match, confirm which one the user means "
+    "before running anything. To answer 'what happened' or 'why didn't X fire', "
+    "use get_automation_trace / get_logbook / get_history - and say plainly when "
+    "Home Assistant's retention window doesn't cover the period asked about."
+)
+
+# Degraded clause when terminus-rag is offline: no discovery; ask for exact ids.
+_KNOWLEDGE_DEGRADED = (
+    "Knowledge tools (search, enumeration, history) are currently offline, so "
+    "you can't look up or list what exists right now. When a target is unknown, "
+    "ask the user for the exact ids (scene.* / automation.*) rather than guessing. "
+    "Instance status (ha_basic_info) and actions (run_scene, trigger_automation) "
+    "still work."
 )
 
 _APPROVAL_GATED = (
@@ -59,10 +96,15 @@ _TOPOLOGY_FRAME = (
 )
 
 
-def _system_prompt(auto_run: bool) -> str:
-    """Render the base prompt with the approval clause matching ``auto_run``."""
+def _system_prompt(auto_run: bool, rag_available: bool = True) -> str:
+    """Render the base prompt with the approval and knowledge clauses.
+
+    ``auto_run`` selects the approval sentence; ``rag_available`` selects the
+    knowledge-tools clause (full discovery vs degraded fallback).
+    """
     return _BASE_PROMPT.format(
-        approval=_APPROVAL_AUTO if auto_run else _APPROVAL_GATED
+        approval=_APPROVAL_AUTO if auto_run else _APPROVAL_GATED,
+        knowledge=_KNOWLEDGE_AVAILABLE if rag_available else _KNOWLEDGE_DEGRADED,
     )
 
 # Scene activation and automation triggers mutate the real home, so they are
@@ -119,22 +161,40 @@ def build_graph(
     *,
     checkpointer=None,
     auto_run: Optional[bool] = None,
+    rag_tools=None,
 ):
     settings = load_settings()
     if model is None:
+        if not settings.anthropic_api_key:
+            logger.error(
+                "ANTHROPIC_API_KEY is not configured; the agent graph cannot "
+                "build a model. Set the add-on's anthropic_api_key option."
+            )
+            raise RuntimeError("ANTHROPIC_API_KEY is not configured")
         model = ChatAnthropic(model=settings.model)
     # When auto-run is enabled (add-on option), state-changing tools run without
     # the human approval interrupt; otherwise they require approval.
     if auto_run is None:
         auto_run = settings.auto_run_tools
+
+    # Mount the terminus-rag knowledge tools beside the local three. Loading is
+    # best-effort and cached across turns; on any failure get_rag_tools returns
+    # [] and the agent runs in degraded mode (local actuation + status only).
+    if rag_tools is None:
+        rag_tools = get_rag_tools()
+    rag_available = bool(rag_tools)
+    tools = [ha_basic_info, run_scene, trigger_automation, *rag_tools]
+
     # Topology context is injected for every turn; approval is gated by auto_run.
+    # The RAG tools are read-only and are deliberately NOT listed in the approval
+    # interrupt, so only run_scene/trigger_automation ever pause for sign-off.
     middleware: list[AgentMiddleware] = [TopologyContextMiddleware()]
     if not auto_run:
         middleware.append(_APPROVAL_MIDDLEWARE)
     return create_agent(
         model,
-        tools=[ha_basic_info, run_scene, trigger_automation],
-        system_prompt=_system_prompt(auto_run),
+        tools=tools,
+        system_prompt=_system_prompt(auto_run, rag_available),
         middleware=middleware,
         context_schema=AgentContext,
         checkpointer=checkpointer,

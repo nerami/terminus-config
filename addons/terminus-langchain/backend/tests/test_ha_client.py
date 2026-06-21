@@ -1,4 +1,5 @@
 import json
+import logging
 
 import pytest
 
@@ -138,3 +139,36 @@ def test_status_shape_before_connect():
         "error": None,
         "url": "ws://x",
     }
+
+
+async def test_run_forever_logs_auth_failure(caplog):
+    # auth_required then auth_invalid => HAAuthError. The connect callback stops
+    # the client during the first attempt, so the loop runs exactly once.
+    ws = FakeWS([{"type": "auth_required"}, {"type": "auth_invalid"}])
+    holder = {}
+
+    def connect(url):
+        holder["client"].stop()
+        return fake_connect(ws)(url)
+
+    client = HAClient("ws://x", "token", connect, reconnect_delay=0.0)
+    holder["client"] = client
+    with caplog.at_level(logging.ERROR, logger="app.ha_client"):
+        await client.run_forever()
+    assert any("auth failed" in r.message for r in caplog.records)
+
+
+async def test_run_forever_logs_transport_failure(caplog):
+    # connect() raises a transport error => generic except arm. It also stops the
+    # client so the loop runs exactly once.
+    holder = {}
+
+    def connect(url):
+        holder["client"].stop()
+        raise ConnectionError("refused")
+
+    client = HAClient("ws://x", "token", connect, reconnect_delay=0.0)
+    holder["client"] = client
+    with caplog.at_level(logging.WARNING, logger="app.ha_client"):
+        await client.run_forever()
+    assert any("connection error" in r.message for r in caplog.records)

@@ -1,4 +1,5 @@
 import json
+import logging
 
 import httpx
 
@@ -211,3 +212,44 @@ def test_run_scene_handles_http_error(monkeypatch):
     monkeypatch.setattr(tools, "call_service", boom)
     payload = json.loads(run_scene.invoke({"scene_id": "scene.evening"}))
     assert "unreachable" in payload["error"].lower()
+
+
+def test_run_scene_handles_decode_error(monkeypatch, caplog):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+
+    def boom(*args, **kwargs):
+        raise json.JSONDecodeError("bad", "", 0)
+
+    monkeypatch.setattr(tools, "call_service", boom)
+    with caplog.at_level(logging.WARNING, logger="app.tools"):
+        payload = json.loads(run_scene.invoke({"scene_id": "scene.evening"}))
+    assert "error" in payload
+    assert any("run_scene" in r.message for r in caplog.records)
+
+
+def test_trigger_automation_handles_invalid_url(monkeypatch, caplog):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+
+    def boom(*args, **kwargs):
+        raise httpx.InvalidURL("bad url")
+
+    monkeypatch.setattr(tools, "call_service", boom)
+    with caplog.at_level(logging.WARNING, logger="app.tools"):
+        payload = json.loads(
+            trigger_automation.invoke({"automation_id": "automation.night"})
+        )
+    assert "error" in payload
+    assert any("trigger_automation" in r.message for r in caplog.records)
+
+
+def test_ha_basic_info_handles_decode_error(monkeypatch, caplog):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+
+    def boom(*args, **kwargs):
+        raise json.JSONDecodeError("bad", "", 0)
+
+    monkeypatch.setattr(tools, "fetch_basic_info", boom)
+    with caplog.at_level(logging.WARNING, logger="app.tools"):
+        payload = json.loads(ha_basic_info.invoke({}))
+    assert "error" in payload
+    assert any("ha_basic_info" in r.message for r in caplog.records)

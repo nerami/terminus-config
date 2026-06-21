@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 import httpx
 from langchain_core.tools import tool
@@ -10,7 +11,10 @@ from langchain_core.tools import tool
 from .config import load_settings, rest_target
 from .ha_client import extract_basic_info
 
+logger = logging.getLogger(__name__)
+
 _TIMEOUT = 10.0
+_TOOL_ERRORS = (httpx.HTTPError, httpx.InvalidURL, json.JSONDecodeError)
 
 
 def fetch_basic_info(
@@ -65,7 +69,8 @@ def ha_basic_info() -> str:
         return json.dumps({"error": "Home Assistant connection not configured"})
     try:
         info = fetch_basic_info(base, token)
-    except httpx.HTTPError as exc:
+    except _TOOL_ERRORS as exc:
+        logger.warning("tool ha_basic_info failed: %s", exc)
         return json.dumps({"error": f"Home Assistant unreachable: {exc}"})
     return json.dumps(info)
 
@@ -89,7 +94,8 @@ def run_scene(scene_id: str) -> str:
         return json.dumps({"error": "Home Assistant connection not configured"})
     try:
         call_service(base, token, "scene", "turn_on", {"entity_id": scene_id})
-    except httpx.HTTPError as exc:
+    except _TOOL_ERRORS as exc:
+        logger.warning("tool run_scene failed: %s", exc)
         return json.dumps({"error": f"Home Assistant unreachable: {exc}"})
     return json.dumps({"success": True, "scene": scene_id})
 
@@ -121,6 +127,7 @@ def trigger_automation(automation_id: str) -> str:
         call_service(
             base, token, "automation", "trigger", {"entity_id": automation_id}
         )
-    except httpx.HTTPError as exc:
+    except _TOOL_ERRORS as exc:
+        logger.warning("tool trigger_automation failed: %s", exc)
         return json.dumps({"error": f"Home Assistant unreachable: {exc}"})
     return json.dumps({"success": True, "automation": automation_id})

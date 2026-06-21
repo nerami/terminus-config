@@ -11,7 +11,9 @@ Responsibilities:
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -25,10 +27,25 @@ from starlette.background import BackgroundTask
 
 from .config import Settings, load_settings
 from .ha_client import HAClient
+from .logging_setup import configure_logging
 from . import ha_registry
+
+logger = logging.getLogger(__name__)
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 LANGGRAPH_URL = os.environ.get("LANGGRAPH_URL", "http://127.0.0.1:2025")
+
+# Bounded proxy timeouts (H2). A wedged upstream must not pin a connection
+# forever. ``read`` is the per-chunk inactivity bound: generous enough for a
+# slow LLM token stream, finite so an SSE stream that goes silent eventually
+# raises httpx.ReadTimeout instead of hanging.
+_PROXY_TIMEOUT = httpx.Timeout(
+    None,  # default (overridden below per-phase)
+    connect=10.0,
+    read=120.0,
+    write=30.0,
+    pool=10.0,
+)
 
 # Response headers managed by StreamingResponse / the transport itself.
 _HOP_BY_HOP = {
@@ -38,6 +55,63 @@ _HOP_BY_HOP = {
     "connection",
     "keep-alive",
 }
+
+# Request headers we never forward upstream (H2): the caller's HA-ingress
+# auth must not reach the langgraph dev server, and hop-by-hop headers must
+# not let a client desync/inject on the upstream connection. httpx recomputes
+# content-length from the body it actually sends.
+# Headers stripped above that httpx re-adds correctly and must be kept for the
+# upstream request (host and content-length are recomputed by httpx).
+_REQUEST_KEEP_HEADERS = ("host", "content-length")
+_REQUEST_STRIP_HEADERS = frozenset(
+    {
+        "host",
+        "authorization",
+        "proxy-authorization",
+        "content-length",
+        "connection",
+        "keep-alive",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+    }
+)
+
+# --- LangGraph proxy allowlist (H1) --------------------------------------
+# Exactly the (method, path) pairs the frontend SDK calls, derived from
+# frontend/src/providers/{thread,stream}.tsx + the bundled
+# @langchain/langgraph-sdk client. Paths are matched AFTER the "/api" prefix
+# is stripped. Anything not listed is rejected (403) BEFORE any upstream call,
+# so thread enumeration/deletion, store, and cron admin surfaces stay closed.
+# {id} segments are opaque url-safe tokens (no slash).
+_ID = r"[^/\s]+"
+_PROXY_ALLOWLIST: tuple[tuple[str, "re.Pattern[str]"], ...] = (
+    ("GET", re.compile(r"^/info$")),
+    ("POST", re.compile(r"^/threads$")),
+    ("POST", re.compile(r"^/threads/search$")),
+    ("GET", re.compile(rf"^/threads/{_ID}$")),
+    ("PATCH", re.compile(rf"^/threads/{_ID}$")),
+    ("GET", re.compile(rf"^/threads/{_ID}/state$")),
+    ("POST", re.compile(rf"^/threads/{_ID}/history$")),
+    ("POST", re.compile(rf"^/threads/{_ID}/runs/stream$")),
+    ("GET", re.compile(rf"^/threads/{_ID}/runs/{_ID}$")),
+    ("POST", re.compile(rf"^/threads/{_ID}/runs/{_ID}/cancel$")),
+    ("GET", re.compile(rf"^/threads/{_ID}/runs/{_ID}/join$")),
+    ("GET", re.compile(rf"^/threads/{_ID}/runs/{_ID}/stream$")),
+)
+
+
+def _is_allowed(method: str, path: str) -> bool:
+    """True iff (method, path) is in the proxy allowlist.
+
+    ``path`` is the proxy's captured ``{path:path}`` (no leading slash); we
+    normalize to a single leading slash before matching.
+    """
+    norm = "/" + path.lstrip("/")
+    method = method.upper()
+    return any(m == method and pat.match(norm) for m, pat in _PROXY_ALLOWLIST)
+
 
 _NOT_CONFIGURED = {
     "status": "disconnected",
@@ -76,6 +150,7 @@ def create_app(
     ha_rest_transport: Optional[httpx.BaseTransport] = None,
     title_chain=None,
 ) -> FastAPI:
+    configure_logging()
     settings = settings or load_settings()
     registry_connect = registry_connect or _ws_connect
 
@@ -86,8 +161,9 @@ def create_app(
             ha = HAClient(settings.ws_url, settings.ha_token, _ws_connect)
         app.state.ha = ha
         app.state.topology_cache = None  # (monotonic_ts, data)
+        app.state.topology_lock = asyncio.Lock()
         app.state.http = httpx.AsyncClient(
-            base_url=LANGGRAPH_URL, transport=proxy_transport, timeout=None
+            base_url=LANGGRAPH_URL, transport=proxy_transport, timeout=_PROXY_TIMEOUT
         )
         task = asyncio.create_task(ha.run_forever()) if ha is not None else None
         try:
@@ -118,17 +194,31 @@ def create_app(
     async def ha_topology():
         if not settings.ws_url:
             return JSONResponse(_NOT_CONFIGURED_ERROR, status_code=503)
-        cached = getattr(app.state, "topology_cache", None)
-        if cached is not None and (time.monotonic() - cached[0]) < _TOPOLOGY_TTL:
-            return JSONResponse(cached[1])
-        try:
-            data = await ha_registry.fetch_topology(settings, registry_connect)
-        except Exception as exc:  # noqa: BLE001 - surface as a 502 to the UI
-            return JSONResponse(
-                {"error": f"{type(exc).__name__}: {exc}"}, status_code=502
-            )
-        app.state.topology_cache = (time.monotonic(), data)
-        return JSONResponse(data)
+
+        def _fresh_cache():
+            cached = getattr(app.state, "topology_cache", None)
+            if cached is not None and (time.monotonic() - cached[0]) < _TOPOLOGY_TTL:
+                return cached[1]
+            return None
+
+        hit = _fresh_cache()
+        if hit is not None:
+            return JSONResponse(hit)
+
+        # Cache miss: single-flight so concurrent misses don't each run the
+        # expensive 4-call + per-automation fetch and open N websockets (M1).
+        async with app.state.topology_lock:
+            hit = _fresh_cache()  # another waiter may have populated it
+            if hit is not None:
+                return JSONResponse(hit)
+            try:
+                data = await ha_registry.fetch_topology(settings, registry_connect)
+            except Exception as exc:  # noqa: BLE001 - surface as a 502 to the UI
+                return JSONResponse(
+                    {"error": f"{type(exc).__name__}: {exc}"}, status_code=502
+                )
+            app.state.topology_cache = (time.monotonic(), data)
+            return JSONResponse(data)
 
     @app.get("/ha/automation/{numeric_id}")
     async def ha_automation(numeric_id: str, entity_id: Optional[str] = None):
@@ -180,11 +270,19 @@ def create_app(
         """Reverse-proxy LangGraph SDK calls to the local langgraph server.
 
         Strips the ``/api`` prefix and streams the response so SSE run streams
-        flow through unbuffered.
+        flow through unbuffered. Only the explicit ``_PROXY_ALLOWLIST`` of
+        (method, path) pairs the frontend uses is forwarded; everything else is
+        rejected here, before any upstream contact.
         """
+        if not _is_allowed(request.method, path):
+            return JSONResponse(
+                {"error": "not allowed"}, status_code=403
+            )
         client_http: httpx.AsyncClient = app.state.http
         headers = {
-            k: v for k, v in request.headers.items() if k.lower() != "host"
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() not in _REQUEST_STRIP_HEADERS
         }
         upstream = client_http.build_request(
             request.method,
@@ -193,6 +291,12 @@ def create_app(
             headers=headers,
             content=await request.body(),
         )
+        # httpx re-adds some hop-by-hop headers (e.g. connection) plus the correct
+        # upstream host and a recomputed content-length. Strip the hop-by-hop ones
+        # it added, but KEEP the host and content-length httpx set for the upstream.
+        for stripped_header in _REQUEST_STRIP_HEADERS:
+            if stripped_header not in _REQUEST_KEEP_HEADERS and stripped_header in upstream.headers:
+                del upstream.headers[stripped_header]
         resp = await client_http.send(upstream, stream=True)
         out_headers = {
             k: v

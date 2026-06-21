@@ -263,3 +263,77 @@ def test_automation_returns_config_and_refs():
         body = resp.json()
         assert body["config"]["alias"] == "Test"
         assert body["referenced"]["entities"] == ["light.lamp"]
+
+
+# ---------------------------------------------------------------------------
+# M1 — single-flight concurrency tests
+# ---------------------------------------------------------------------------
+
+from httpx import ASGITransport, AsyncClient  # noqa: E402
+
+
+def _counting_connect(incoming, counter, delay=0.05):
+    """A registry connect fn that records each open and stalls briefly,
+    widening the window for a cache stampede."""
+
+    def _connect(url):
+        counter["opens"] += 1
+
+        class _CM:
+            async def __aenter__(self):
+                await asyncio.sleep(delay)
+                return _FakeWS(list(incoming))
+
+            async def __aexit__(self, *exc):
+                return False
+
+        return _CM()
+
+    return _connect
+
+
+_TOPO_INCOMING = [
+    {"type": "auth_required"},
+    {"type": "auth_ok"},
+    {"id": 1, "type": "result", "success": True,
+     "result": [{"area_id": "kitchen", "name": "Kitchen"}]},
+    {"id": 2, "type": "result", "success": True, "result": []},
+    {"id": 3, "type": "result", "success": True,
+     "result": [{"entity_id": "light.kitchen", "area_id": "kitchen"}]},
+    {"id": 4, "type": "result", "success": True,
+     "result": [{"entity_id": "light.kitchen", "attributes": {"friendly_name": "K"}}]},
+]
+
+
+async def test_topology_single_flight_under_concurrent_misses():
+    counter = {"opens": 0}
+    app = create_app(
+        settings=_settings("ws://x"),
+        client=StubHA({"status": "connected"}),
+        registry_connect=_counting_connect(_TOPO_INCOMING, counter),
+    )
+    transport = ASGITransport(app=app)
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(transport=transport, base_url="http://t") as ac:
+            r1, r2 = await asyncio.gather(
+                ac.get("/ha/topology"), ac.get("/ha/topology")
+            )
+    assert r1.status_code == 200 and r2.status_code == 200
+    assert r1.json() == r2.json()
+    # The whole point of M1: concurrent misses fetch exactly once.
+    assert counter["opens"] == 1
+
+
+async def test_topology_hit_within_ttl_does_not_refetch():
+    counter = {"opens": 0}
+    app = create_app(
+        settings=_settings("ws://x"),
+        client=StubHA({"status": "connected"}),
+        registry_connect=_counting_connect(_TOPO_INCOMING, counter, delay=0.0),
+    )
+    transport = ASGITransport(app=app)
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(transport=transport, base_url="http://t") as ac:
+            await ac.get("/ha/topology")  # miss -> fetch
+            await ac.get("/ha/topology")  # hit within TTL -> no fetch
+    assert counter["opens"] == 1

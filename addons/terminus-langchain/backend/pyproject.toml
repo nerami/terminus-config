@@ -5,7 +5,7 @@ name = "terminus-langchain"
 # pip-install cache layer on every version bump. Do not sync it to config.yaml.
 version = "0.0.0"
 description = "Terminus LangChain Home Assistant add-on backend"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
@@ -14,6 +14,7 @@ dependencies = [
     "langchain>=1.0",
     "langgraph>=1.0",
     "langchain-anthropic>=1.0",
+    "langchain-mcp-adapters>=0.1",
 ]
 
 [project.optional-dependencies]
@@ -35,3 +36,7 @@ include = ["app*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = "-m 'not slow'"
+markers = [
+    "slow: opt-in slow/integration tests (real MCP server); deselected by default",
+]

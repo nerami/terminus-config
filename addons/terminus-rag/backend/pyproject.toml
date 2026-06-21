@@ -1,0 +1,39 @@
+[project]
+name = "terminus-rag"
+# Static placeholder. The add-on's real version lives in config.yaml (the only one
+# bumped on release); keeping this constant avoids busting the Docker pip-install
+# cache layer on every version bump. Do not sync it to config.yaml.
+version = "0.0.0"
+description = "Terminus RAG Home Assistant add-on backend"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.12,<2",
+    "fastembed>=0.4",
+    "numpy>=1.26",
+    "httpx>=0.28",
+    "websockets>=14",
+    "uvicorn[standard]>=0.34",
+    "starlette>=0.40",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-m 'not slow'"
+markers = [
+    "slow: opt-in tests that download/run the real fastembed model",
+]

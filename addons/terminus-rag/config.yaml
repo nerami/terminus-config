@@ -1,0 +1,29 @@
+name: Terminus RAG
+# Canonical add-on version — the ONLY version bumped on release. backend/pyproject.toml
+# is intentionally pinned to "0.0.0" to preserve the Docker pip dependency-layer cache.
+version: "0.1.0"
+slug: terminus_rag
+description: HA knowledge MCP server — semantic search + enumeration + history over the registry.
+arch:
+  - aarch64
+  - amd64
+init: false
+homeassistant_api: true
+boot: auto
+startup: application
+options:
+  api_token: ""
+  refresh_interval: 600
+  embed_model: BAAI/bge-small-en-v1.5
+  top_k_default: 10
+  log_level: info
+  ha_url: ""
+  ha_token: ""
+schema:
+  api_token: password?
+  refresh_interval: int
+  embed_model: str
+  top_k_default: int
+  log_level: list(debug|info|warning|error)
+  ha_url: str?
+  ha_token: password?

@@ -31,3 +31,18 @@ configuration:
     description: >-
       When enabled, scene and automation actions run without the manual approval
       prompt. Leave off to review each action before it changes your home.
+  rag_url:
+    name: Knowledge index URL (terminus-rag)
+    description: >-
+      MCP endpoint of the terminus-rag add-on that provides the home's
+      searchable knowledge index (entities, scenes, automations, history).
+      Defaults to the internal add-on host
+      http://local-terminus-rag:9000/mcp. If terminus-rag is not installed or
+      is unreachable, the agent runs in degraded mode (actuation and instance
+      status still work). Changing this requires an add-on restart.
+  rag_token:
+    name: Knowledge index token (terminus-rag)
+    description: >-
+      Optional bearer token sent to terminus-rag when its api_token option is
+      set. Leave blank when terminus-rag has no token configured. Changing this
+      requires an add-on restart.

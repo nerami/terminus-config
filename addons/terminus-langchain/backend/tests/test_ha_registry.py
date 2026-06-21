@@ -1,11 +1,16 @@
+import asyncio
 import json
+import logging
+import time
 
 import httpx
 import pytest
 
+from app import ha_registry
 from app.config import Settings
 from app.ha_registry import (
     HARegistryError,
+    _command,
     build_topology,
     fetch_automation,
     fetch_topology,
@@ -320,3 +325,248 @@ async def test_fetch_automation_falls_back_to_related_when_no_traces():
     assert result["config"] == {}
     assert result["referenced"]["entities"] == ["light.lamp"]
     assert result["referenced"]["scenes"] == ["scene.movie"]
+
+
+async def test_fetch_automation_propagates_ws_auth_failure():
+    # REST 404s, then the websocket auth is rejected. That is a *real* failure
+    # and must propagate (so web.py returns 502), not return empty-200.
+    ws = FakeWS([{"type": "auth_required"}, {"type": "auth_invalid"}])
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404)
+
+    with pytest.raises(HARegistryError):
+        await fetch_automation(
+            _settings(),
+            "1771085036395",
+            fake_connect(ws),
+            entity_id="automation.night",
+            transport=httpx.MockTransport(handler),
+        )
+
+
+async def test_fetch_automation_logs_rest_fallback(caplog):
+    ws = FakeWS(
+        [
+            {"type": "auth_required"},
+            {"type": "auth_ok"},
+            {"id": 1, "type": "result", "success": True, "result": []},
+            {
+                "id": 3,
+                "type": "result",
+                "success": True,
+                "result": {"entity": ["light.lamp"]},
+            },
+        ]
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404)
+
+    with caplog.at_level(logging.INFO, logger="app.ha_registry"):
+        result = await fetch_automation(
+            _settings(),
+            "1771085036395",
+            fake_connect(ws),
+            entity_id="automation.night",
+            transport=httpx.MockTransport(handler),
+        )
+    assert result["referenced"]["entities"] == ["light.lamp"]
+    assert any("REST" in r.message or "trace" in r.message for r in caplog.records)
+
+
+async def test_fetch_topology_logs_enrichment_failure(caplog):
+    ws = FakeWS(
+        [
+            {"type": "auth_required"},
+            {"type": "auth_ok"},
+            {"id": 1, "type": "result", "success": True, "result": AREAS},
+            {"id": 2, "type": "result", "success": True, "result": DEVICES},
+            {"id": 3, "type": "result", "success": True, "result": ENTITIES},
+            {"id": 4, "type": "result", "success": True, "result": STATES},
+            {"id": 5, "type": "result", "success": False, "error": {"message": "nope"}},
+        ]
+    )
+    with caplog.at_level(logging.WARNING, logger="app.ha_registry"):
+        topo = await fetch_topology(_settings(), fake_connect(ws))
+    assert topo["automations"][0]["references"] == {
+        "entities": [],
+        "scenes": [],
+        "devices": [],
+    }
+    assert any("automation.night" in r.message for r in caplog.records)
+
+
+def test_referenced_ids_bounds_recursion(caplog):
+    # Build a config nested far deeper than the bound; it must not RecursionError.
+    node: dict = {"entity_id": "light.deep"}
+    for _ in range(5000):
+        node = {"nested": node}
+    with caplog.at_level(logging.WARNING, logger="app.ha_registry"):
+        refs = referenced_ids(node)
+    # Did not raise; bound was hit and logged.
+    assert isinstance(refs["entities"], list)
+    assert any("recursion bound" in r.message for r in caplog.records)
+
+
+def test_referenced_ids_shallow_config_unaffected():
+    config = {"trigger": [{"entity_id": "sun.sun"}]}
+    assert referenced_ids(config)["entities"] == ["sun.sun"]
+
+
+def test_build_topology_tolerates_non_str_area_name():
+    areas = [
+        {"area_id": "a1", "name": 12345},   # non-str name (malformed registry)
+        {"area_id": "a2", "name": "Bedroom"},
+    ]
+    topo = build_topology(areas, [], [], [])
+    names = {a["area_id"]: a["name"] for a in topo["areas"]}
+    assert names["a1"] == 12345        # value preserved as-is
+    assert names["a2"] == "Bedroom"
+    # sorted without raising; int coerces to "12345" < "bedroom"
+    assert [a["area_id"] for a in topo["areas"]] == ["a1", "a2"]
+
+
+async def test_fetch_automation_trace_without_config_degrades_to_related():
+    # REST 404s; a trace exists but its payload carries no `config`, so
+    # _latest_trace_config returns None and we fall to search/related.
+    ws = FakeWS(
+        [
+            {"type": "auth_required"},
+            {"type": "auth_ok"},
+            # trace/list (mid 1): one trace
+            {
+                "id": 1,
+                "type": "result",
+                "success": True,
+                "result": [
+                    {"run_id": "r1", "timestamp": {"start": "2026-06-01T00:00:00"}}
+                ],
+            },
+            # trace/get (mid 2): no `config` key in the trace payload
+            {"id": 2, "type": "result", "success": True, "result": {}},
+            # search/related (mid 3)
+            {
+                "id": 3,
+                "type": "result",
+                "success": True,
+                "result": {"entity": ["light.lamp"], "scene": ["scene.movie"]},
+            },
+        ]
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404)
+
+    result = await fetch_automation(
+        _settings(),
+        "1771085036395",
+        fake_connect(ws),
+        entity_id="automation.night",
+        transport=httpx.MockTransport(handler),
+    )
+    assert result["config"] == {}
+    assert result["referenced"]["entities"] == ["light.lamp"]
+    assert result["referenced"]["scenes"] == ["scene.movie"]
+
+
+class HangingWS:
+    """recv() blocks forever — simulates a Core that never answers an id."""
+
+    def __init__(self):
+        self.sent = []
+
+    async def send(self, data):
+        self.sent.append(json.loads(data))
+
+    async def recv(self):
+        await asyncio.Future()  # never resolves
+
+
+async def test_command_times_out_to_ha_registry_error(monkeypatch):
+    monkeypatch.setattr(ha_registry, "_COMMAND_TIMEOUT", 0.05)
+    ws = HangingWS()
+    with pytest.raises(HARegistryError):
+        await _command(ws, 1, {"type": "config/area_registry/list"})
+
+
+async def test_authenticate_times_out_to_ha_registry_error(monkeypatch):
+    """_authenticate must raise HARegistryError when recv() never returns.
+
+    HangingWS.recv() awaits asyncio.Future() forever; with _COMMAND_TIMEOUT
+    monkeypatched to 0.05 the wait_for in _authenticate must fire and convert
+    asyncio.TimeoutError -> HARegistryError within ~0.1 s.
+    """
+    monkeypatch.setattr(ha_registry, "_COMMAND_TIMEOUT", 0.05)
+    ws = HangingWS()
+    with pytest.raises(HARegistryError, match="timed out"):
+        await ha_registry._authenticate(ws, "token")
+
+
+async def test_command_returns_result_before_timeout(monkeypatch):
+    # A normal, prompt reply still works under the timeout.
+    monkeypatch.setattr(ha_registry, "_COMMAND_TIMEOUT", 5.0)
+    ws = FakeWS(
+        [{"id": 7, "type": "result", "success": True, "result": ["ok"]}]
+    )
+    result = await _command(ws, 7, {"type": "get_states"})
+    assert result == ["ok"]
+
+
+def _slow_related_ws(num_automations, per_call_delay):
+    """A FakeWS where each search/related recv is artificially slow."""
+    states = []
+    for i in range(num_automations):
+        states.append(
+            {
+                "entity_id": f"automation.a{i}",
+                "attributes": {"friendly_name": f"A{i}", "id": str(1000 + i)},
+            }
+        )
+    incoming = [
+        {"type": "auth_required"},
+        {"type": "auth_ok"},
+        {"id": 1, "type": "result", "success": True, "result": []},   # areas
+        {"id": 2, "type": "result", "success": True, "result": []},   # devices
+        {"id": 3, "type": "result", "success": True, "result": []},   # entities
+        {"id": 4, "type": "result", "success": True, "result": states},  # states
+    ]
+    for i in range(num_automations):
+        incoming.append(
+            {
+                "id": 5 + i,
+                "type": "result",
+                "success": True,
+                "result": {"entity": [f"light.l{i}"]},
+            }
+        )
+
+    class SlowWS(FakeWS):
+        async def recv(self):
+            # Only the search/related replies (after the 4 list cmds + auth) are slow.
+            if len(self.sent) > 5:
+                await asyncio.sleep(per_call_delay)
+            return await super().recv()
+
+    return SlowWS(incoming)
+
+
+async def test_fetch_topology_enrichment_respects_budget(monkeypatch):
+    monkeypatch.setattr(ha_registry, "_ENRICH_BUDGET", 0.05)
+    # Each related call sleeps 0.04s; with a 0.05s budget only the first one or
+    # two run before the loop stops enriching and the rest get empty refs.
+    ws = _slow_related_ws(num_automations=5, per_call_delay=0.04)
+    started = time.monotonic()
+    topo = await fetch_topology(_settings(), fake_connect(ws))
+    elapsed = time.monotonic() - started
+
+    # Returned without awaiting all 5 slow calls (5 * 0.04 = 0.20s).
+    assert elapsed < 0.15
+    # Every automation still has a references key (renders), even if empty.
+    assert all("references" in a for a in topo["automations"])
+    # At least one automation was skipped -> empty refs present.
+    empties = [
+        a for a in topo["automations"]
+        if a["references"] == {"entities": [], "scenes": [], "devices": []}
+    ]
+    assert empties, "expected some automations to fall back to empty refs under budget"

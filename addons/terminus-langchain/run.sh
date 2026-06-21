@@ -11,6 +11,9 @@ export TLC_MODEL="$(bashio::config 'model')"
 export TLC_TITLE_MODEL="$(bashio::config 'title_model')"
 # When true, scene/automation tools run without the human approval prompt.
 export AUTO_RUN_TOOLS="$(bashio::config 'auto_run_tools')"
+# Root log level for the backend (debug|info|warning|error). Captured on stdout
+# by the Supervisor (`ha apps logs local_terminus`).
+export LOG_LEVEL="$(bashio::config 'log_level')"
 
 if bashio::config.has_value 'ha_url'; then
   export HASS_URL="$(bashio::config 'ha_url')"

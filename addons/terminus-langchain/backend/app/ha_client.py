@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections import Counter
 from datetime import datetime, timezone
 from enum import Enum
@@ -30,6 +31,8 @@ class HAAuthError(Exception):
 
 # connect(url) -> async context manager yielding an object with async send/recv.
 ConnectFn = Callable[[str], Any]
+
+logger = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
@@ -146,11 +149,17 @@ class HAClient:
             except HAAuthError as exc:
                 self._status = HAStatus.auth_failed
                 self._error = str(exc)
+                logger.error("Home Assistant auth failed: %s", exc)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001 - surface any transport error
                 self._status = HAStatus.disconnected
                 self._error = f"{type(exc).__name__}: {exc}"
+                logger.warning(
+                    "Home Assistant connection error: %s: %s",
+                    type(exc).__name__,
+                    exc,
+                )
 
             if self._stop.is_set():
                 break

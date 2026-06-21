@@ -79,7 +79,8 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_vscode | Studio Code Server | 6.0.1 |
 | a0d7b954_tailscale | Tailscale | 0.28.1 |
 | a0d7b954_ssh | Advanced SSH & Web Terminal | 24.0.1 |
-| local_terminus | Terminus | 0.6.0 |
+| local_terminus | Terminus | 0.13.0 |
+| local_terminus_rag | Terminus RAG | 0.1.0 |
 
 ### Terminus LangChain Internals
 
@@ -90,6 +91,7 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 - **API key**: set via add-on options UI (`anthropic_api_key`), not `.env`. Model configurable (`model`, default `claude-sonnet-4-6`).
 - After source changes: sync via `bin/deploy-addons-ssh.sh`, then on device run `ha apps update local_terminus` if `config.yaml` version was bumped, else `ha apps rebuild local_terminus`.
 - **Gotchas**: base image tag must be `3.12-alpine3.18` (never bare `:3.12`); `langgraph.json` paths must be absolute (`/app/backend/...`). See `addons/terminus-langchain/README.md` for full details.
+- **MCP knowledge tools**: Agent mounts `terminus-rag`'s MCP knowledge tools at `http://local-terminus-rag:9000/mcp` (graceful degradation when absent), configured via `rag_url`/`rag_token` add-on options.
 
 Local add-ons live in `addons/<dir>/` in this repo. Sync to `/addons/`
 on device via `bin/deploy-addons.sh` (called by `bin/deploy.sh` when

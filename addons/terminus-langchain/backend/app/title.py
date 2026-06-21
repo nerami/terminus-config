@@ -12,6 +12,7 @@ module exposes a canonical LCEL chain plus pure helpers, all designed so that:
 
 from __future__ import annotations
 
+import logging
 import re
 
 from langchain_core.language_models import BaseChatModel
@@ -35,6 +36,8 @@ _MAX_LEN = 60
 
 # Cap how much of the user's message we send to the model / use as a fallback.
 _MAX_INPUT = 2000
+
+logger = logging.getLogger(__name__)
 
 _default: object | None = None
 

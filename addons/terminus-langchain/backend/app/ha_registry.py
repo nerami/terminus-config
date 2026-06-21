@@ -13,7 +13,10 @@ extract the entities, scenes and devices each automation references.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
+import time
 from typing import Any, Callable, Optional
 
 import httpx
@@ -23,6 +26,20 @@ from .config import Settings, rest_target
 # connect(url) -> async context manager yielding an object with async send/recv.
 ConnectFn = Callable[[str], Any]
 
+logger = logging.getLogger(__name__)
+
+_MAX_WALK_DEPTH = 100
+
+# Per-websocket-command timeout (M2). A command's send + await-matching-id
+# must not block forever on a wedged Core; on timeout we raise HARegistryError
+# so callers degrade (and, per Spec C, log) instead of hanging.
+_COMMAND_TIMEOUT = 15.0
+
+# Total wall-clock budget for the per-automation search/related enrichment in
+# fetch_topology (M2). Once exceeded, remaining automations get empty refs so a
+# slow/wedged Core can't stall /ha/topology indefinitely.
+_ENRICH_BUDGET = 8.0
+
 
 class HARegistryError(Exception):
     """Raised when a registry websocket session fails to authenticate."""
@@ -30,24 +47,46 @@ class HARegistryError(Exception):
 
 # -- websocket helpers ----------------------------------------------------
 async def _authenticate(ws, token: Optional[str]) -> None:
-    msg = json.loads(await ws.recv())
+    try:
+        raw = await asyncio.wait_for(ws.recv(), _COMMAND_TIMEOUT)
+    except asyncio.TimeoutError as exc:
+        raise HARegistryError(
+            f"websocket authentication timed out after {_COMMAND_TIMEOUT}s"
+        ) from exc
+    msg = json.loads(raw)
     if msg.get("type") != "auth_required":
         raise HARegistryError(f"unexpected greeting: {msg.get('type')!r}")
     await ws.send(json.dumps({"type": "auth", "access_token": token}))
-    msg = json.loads(await ws.recv())
+    try:
+        raw = await asyncio.wait_for(ws.recv(), _COMMAND_TIMEOUT)
+    except asyncio.TimeoutError as exc:
+        raise HARegistryError(
+            f"websocket authentication timed out after {_COMMAND_TIMEOUT}s"
+        ) from exc
+    msg = json.loads(raw)
     if msg.get("type") != "auth_ok":
         raise HARegistryError(msg.get("message", "authentication failed"))
 
 
 async def _command(ws, mid: int, payload: dict) -> Any:
     await ws.send(json.dumps({"id": mid, **payload}))
-    while True:
-        msg = json.loads(await ws.recv())
-        if msg.get("id") == mid:
-            if not msg.get("success", True):
-                err = (msg.get("error") or {}).get("message", "command failed")
-                raise HARegistryError(err)
-            return msg.get("result")
+
+    async def _await_reply() -> Any:
+        while True:
+            msg = json.loads(await ws.recv())
+            if msg.get("id") == mid:
+                if not msg.get("success", True):
+                    err = (msg.get("error") or {}).get("message", "command failed")
+                    raise HARegistryError(err)
+                return msg.get("result")
+
+    try:
+        return await asyncio.wait_for(_await_reply(), timeout=_COMMAND_TIMEOUT)
+    except asyncio.TimeoutError as exc:
+        raise HARegistryError(
+            f"websocket command {payload.get('type', mid)!r} timed out "
+            f"after {_COMMAND_TIMEOUT}s"
+        ) from exc
 
 
 # -- normalization (pure, unit-testable) ----------------------------------
@@ -139,7 +178,7 @@ def build_topology(
         for a in areas
         if a.get("area_id")
     ]
-    out_areas.sort(key=lambda a: a["name"].lower())
+    out_areas.sort(key=lambda a: str(a["name"]).lower())
 
     return {
         "areas": out_areas,
@@ -156,10 +195,12 @@ def referenced_ids(config: Any) -> dict:
     ``choose`` / ``if`` / ``repeat`` / ``parallel`` structures) collecting every
     ``entity_id`` and ``device_id`` value plus legacy ``scene:`` action targets.
     Entity ids in the ``scene.`` domain are returned separately from other
-    entities.
+    entities. The walk is depth-bounded so a pathological config can't
+    ``RecursionError``.
     """
     entities: set[str] = set()
     devices: set[str] = set()
+    bound_hit = False
 
     def add(value: Any, into: set[str]) -> None:
         if isinstance(value, str):
@@ -169,7 +210,11 @@ def referenced_ids(config: Any) -> dict:
                 if isinstance(item, str):
                     into.add(item)
 
-    def walk(node: Any) -> None:
+    def walk(node: Any, depth: int) -> None:
+        nonlocal bound_hit
+        if depth > _MAX_WALK_DEPTH:
+            bound_hit = True
+            return
         if isinstance(node, dict):
             for key, value in node.items():
                 if key == "entity_id":
@@ -179,12 +224,17 @@ def referenced_ids(config: Any) -> dict:
                 elif key == "scene" and isinstance(value, str):
                     entities.add(value)
                 else:
-                    walk(value)
+                    walk(value, depth + 1)
         elif isinstance(node, list):
             for item in node:
-                walk(item)
+                walk(item, depth + 1)
 
-    walk(config)
+    walk(config, 0)
+    if bound_hit:
+        logger.warning(
+            "referenced_ids recursion bound %d hit; truncating walk",
+            _MAX_WALK_DEPTH,
+        )
     scenes = sorted(e for e in entities if e.startswith("scene."))
     plain = sorted(e for e in entities if not e.startswith("scene."))
     return {"entities": plain, "scenes": scenes, "devices": sorted(devices)}
@@ -265,12 +315,23 @@ async def fetch_topology(settings: Settings, connect: ConnectFn) -> dict:
         topology = build_topology(areas, devices, entities, states)
 
         mid = 5
+        enrich_deadline = time.monotonic() + _ENRICH_BUDGET
         for automation in topology["automations"]:
+            if time.monotonic() >= enrich_deadline:
+                # Out of budget: leave the rest unenriched so the diagram still
+                # renders (M2). They keep empty references.
+                automation["references"] = _empty_refs()
+                continue
             try:
                 automation["references"] = await _search_related(
                     ws, mid, automation["entity_id"]
                 )
-            except Exception:  # noqa: BLE001 - degrade gracefully per automation
+            except HARegistryError as exc:
+                logger.warning(
+                    "enrichment failed for automation %s: %s",
+                    automation["entity_id"],
+                    exc,
+                )
                 automation["references"] = _empty_refs()
             mid += 1
 
@@ -353,41 +414,54 @@ async def fetch_automation(
       3. ``search/related`` - relationships only, when no structure is available
          (e.g. a never-run package automation), so the view still renders.
     """
-    # 1. REST config (editor-managed automations)
+    # 1. REST config (editor-managed automations).
     try:
         config = await _rest_get(
             settings, f"/api/config/automation/config/{numeric_id}", transport
         )
         return {"config": config, "referenced": referenced_ids(config)}
-    except Exception:  # noqa: BLE001 - fall back to the websocket below
-        pass
+    except httpx.HTTPStatusError as exc:
+        # A 404 is the expected "not editor-managed" signal; fall through to
+        # the websocket ladder below. Any other status is logged too.
+        logger.info(
+            "REST automation config %s returned %s; falling back to trace",
+            numeric_id,
+            exc.response.status_code,
+        )
 
     if connect is None:
         return {"config": {}, "referenced": _empty_refs()}
 
-    try:
-        async with connect(settings.ws_url) as ws:
-            await _authenticate(ws, settings.ha_token)
+    async with connect(settings.ws_url) as ws:
+        await _authenticate(ws, settings.ha_token)
 
-            # 2. Structure from the most recent trace.
+        # 2. Structure from the most recent trace.
+        config = None
+        try:
+            config = await _latest_trace_config(ws, numeric_id)
+        except HARegistryError as exc:
+            logger.warning(
+                "trace lookup failed for %s; degrading to relationships: %s",
+                numeric_id,
+                exc,
+            )
             config = None
-            try:
-                config = await _latest_trace_config(ws, numeric_id)
-            except Exception:  # noqa: BLE001 - degrade to relationships
-                config = None
-            if config:
-                return {"config": config, "referenced": referenced_ids(config)}
+        if config:
+            return {"config": config, "referenced": referenced_ids(config)}
 
-            # 3. Relationships only.
-            refs = _empty_refs()
-            if entity_id:
-                try:
-                    refs = await _search_related(ws, 3, entity_id)
-                except Exception:  # noqa: BLE001 - degrade gracefully
-                    refs = _empty_refs()
-            return {"config": {}, "referenced": refs}
-    except Exception:  # noqa: BLE001 - degrade gracefully
-        return {"config": {}, "referenced": _empty_refs()}
+        # 3. Relationships only.
+        refs = _empty_refs()
+        if entity_id:
+            try:
+                refs = await _search_related(ws, 3, entity_id)
+            except HARegistryError as exc:
+                logger.warning(
+                    "search/related failed for %s; returning empty refs: %s",
+                    entity_id,
+                    exc,
+                )
+                refs = _empty_refs()
+        return {"config": {}, "referenced": refs}
 
 
 async def fetch_entity(
