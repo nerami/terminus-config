@@ -133,20 +133,69 @@ def _fake_connect(ws):
     return lambda url: _CM()
 
 
+class FakeWSDomainBlueprints(FakeWS):
+    """Extends FakeWS to handle blueprint/list with domain disambiguation.
+
+    When the fetch loop sends ``{"type": "blueprint/list", "domain": "automation"}``
+    vs ``{"type": "blueprint/list", "domain": "script"}`` we need to return
+    different payloads for each.  The base FakeWS matches only on ``type``; this
+    subclass falls back to a ``(type, domain)`` lookup so both calls are served.
+    """
+
+    def __init__(self, results, blueprint_by_domain: dict):
+        super().__init__(results)
+        # {domain: payload} for blueprint/list calls that carry a domain key
+        self._blueprint_by_domain = blueprint_by_domain
+        self._blueprint_domains_seen: list[str] = []
+
+    async def send(self, data):
+        msg = json.loads(data)
+        if msg.get("type") == "auth":
+            self._queue.append(json.dumps({"type": "auth_ok"}))
+            return
+        if msg.get("type") == "blueprint/list":
+            domain = msg.get("domain")
+            self._blueprint_domains_seen.append(domain)
+            result = self._blueprint_by_domain.get(domain, {})
+            self._queue.append(json.dumps({"id": msg["id"], "success": True, "result": result}))
+            return
+        result = self._results.get(msg["type"], [])
+        self._queue.append(json.dumps({"id": msg["id"], "success": True, "result": result}))
+
+
 async def test_fetch_all_assembles_all_kinds():
-    ws = FakeWS({
-        "config/area_registry/list": AREAS,
-        "config/label_registry/list": LABELS,
-        "config/device_registry/list": DEVICES,
-        "config/entity_registry/list": ENTITIES,
-        "get_states": STATES,
-        "blueprint/list": BLUEPRINTS,
-    })
+    ws = FakeWSDomainBlueprints(
+        results={
+            "config/area_registry/list": AREAS,
+            "config/label_registry/list": LABELS,
+            "config/device_registry/list": DEVICES,
+            "config/entity_registry/list": ENTITIES,
+            "get_states": STATES,
+        },
+        blueprint_by_domain={
+            "automation": {
+                "motion/light.yaml": {"metadata": {"name": "Motion Light",
+                                                   "source_url": "http://x"}},
+            },
+            "script": {
+                "bedtime/routine.yaml": {"metadata": {"name": "Bedtime Routine",
+                                                      "source_url": None}},
+            },
+        },
+    )
     records, errors = await fetch_all(_settings(), _fake_connect(ws))
     assert errors == []
     kinds = {r.kind for r in records}
     assert kinds == {"area", "label", "device", "entity", "helper",
                      "scene", "script", "automation", "blueprint"}
+
+    # Both domains were queried, each with the domain key set.
+    assert sorted(ws._blueprint_domains_seen) == ["automation", "script"]
+
+    # Both automation and script blueprints appear in the index.
+    bp_ids = {r.id for r in records if r.kind == "blueprint"}
+    assert "blueprint:automation:motion/light.yaml" in bp_ids
+    assert "blueprint:script:bedtime/routine.yaml" in bp_ids
 
 
 class HangingWS:

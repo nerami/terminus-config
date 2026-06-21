@@ -224,12 +224,19 @@ async def fetch_all(settings: Settings, connect: ConnectFn) -> tuple[list[IndexR
         devices = await _command(ws, 3, {"type": "config/device_registry/list"}) or []
         entities = await _command(ws, 4, {"type": "config/entity_registry/list"}) or []
         states = await _command(ws, 5, {"type": "get_states"}) or []
-        try:
-            blueprints = await _command(ws, 6, {"type": "blueprint/list"}) or {}
-        except Exception as exc:  # noqa: BLE001 - blueprints optional; log + skip
-            logger.warning("blueprint/list failed: %s", exc)
-            blueprints = {}
-            errors.append("blueprint")
+        # blueprint/list requires a domain; call once per domain and merge results.
+        blueprints: dict = {}
+        _mid = 6
+        for _domain in ("automation", "script"):
+            try:
+                result = await _command(
+                    ws, _mid, {"type": "blueprint/list", "domain": _domain}
+                ) or {}
+                blueprints[_domain] = result
+            except Exception as exc:  # noqa: BLE001 - blueprints optional; log + skip
+                logger.warning("blueprint/list failed for domain %r: %s", _domain, exc)
+                errors.append("blueprint")
+            _mid += 1
 
     sources = [
         ("area", lambda: build_area_records(areas)),
