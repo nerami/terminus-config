@@ -146,11 +146,29 @@ class BearerAuthMiddleware:
 
 def build_app(state: AppState) -> Starlette:
     from mcp.server.fastmcp import FastMCP
+    from mcp.server.transport_security import TransportSecuritySettings
 
     global STATE
     STATE = state
 
-    mcp = FastMCP("terminus-rag", stateless_http=True, json_response=True)
+    mcp = FastMCP(
+        "terminus-rag",
+        stateless_http=True,
+        json_response=True,
+        transport_security=TransportSecuritySettings(
+            allowed_hosts=[
+                # Internal add-on hostname used by Terminus when calling over the
+                # hassio network (local-terminus-rag:<port>).
+                "local-terminus-rag",
+                "local-terminus-rag:*",
+                # Keep localhost variants for local dev / tests.
+                "127.0.0.1:*",
+                "localhost",
+                "localhost:*",
+                "[::1]:*",
+            ],
+        ),
+    )
     tools = build_tools(state)
 
     # Register each tool with a description (history descriptions note HA retention).

@@ -256,3 +256,35 @@ async def test_assembled_app_auth_gate(tmp_path):
                                    headers={k: v for k, v in _MCP_HEADERS.items()
                                             if k != "Authorization"})
             assert r2.status_code == 401
+
+
+async def test_mcp_accepts_internal_addon_host(tmp_path):
+    """POST /mcp with Host: local-terminus-rag:9000 must NOT be rejected with 421.
+
+    FastMCP's DNS-rebinding protection by default only allows localhost/127.0.0.1/[::1].
+    When the add-on hostname is not allow-listed the MCP transport returns 421
+    Misdirected Request and every tool call from Terminus fails. After the fix the
+    internal hostname must be accepted (200/400/406 all prove the host passed the
+    security check; 421 means it was still rejected).
+    """
+    app = _assembled_app(tmp_path)
+    transport = httpx.ASGITransport(app=app)
+
+    tools_payload = json.dumps(
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+    ).encode()
+
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://local-terminus-rag:9000",
+        ) as client:
+            r = await client.post(
+                "/mcp",
+                content=tools_payload,
+                headers={**_MCP_HEADERS, "Host": "local-terminus-rag:9000"},
+            )
+            assert r.status_code != 421, (
+                f"MCP transport rejected Host: local-terminus-rag:9000 with 421 — "
+                f"add the host to FastMCP transport_security allowed_hosts"
+            )
