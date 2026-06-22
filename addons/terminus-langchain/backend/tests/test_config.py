@@ -291,3 +291,58 @@ def test_reset_settings_cache_forces_reload(monkeypatch):
     second = config.get_settings()
     assert first is not second
     config.reset_settings_cache()
+
+
+def test_langfuse_defaults_off_and_empty():
+    s = load_settings(env={}, options={})
+    assert s.langfuse_tracing is False
+    assert s.langfuse_public_key == ""
+    assert s.langfuse_secret_key == ""
+    assert s.langfuse_host == ""
+
+
+def test_langfuse_from_options():
+    s = load_settings(
+        env={},
+        options={
+            "langfuse_tracing": True,
+            "langfuse_public_key": "pk-lf-1",
+            "langfuse_secret_key": "sk-lf-1",
+            "langfuse_host": "http://192.168.100.176:3000",
+        },
+    )
+    assert s.langfuse_tracing is True
+    assert s.langfuse_public_key == "pk-lf-1"
+    assert s.langfuse_secret_key == "sk-lf-1"
+    assert s.langfuse_host == "http://192.168.100.176:3000"
+
+
+def test_langfuse_tracing_from_env_truthy_and_falsy():
+    for truthy in ("true", "True", "1", "yes"):
+        assert load_settings(env={"LANGFUSE_TRACING": truthy}, options={}).langfuse_tracing is True
+    for falsy in ("false", "0", "no", ""):
+        assert load_settings(env={"LANGFUSE_TRACING": falsy}, options={}).langfuse_tracing is False
+
+
+def test_langfuse_keys_from_env():
+    s = load_settings(
+        env={
+            "LANGFUSE_PUBLIC_KEY": "pk-env",
+            "LANGFUSE_SECRET_KEY": "sk-env",
+            "LANGFUSE_HOST": "http://10.0.0.5:3000",
+        },
+        options={},
+    )
+    assert s.langfuse_public_key == "pk-env"
+    assert s.langfuse_secret_key == "sk-env"
+    assert s.langfuse_host == "http://10.0.0.5:3000"
+
+
+def test_langfuse_carried_in_supervisor_mode():
+    s = load_settings(
+        env={"SUPERVISOR_TOKEN": "super"},
+        options={"langfuse_tracing": True, "langfuse_host": "http://192.168.1.2:3000"},
+    )
+    assert s.use_supervisor is True
+    assert s.langfuse_tracing is True
+    assert s.langfuse_host == "http://192.168.1.2:3000"

@@ -4,6 +4,19 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.16.0
+
+- **Optional Langfuse tracing (default off).** A new set of add-on options
+  (`langfuse_tracing`, `langfuse_public_key`, `langfuse_secret_key`,
+  `langfuse_host`) lets the agent emit traces to a self-hosted Langfuse
+  instance. The handler is baked into the compiled graph, so every agent run
+  is traced once enabled.
+- **Fail-closed, private-LAN only.** Tracing activates only when explicitly
+  switched on, fully credentialed, AND pointed at a private-LAN host; a public
+  host (or incomplete config) is refused and logged rather than silently
+  shipping prompts off-network. Tracing failures never block the agent.
+- Adds the `langfuse` (v4) runtime dependency.
+
 ## 0.15.0
 
 - Chat no longer dies on a render error. The chat is wrapped in an error

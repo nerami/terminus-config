@@ -729,3 +729,21 @@ def test_approval_clause_covers_device_control():
     auto = _system_prompt(auto_run=True, rag_available=True)
     assert "device-control" in gated
     assert "device-control" in auto
+
+
+def _bound_callbacks(graph) -> list:
+    """Callbacks bound onto the graph via .with_config (empty if unbound)."""
+    return (getattr(graph, "config", None) or {}).get("callbacks") or []
+
+
+def test_build_graph_attaches_tracer_callback(monkeypatch):
+    sentinel = object()
+    monkeypatch.setattr("app.agent.build_tracer", lambda settings: sentinel)
+    graph = build_graph(model=CapturingModel())
+    assert sentinel in _bound_callbacks(graph)
+
+
+def test_build_graph_binds_no_callbacks_when_tracer_absent(monkeypatch):
+    monkeypatch.setattr("app.agent.build_tracer", lambda settings: None)
+    graph = build_graph(model=CapturingModel())
+    assert _bound_callbacks(graph) == []

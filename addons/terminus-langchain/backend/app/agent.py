@@ -26,6 +26,7 @@ from app.tools import (
     run_scene,
     trigger_automation,
 )
+from app.tracing import build_tracer
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +212,7 @@ def build_graph(
     middleware: list[AgentMiddleware] = [TopologyContextMiddleware()]
     if not auto_run:
         middleware.append(_APPROVAL_MIDDLEWARE)
-    return create_agent(
+    agent = create_agent(
         model,
         tools=tools,
         system_prompt=_system_prompt(auto_run, rag_available),
@@ -219,6 +220,12 @@ def build_graph(
         context_schema=AgentContext,
         checkpointer=checkpointer,
     )
+    # Optional Langfuse tracing: baked into the compiled graph so every
+    # LangGraph-dev-server invocation traces (we don't control its invoke call).
+    tracer = build_tracer(settings)
+    if tracer is not None:
+        agent = agent.with_config({"callbacks": [tracer]})
+    return agent
 
 
 graph = build_graph()

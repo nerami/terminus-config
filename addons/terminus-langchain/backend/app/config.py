@@ -37,6 +37,12 @@ class Settings:
     title_model: str = DEFAULT_TITLE_MODEL
     rag_url: str = DEFAULT_RAG_URL
     rag_token: str | None = None
+    # Optional Langfuse tracing (default OFF). Resolved by load_settings; the
+    # activation policy lives in app.tracing.should_trace.
+    langfuse_tracing: bool = False
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = ""
 
 
 def _as_bool(value: object) -> bool:
@@ -152,6 +158,21 @@ def load_settings(
     )
     rag_token = str(rag_token_raw) if rag_token_raw else None
 
+    langfuse_tracing = _as_bool(
+        options.get("langfuse_tracing")
+        if options.get("langfuse_tracing") is not None
+        else env.get("LANGFUSE_TRACING", "")
+    )
+    langfuse_public_key = str(
+        options.get("langfuse_public_key") or env.get("LANGFUSE_PUBLIC_KEY", "")
+    )
+    langfuse_secret_key = str(
+        options.get("langfuse_secret_key") or env.get("LANGFUSE_SECRET_KEY", "")
+    )
+    langfuse_host = str(
+        options.get("langfuse_host") or env.get("LANGFUSE_HOST", "")
+    )
+
     supervisor_token = env.get("SUPERVISOR_TOKEN")
     if supervisor_token:
         return Settings(
@@ -164,6 +185,10 @@ def load_settings(
             title_model=title_model,
             rag_url=rag_url,
             rag_token=rag_token,
+            langfuse_tracing=langfuse_tracing,
+            langfuse_public_key=langfuse_public_key,
+            langfuse_secret_key=langfuse_secret_key,
+            langfuse_host=langfuse_host,
         )
 
     raw_url = str(
@@ -185,6 +210,10 @@ def load_settings(
         title_model=title_model,
         rag_url=rag_url,
         rag_token=rag_token,
+        langfuse_tracing=langfuse_tracing,
+        langfuse_public_key=langfuse_public_key,
+        langfuse_secret_key=langfuse_secret_key,
+        langfuse_host=langfuse_host,
     )
 
 
