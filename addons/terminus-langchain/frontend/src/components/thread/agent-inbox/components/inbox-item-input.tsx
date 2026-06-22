@@ -27,7 +27,7 @@ function ResetButton({ handleReset }: { handleReset: () => void }) {
 function ArgsRenderer({ args }: { args: Record<string, unknown> }) {
   return (
     <div className="flex w-full flex-col items-start gap-6">
-      {Object.entries(args).map(([key, value]) => {
+      {Object.entries(args ?? {}).map(([key, value]) => {
         const stringValue =
           typeof value === 'string' || typeof value === 'number' ? value.toString() : JSON.stringify(value, null);
 
@@ -151,7 +151,7 @@ function EditActionCard({
         <ResetButton handleReset={handleReset} />
       </div>
 
-      {Object.entries(editResponse.edited_action.args).map(([key, value], idx) => {
+      {Object.entries(editResponse.edited_action.args ?? {}).map(([key, value], idx) => {
         const stringValue =
           typeof value === 'string' || typeof value === 'number' ? value.toString() : JSON.stringify(value, null);
 

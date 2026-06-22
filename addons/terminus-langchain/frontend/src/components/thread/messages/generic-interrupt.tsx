@@ -73,7 +73,7 @@ export function GenericInterruptView({ interrupt }: { interrupt: Record<string, 
     if (Array.isArray(interrupt)) {
       return isExpanded ? interrupt : interrupt.slice(0, 5);
     } else {
-      const entries = Object.entries(interrupt);
+      const entries = Object.entries(interrupt ?? {});
       if (!isExpanded && shouldTruncate) {
         // When collapsed, process each value to potentially truncate it
         return entries.map(([key, value]) => [key, truncateValue(value)]);

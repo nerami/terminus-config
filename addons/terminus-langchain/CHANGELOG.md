@@ -4,6 +4,17 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.15.0
+
+- Chat no longer dies on a render error. The chat is wrapped in an error
+  boundary that shows a recoverable Error screen (reload to recover) instead of
+  unmounting the whole app. The agent-server connection error reuses the same
+  Error screen.
+- Harden the interrupt/tool-call/tool-result render path against
+  `Object.entries(null/undefined)`: guard tool-call args, edit-action args,
+  generic-interrupt values, tool-result content (non-string content no longer
+  crashes), and state-view values (which treated `null` as an object).
+
 ## 0.14.0
 
 - Add `control_entity`: turn a single entity on / off / toggle by its entity id

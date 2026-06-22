@@ -81,7 +81,7 @@ export function createDefaultHumanResponse(
   const allowedDecisions = reviewConfig.allowed_decisions ?? [];
 
   if (allowedDecisions.includes('edit')) {
-    Object.entries(actionRequest.args).forEach(([key, value]) => {
+    Object.entries(actionRequest.args ?? {}).forEach(([key, value]) => {
       const stringValue =
         typeof value === 'string' || typeof value === 'number' ? value.toString() : JSON.stringify(value, null);
       initialHumanInterruptEditValue.current = {
@@ -92,7 +92,7 @@ export function createDefaultHumanResponse(
 
     const editedAction: Action = {
       name: actionRequest.name,
-      args: { ...actionRequest.args },
+      args: { ...(actionRequest.args ?? {}) },
     };
 
     responses.push({

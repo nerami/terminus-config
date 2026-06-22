@@ -14,7 +14,7 @@ export function ToolCallTable({ toolCall }: { toolCall: ToolCall }) {
           </tr>
         </thead>
         <tbody>
-          {Object.entries(toolCall.args).map(([key, value]) => {
+          {Object.entries(toolCall.args ?? {}).map(([key, value]) => {
             let valueStr = '';
             if (['string', 'number'].includes(typeof value)) {
               valueStr = value.toString();

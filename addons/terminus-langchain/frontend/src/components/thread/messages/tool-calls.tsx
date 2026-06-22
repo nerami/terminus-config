@@ -108,7 +108,9 @@ export function ToolResult({ message }: { message: ToolMessage }) {
 
   const rows = isArray
     ? (parsedContent as any[]).map((value, argIdx) => <ArgRow key={argIdx} name={argIdx} value={value} />)
-    : Object.entries(parsedContent).map(([key, value], argIdx) => <ArgRow key={argIdx} name={key} value={value} />);
+    : Object.entries(parsedContent ?? {}).map(([key, value], argIdx) => (
+        <ArgRow key={argIdx} name={key} value={value} />
+      ));
 
   return (
     <Item variant="outline" className="min-w-0 flex-col items-stretch p-0">

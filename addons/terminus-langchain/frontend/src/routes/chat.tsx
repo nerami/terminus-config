@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { ErrorBoundary } from '@/components/error-boundary';
 import { HaStatusGate } from '@/components/ha-status-gate';
 import { HtmlFontSize } from '@/components/html-font-size';
 import { AppSidebar } from '@/components/sidebar/app-sidebar';
@@ -24,7 +25,9 @@ export function ChatPage(): React.ReactNode {
               <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset className="min-w-0 overflow-hidden">
-                  <Thread />
+                  <ErrorBoundary>
+                    <Thread />
+                  </ErrorBoundary>
                 </SidebarInset>
               </SidebarProvider>
             </ArtifactProvider>

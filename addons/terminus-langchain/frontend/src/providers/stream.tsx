@@ -9,11 +9,12 @@ import {
   type UIMessage,
   type RemoveUIMessage,
 } from '@langchain/langgraph-sdk/react-ui';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 
 import { useThreads } from './thread';
 
+import { ErrorScreen } from '@/components/error-screen';
 import { TerminusLogoSVG } from '@/components/icons/terminus/terminus-logo';
 import { StatusCard } from '@/components/status-card';
 import { Button } from '@/components/ui/button';
@@ -184,17 +185,17 @@ const ChatRuntime = ({
 
   if (status === 'error') {
     return (
-      <StatusCard variant="glitch">
-        <h1 className="text-lg font-semibold tracking-tight">Couldn't reach the agent server</h1>
-        <p className="text-muted-foreground text-sm">
-          Please ensure the graph is running at <code>{apiUrl}</code> and your API key is correctly set (if connecting
-          to a deployed graph).
-        </p>
-        <Button variant="outline" onClick={retry}>
-          <RefreshCw className="size-4" />
-          Retry
-        </Button>
-      </StatusCard>
+      <ErrorScreen
+        title="Couldn't reach the agent server"
+        message={
+          <>
+            Please ensure the graph is running at <code>{apiUrl}</code> and your API key is correctly set (if connecting
+            to a deployed graph).
+          </>
+        }
+        onRetry={retry}
+        retryLabel="Retry"
+      />
     );
   }
 

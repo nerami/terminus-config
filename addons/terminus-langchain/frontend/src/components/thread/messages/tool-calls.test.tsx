@@ -131,4 +131,15 @@ describe('ToolResult', () => {
 
     expect(screen.getByText('item 7')).toBeInTheDocument();
   });
+
+  it('renders without crashing when content is not a string (array of blocks)', () => {
+    // Anthropic can deliver tool-result content as an array of content blocks
+    // rather than a plain string; parsedContent then stays undefined and the
+    // unguarded Object.entries(parsedContent) used to throw.
+    const message = toolMessage('', {
+      content: [{ type: 'text', text: 'block' }] as unknown as ToolMessage['content'],
+    });
+    expect(() => render(<ToolResult message={message} />)).not.toThrow();
+    expect(screen.getByText('my_tool')).toBeInTheDocument();
+  });
 });

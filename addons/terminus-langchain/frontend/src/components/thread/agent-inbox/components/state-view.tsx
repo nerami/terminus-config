@@ -105,7 +105,7 @@ function StateViewRecursive(props: StateViewRecursiveProps) {
     );
   }
 
-  if (typeof props.value === 'object') {
+  if (props.value && typeof props.value === 'object') {
     if (Object.keys(props.value).length === 0) {
       return <p className="text-muted-foreground font-light">{'{}'}</p>;
     }
@@ -224,7 +224,7 @@ export function StateView({ description, handleShowSidePanel, values, view }: St
       )}
       {view === 'state' && (
         <div className="flex flex-col items-start justify-start gap-1">
-          {Object.entries(values).map(([k, v], idx) => (
+          {Object.entries(values ?? {}).map(([k, v], idx) => (
             <StateViewObject expanded={expanded} key={`state-view-${k}-${idx}`} keyName={k} value={v} />
           ))}
         </div>
