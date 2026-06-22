@@ -19,7 +19,13 @@ from langchain_anthropic import ChatAnthropic
 
 from app.config import load_settings
 from app.mcp_client import get_rag_tools
-from app.tools import ha_basic_info, run_scene, trigger_automation
+from app.tools import (
+    control_entity,
+    get_entity_state,
+    ha_basic_info,
+    run_scene,
+    trigger_automation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +44,16 @@ _BASE_PROMPT = (
     "Your local operations (always available):\n"
     "  ha_basic_info        read instance metadata (version, config, entity counts)\n"
     "  run_scene            activate a scene by scene.* id\n"
-    "  trigger_automation   execute an automation by automation.* id\n\n"
+    "  trigger_automation   execute an automation by automation.* id\n"
+    "  control_entity       turn one entity on/off/toggle by its entity id\n"
+    "  get_entity_state     read one entity's current state\n\n"
     "{knowledge}\n\n"
     "For questions about the instance itself (version, counts, config), query "
     "ha_basic_info and answer from its JSON. To set a mood, run_scene with a "
     "scene.* id; to kick off a routine, trigger_automation with an automation.* "
-    "id. {approval}\n\n"
+    "id. To turn a single device on, off or toggle it, control_entity with its "
+    "entity id (light/switch/fan/media_player/cover/climate); to check or "
+    "confirm what a device is doing, get_entity_state. {approval}\n\n"
     "If a tool returns an error, report it plainly and kindly; never claim a "
     "success you didn't receive. Keep output minimal and human."
 )
@@ -74,18 +84,19 @@ _KNOWLEDGE_AVAILABLE = (
 _KNOWLEDGE_DEGRADED = (
     "Knowledge tools (search, enumeration, history) are currently offline, so "
     "you can't look up or list what exists right now. When a target is unknown, "
-    "ask the user for the exact ids (scene.* / automation.*) rather than guessing. "
-    "Instance status (ha_basic_info) and actions (run_scene, trigger_automation) "
-    "still work."
+    "ask the user for the exact ids (scene.* / automation.* / domain.object) "
+    "rather than guessing. Instance status (ha_basic_info), actions (run_scene, "
+    "trigger_automation, control_entity) and single-entity reads "
+    "(get_entity_state) still work."
 )
 
 _APPROVAL_GATED = (
-    "Scene and automation operations change your home, so they pause for your "
-    "sign-off before running."
+    "Scene, automation and device-control operations change your home, so they "
+    "pause for your sign-off before running. Reads (get_entity_state) never pause."
 )
 _APPROVAL_AUTO = (
-    "Scene and automation operations change your home and run immediately - I'll "
-    "tell you what I did."
+    "Scene, automation and device-control operations change your home and run "
+    "immediately - I'll tell you what I did."
 )
 
 # Prefixed to the per-turn topology context so the model knows what the appended
@@ -107,13 +118,15 @@ def _system_prompt(auto_run: bool, rag_available: bool = True) -> str:
         knowledge=_KNOWLEDGE_AVAILABLE if rag_available else _KNOWLEDGE_DEGRADED,
     )
 
-# Scene activation and automation triggers mutate the real home, so they are
-# gated behind a human approval interrupt. The interrupt payload (approve /
-# edit / reject decisions) is consumed by the frontend agent-inbox UI.
+# Scene activation, automation triggers and direct entity control mutate the
+# real home, so they are gated behind a human approval interrupt. The interrupt
+# payload (approve / edit / reject decisions) is consumed by the frontend
+# agent-inbox UI. get_entity_state is read-only and is deliberately NOT listed.
 _APPROVAL_MIDDLEWARE = HumanInTheLoopMiddleware(
     interrupt_on={
         "run_scene": {"allowed_decisions": ["approve", "edit", "reject"]},
         "trigger_automation": {"allowed_decisions": ["approve", "edit", "reject"]},
+        "control_entity": {"allowed_decisions": ["approve", "edit", "reject"]},
     },
     description_prefix="Terminus wants to run an action on your home",
 )
@@ -183,7 +196,14 @@ def build_graph(
     if rag_tools is None:
         rag_tools = get_rag_tools()
     rag_available = bool(rag_tools)
-    tools = [ha_basic_info, run_scene, trigger_automation, *rag_tools]
+    tools = [
+        ha_basic_info,
+        run_scene,
+        trigger_automation,
+        control_entity,
+        get_entity_state,
+        *rag_tools,
+    ]
 
     # Topology context is injected for every turn; approval is gated by auto_run.
     # The RAG tools are read-only and are deliberately NOT listed in the approval

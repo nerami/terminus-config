@@ -6,7 +6,10 @@ import httpx
 from app import tools
 from app.tools import (
     call_service,
+    control_entity,
     fetch_basic_info,
+    fetch_entity_state,
+    get_entity_state,
     ha_basic_info,
     run_scene,
     trigger_automation,
@@ -253,3 +256,216 @@ def test_ha_basic_info_handles_decode_error(monkeypatch, caplog):
         payload = json.loads(ha_basic_info.invoke({}))
     assert "error" in payload
     assert any("ha_basic_info" in r.message for r in caplog.records)
+
+
+# -- control_entity -------------------------------------------------------
+
+
+def _control_capture(monkeypatch):
+    """Patch settings + call_service to capture a control_entity service call."""
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+    captured: dict = {}
+    monkeypatch.setattr(
+        tools,
+        "call_service",
+        lambda base, token, domain, service, data: captured.update(
+            domain=domain, service=service, data=data
+        ),
+    )
+    return captured
+
+
+def test_control_entity_on_calls_turn_on(monkeypatch):
+    captured = _control_capture(monkeypatch)
+    payload = json.loads(
+        control_entity.invoke({"entity_id": "switch.mb_lamp", "action": "on"})
+    )
+    assert payload["success"] is True
+    assert payload["entity_id"] == "switch.mb_lamp"
+    assert payload["action"] == "on"
+    assert captured == {
+        "domain": "homeassistant",
+        "service": "turn_on",
+        "data": {"entity_id": "switch.mb_lamp"},
+    }
+
+
+def test_control_entity_off_calls_turn_off(monkeypatch):
+    captured = _control_capture(monkeypatch)
+    payload = json.loads(
+        control_entity.invoke({"entity_id": "light.kitchen", "action": "off"})
+    )
+    assert payload["success"] is True
+    assert payload["entity_id"] == "light.kitchen"
+    assert payload["action"] == "off"
+    assert captured["service"] == "turn_off"
+    assert captured["domain"] == "homeassistant"
+    assert captured["data"] == {"entity_id": "light.kitchen"}
+
+
+def test_control_entity_toggle_calls_toggle(monkeypatch):
+    captured = _control_capture(monkeypatch)
+    payload = json.loads(
+        control_entity.invoke({"entity_id": "fan.office", "action": "toggle"})
+    )
+    assert payload["success"] is True
+    assert payload["entity_id"] == "fan.office"
+    assert payload["action"] == "toggle"
+    assert captured["service"] == "toggle"
+    assert captured["domain"] == "homeassistant"
+
+
+def test_control_entity_allows_each_supported_domain(monkeypatch):
+    for domain in ("light", "switch", "fan", "media_player", "cover", "climate"):
+        captured = _control_capture(monkeypatch)
+        payload = json.loads(
+            control_entity.invoke({"entity_id": f"{domain}.thing", "action": "on"})
+        )
+        assert payload.get("success") is True, domain
+        assert captured["data"] == {"entity_id": f"{domain}.thing"}
+
+
+def test_control_entity_rejects_disallowed_domain(monkeypatch):
+    called = {"ran": False}
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+    monkeypatch.setattr(
+        tools, "call_service", lambda *a, **k: called.update(ran=True)
+    )
+    for entity_id in ("lock.front_door", "automation.night", "scene.evening"):
+        payload = json.loads(
+            control_entity.invoke({"entity_id": entity_id, "action": "on"})
+        )
+        assert "error" in payload, entity_id
+    assert called["ran"] is False
+
+
+def test_control_entity_rejects_bad_entity_id(monkeypatch):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+    payload = json.loads(
+        control_entity.invoke({"entity_id": "kitchenlamp", "action": "on"})
+    )
+    assert "error" in payload
+
+
+def test_control_entity_rejects_invalid_action(monkeypatch):
+    called = {"ran": False}
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+    monkeypatch.setattr(
+        tools, "call_service", lambda *a, **k: called.update(ran=True)
+    )
+    payload = json.loads(
+        control_entity.invoke({"entity_id": "light.kitchen", "action": "dim"})
+    )
+    assert "error" in payload
+    assert called["ran"] is False
+
+
+def test_control_entity_reports_when_unconfigured(monkeypatch):
+    monkeypatch.setattr(tools, "load_settings", _unconfigured_settings)
+    payload = json.loads(
+        control_entity.invoke({"entity_id": "light.kitchen", "action": "on"})
+    )
+    assert "not configured" in payload["error"]
+
+
+def test_control_entity_handles_http_error(monkeypatch, caplog):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+
+    def boom(*args, **kwargs):
+        raise httpx.ConnectError("nope")
+
+    monkeypatch.setattr(tools, "call_service", boom)
+    with caplog.at_level(logging.WARNING, logger="app.tools"):
+        payload = json.loads(
+            control_entity.invoke({"entity_id": "light.kitchen", "action": "on"})
+        )
+    assert "unreachable" in payload["error"].lower()
+    assert any("control_entity" in r.message for r in caplog.records)
+
+
+def test_control_entity_has_name_and_description():
+    assert control_entity.name == "control_entity"
+    assert "on" in control_entity.description.lower()
+
+
+# -- get_entity_state -----------------------------------------------------
+
+
+def _state_transport(expected_path: str, body: dict, captured: dict):
+    """A MockTransport asserting a GET to ``expected_path`` and returning body."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["method"] = request.method
+        captured["path"] = request.url.path
+        if request.method == "GET" and request.url.path.endswith(expected_path):
+            return httpx.Response(200, json=body)
+        return httpx.Response(404)
+
+    return httpx.MockTransport(handler)
+
+
+STATE = {
+    "entity_id": "switch.mb_lamp",
+    "state": "off",
+    "attributes": {"friendly_name": "MB: Lamp"},
+}
+
+
+def test_fetch_entity_state_gets_single_state():
+    captured: dict = {}
+    result = fetch_entity_state(
+        "http://supervisor/core",
+        "token",
+        "switch.mb_lamp",
+        transport=_state_transport(
+            "/api/states/switch.mb_lamp", STATE, captured
+        ),
+    )
+    assert captured["method"] == "GET"
+    assert captured["path"].endswith("/api/states/switch.mb_lamp")
+    assert result == STATE
+
+
+def test_get_entity_state_returns_state(monkeypatch):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+    monkeypatch.setattr(
+        tools, "fetch_entity_state", lambda base, token, entity_id: STATE
+    )
+    payload = json.loads(
+        get_entity_state.invoke({"entity_id": "switch.mb_lamp"})
+    )
+    assert payload == STATE
+
+
+def test_get_entity_state_rejects_bad_entity_id(monkeypatch):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+    payload = json.loads(get_entity_state.invoke({"entity_id": "mblamp"}))
+    assert "error" in payload
+
+
+def test_get_entity_state_reports_when_unconfigured(monkeypatch):
+    monkeypatch.setattr(tools, "load_settings", _unconfigured_settings)
+    payload = json.loads(
+        get_entity_state.invoke({"entity_id": "switch.mb_lamp"})
+    )
+    assert "not configured" in payload["error"]
+
+
+def test_get_entity_state_handles_http_error(monkeypatch, caplog):
+    monkeypatch.setattr(tools, "load_settings", _dev_settings)
+
+    def boom(*args, **kwargs):
+        raise httpx.ConnectError("nope")
+
+    monkeypatch.setattr(tools, "fetch_entity_state", boom)
+    with caplog.at_level(logging.WARNING, logger="app.tools"):
+        payload = json.loads(
+            get_entity_state.invoke({"entity_id": "switch.mb_lamp"})
+        )
+    assert "unreachable" in payload["error"].lower()
+    assert any("get_entity_state" in r.message for r in caplog.records)
+
+
+def test_get_entity_state_has_name_and_description():
+    assert get_entity_state.name == "get_entity_state"
+    assert "state" in get_entity_state.description.lower()

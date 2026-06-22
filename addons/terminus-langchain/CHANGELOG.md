@@ -4,6 +4,19 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.14.0
+
+- Add `control_entity`: turn a single entity on / off / toggle by its entity id
+  (e.g. "turn MB: Lamp off"). It maps to the universal
+  `homeassistant.turn_on/turn_off/toggle` services and is allowlisted to the
+  light, switch, fan, media_player, cover and climate domains. Like run_scene /
+  trigger_automation it changes the home, so it pauses for your approval before
+  running. (`lock` is intentionally excluded — the universal services don't map
+  cleanly to lock/unlock.)
+- Add `get_entity_state`: read one entity's current state and attributes to
+  check or confirm what a device is doing. It only reads, so it never pauses
+  for approval.
+
 ## 0.13.0
 
 - Mount terminus-rag's MCP knowledge tools into the agent: semantic search

@@ -365,11 +365,13 @@ def test_build_graph_mounts_rag_tools_alongside_local(monkeypatch):
     assert "ha_basic_info" in bound["names"]
     assert "run_scene" in bound["names"]
     assert "trigger_automation" in bound["names"]
+    assert "control_entity" in bound["names"]
+    assert "get_entity_state" in bound["names"]
     assert "rag_search_ha" in bound["names"]
 
 
-def test_build_graph_degrades_to_local_three_when_rag_empty(monkeypatch):
-    """RAG mount failure -> agent keeps exactly the local three tools."""
+def test_build_graph_degrades_to_local_tools_when_rag_empty(monkeypatch):
+    """RAG mount failure -> agent keeps exactly the local tool set."""
     bound = {}
 
     class BindCapture(CapturingModel):
@@ -381,6 +383,8 @@ def test_build_graph_degrades_to_local_three_when_rag_empty(monkeypatch):
     graph = build_graph(model=fake, auto_run=True, rag_tools=[])
     graph.invoke({"messages": [HumanMessage(content="hi")]})
     assert sorted(bound["names"]) == [
+        "control_entity",
+        "get_entity_state",
         "ha_basic_info",
         "run_scene",
         "trigger_automation",
@@ -504,13 +508,19 @@ class FakeCallsRagTool(BaseChatModel):
 
 
 def test_approval_interrupt_only_lists_local_actuation_tools():
-    """The approval middleware gates exactly run_scene + trigger_automation."""
+    """The approval middleware gates the state-changing local tools only.
+
+    control_entity joins run_scene + trigger_automation; the read-only
+    get_entity_state is deliberately NOT gated.
+    """
     from app.agent import _APPROVAL_MIDDLEWARE
 
     assert set(_APPROVAL_MIDDLEWARE.interrupt_on) == {
         "run_scene",
         "trigger_automation",
+        "control_entity",
     }
+    assert "get_entity_state" not in _APPROVAL_MIDDLEWARE.interrupt_on
 
 
 def test_mounted_read_tool_does_not_interrupt():
@@ -530,3 +540,192 @@ def test_mounted_read_tool_does_not_interrupt():
     assert not result.get("__interrupt__"), "read tools must not interrupt"
     assert _rag_list_records_state["ran"] is True
     assert result["messages"][-1].content == "There is one scene: scene.evening."
+
+
+# -- control_entity gating ------------------------------------------------
+
+
+class FakeRunsControlEntity(BaseChatModel):
+    """Requests the state-changing control_entity tool once, then answers."""
+
+    calls: int = 0
+
+    @property
+    def _llm_type(self) -> str:
+        return "fake-runs-control-entity"
+
+    def bind_tools(self, tools, **kwargs):  # noqa: A002
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        self.calls += 1
+        if self.calls == 1:
+            msg = AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "control_entity",
+                        "args": {"entity_id": "switch.mb_lamp", "action": "off"},
+                        "id": "call_control",
+                        "type": "tool_call",
+                    }
+                ],
+            )
+        else:
+            msg = AIMessage(content="Done, MB: Lamp is off.")
+        return ChatResult(generations=[ChatGeneration(message=msg)])
+
+
+def test_control_entity_requires_human_approval(monkeypatch):
+    """control_entity must interrupt for approval before executing."""
+    called = {"ran": False}
+    monkeypatch.setattr(tools, "load_settings", lambda: _dev_settings(), raising=True)
+    monkeypatch.setattr(
+        tools, "call_service", lambda *a, **k: called.update(ran=True), raising=True
+    )
+
+    graph = build_graph(model=FakeRunsControlEntity(), checkpointer=InMemorySaver())
+    config = {"configurable": {"thread_id": "ce-gated"}}
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="turn MB: Lamp off")]}, config
+    )
+    assert result.get("__interrupt__"), "expected an approval interrupt"
+    assert called["ran"] is False
+
+
+def test_control_entity_auto_runs_without_approval(monkeypatch):
+    """With auto-run enabled control_entity executes immediately (no interrupt)."""
+    called = {"ran": False}
+    monkeypatch.setattr(tools, "load_settings", lambda: _dev_settings(), raising=True)
+    monkeypatch.setattr(
+        tools, "call_service", lambda *a, **k: called.update(ran=True), raising=True
+    )
+
+    graph = build_graph(model=FakeRunsControlEntity(), auto_run=True)
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="turn MB: Lamp off")]}
+    )
+    assert not result.get("__interrupt__"), "auto-run should not interrupt"
+    assert called["ran"] is True
+
+
+def test_control_entity_resume_approve(monkeypatch):
+    """Resuming the interrupt with approve fires the control service call."""
+    from langgraph.types import Command
+
+    called = {"ran": False}
+    monkeypatch.setattr(tools, "load_settings", lambda: _dev_settings(), raising=True)
+    monkeypatch.setattr(
+        tools, "call_service", lambda *a, **k: called.update(ran=True), raising=True
+    )
+
+    graph = build_graph(model=FakeRunsControlEntity(), checkpointer=InMemorySaver())
+    config = {"configurable": {"thread_id": "ce-approve"}}
+    first = graph.invoke(
+        {"messages": [HumanMessage(content="turn MB: Lamp off")]}, config
+    )
+    assert first.get("__interrupt__")
+    assert called["ran"] is False
+    resumed = graph.invoke(
+        Command(resume={"decisions": [{"type": "approve"}]}), config
+    )
+    assert called["ran"] is True
+    assert not resumed.get("__interrupt__")
+
+
+def test_control_entity_resume_reject(monkeypatch):
+    """Resuming the interrupt with reject must not fire the control service call."""
+    from langgraph.types import Command
+
+    called = {"ran": False}
+    monkeypatch.setattr(tools, "load_settings", lambda: _dev_settings(), raising=True)
+    monkeypatch.setattr(
+        tools, "call_service", lambda *a, **k: called.update(ran=True), raising=True
+    )
+
+    graph = build_graph(model=FakeRunsControlEntity(), checkpointer=InMemorySaver())
+    config = {"configurable": {"thread_id": "ce-reject"}}
+    first = graph.invoke(
+        {"messages": [HumanMessage(content="turn MB: Lamp off")]}, config
+    )
+    assert first.get("__interrupt__")
+    resumed = graph.invoke(
+        Command(resume={"decisions": [{"type": "reject"}]}), config
+    )
+    assert called["ran"] is False
+    assert not resumed.get("__interrupt__")
+
+
+_get_state_ran = {"ran": False}
+
+
+class FakeCallsGetState(BaseChatModel):
+    """Calls the read-only get_entity_state tool once, then answers."""
+
+    calls: int = 0
+
+    @property
+    def _llm_type(self) -> str:
+        return "fake-calls-get-state"
+
+    def bind_tools(self, tools, **kwargs):  # noqa: A002
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        self.calls += 1
+        if self.calls == 1:
+            msg = AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "get_entity_state",
+                        "args": {"entity_id": "switch.mb_lamp"},
+                        "id": "call_state",
+                        "type": "tool_call",
+                    }
+                ],
+            )
+        else:
+            msg = AIMessage(content="MB: Lamp is off.")
+        return ChatResult(generations=[ChatGeneration(message=msg)])
+
+
+def test_get_entity_state_does_not_interrupt(monkeypatch):
+    """The read-only get_entity_state runs without pausing for approval."""
+    _get_state_ran["ran"] = False
+    monkeypatch.setattr(tools, "load_settings", lambda: _dev_settings(), raising=True)
+
+    def _fake_fetch(base, token, entity_id):
+        _get_state_ran["ran"] = True
+        return {"entity_id": entity_id, "state": "off"}
+
+    monkeypatch.setattr(tools, "fetch_entity_state", _fake_fetch, raising=True)
+
+    graph = build_graph(
+        model=FakeCallsGetState(),
+        auto_run=False,  # approval ON for actuation
+        checkpointer=InMemorySaver(),
+    )
+    config = {"configurable": {"thread_id": "state-t1"}}
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="is MB: Lamp off?")]}, config
+    )
+    assert not result.get("__interrupt__"), "read tools must not interrupt"
+    assert _get_state_ran["ran"] is True
+    assert result["messages"][-1].content == "MB: Lamp is off."
+
+
+def test_prompt_advertises_entity_control_tools():
+    """The prompt advertises control_entity + get_entity_state in both modes."""
+    for rag_available in (True, False):
+        text = _system_prompt(auto_run=True, rag_available=rag_available)
+        assert "control_entity" in text
+        assert "get_entity_state" in text
+
+
+def test_approval_clause_covers_device_control():
+    """Both approval clauses name device control, not just scenes/automations."""
+    gated = _system_prompt(auto_run=False, rag_available=True)
+    auto = _system_prompt(auto_run=True, rag_available=True)
+    assert "device-control" in gated
+    assert "device-control" in auto
