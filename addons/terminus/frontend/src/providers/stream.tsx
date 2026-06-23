@@ -12,12 +12,10 @@ import {
 import { ArrowRight } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 
-import { useGraphReady } from './graph-ready';
+import { GraphReadyGate } from './graph-ready-gate';
 import { useThreads } from './thread';
 
-import { ErrorScreen } from '@/components/error-screen';
 import { TerminusLogoSVG } from '@/components/icons/terminus/terminus-logo';
-import { StatusCard } from '@/components/status-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,8 +91,8 @@ const StreamSession = ({
   return <StreamContext.Provider value={streamValue}>{children}</StreamContext.Provider>;
 };
 
-// Gates the chat on the LangGraph server being reachable, showing a warming-up
-// indicator while it starts and a retryable error if it never comes up.
+// Holds the chat behind the environment-readiness gate (the LangGraph server
+// warming up), then runs the stream session inside it once the backend answers.
 const ChatRuntime = ({
   apiKey,
   apiUrl,
@@ -107,42 +105,13 @@ const ChatRuntime = ({
   apiUrl: string;
   assistantId: string;
   authScheme?: string;
-}) => {
-  const { retry, status } = useGraphReady(apiUrl, apiKey, authScheme);
-
-  if (status === 'checking') {
-    return (
-      <StatusCard>
-        <h1 className="text-lg font-semibold tracking-tight">Starting Terminus…</h1>
-        <p className="text-muted-foreground text-sm">
-          The agent server is warming up. This can take a moment right after an update or restart.
-        </p>
-      </StatusCard>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <ErrorScreen
-        title="Couldn't reach the agent server"
-        message={
-          <>
-            Please ensure the graph is running at <code>{apiUrl}</code> and your API key is correctly set (if connecting
-            to a deployed graph).
-          </>
-        }
-        onRetry={retry}
-        retryLabel="Retry"
-      />
-    );
-  }
-
-  return (
+}) => (
+  <GraphReadyGate apiUrl={apiUrl} apiKey={apiKey} authScheme={authScheme}>
     <StreamSession apiKey={apiKey} apiUrl={apiUrl} assistantId={assistantId} authScheme={authScheme}>
       {children}
     </StreamSession>
-  );
-};
+  </GraphReadyGate>
+);
 
 // Default values for the form
 const DEFAULT_API_URL = 'http://localhost:2024';

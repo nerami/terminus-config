@@ -1,6 +1,7 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { checkGraphStatus, mapGraphReadyStatus } from './graph-ready';
+import { checkGraphStatus, useGraphReadyPoll } from './graph-ready';
 
 import { http } from '@/lib/http';
 
@@ -10,29 +11,6 @@ const mockGet = vi.mocked(http.get);
 
 afterEach(() => {
   vi.clearAllMocks();
-});
-
-describe('mapGraphReadyStatus', () => {
-  it('is checking before any poll resolves', () => {
-    expect(mapGraphReadyStatus(undefined, 0)).toBe('checking');
-  });
-
-  it('stays checking while polls fail under the cap', () => {
-    expect(mapGraphReadyStatus(false, 1)).toBe('checking');
-    expect(mapGraphReadyStatus(false, 39)).toBe('checking');
-  });
-
-  it('is ready as soon as a poll succeeds', () => {
-    expect(mapGraphReadyStatus(true, 3)).toBe('ready');
-  });
-
-  it('errors once the attempt cap is reached without success', () => {
-    expect(mapGraphReadyStatus(false, 40)).toBe('error');
-  });
-
-  it('prefers ready over error at the cap', () => {
-    expect(mapGraphReadyStatus(true, 40)).toBe('ready');
-  });
 });
 
 describe('checkGraphStatus', () => {
@@ -49,5 +27,45 @@ describe('checkGraphStatus', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mockGet.mockRejectedValue(new Error('503'));
     expect(await checkGraphStatus('http://x/api', null)).toBe(false);
+  });
+});
+
+describe('useGraphReadyPoll', () => {
+  it('reports ready once the server answers', async () => {
+    mockGet.mockResolvedValue({ status: 200 });
+
+    const { result } = renderHook(() => useGraphReadyPoll('http://x/api', null));
+
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports error after the attempt cap with no success', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockGet.mockRejectedValue(new Error('down'));
+
+    const { result } = renderHook(() =>
+      useGraphReadyPoll('http://x/api', null, undefined, { maxAttempts: 3, intervalMs: 1 }),
+    );
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(mockGet).toHaveBeenCalledTimes(3);
+  });
+
+  it('retry restarts polling and can reach ready', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockGet.mockRejectedValue(new Error('down'));
+
+    const { result } = renderHook(() =>
+      useGraphReadyPoll('http://x/api', null, undefined, { maxAttempts: 2, intervalMs: 1 }),
+    );
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+
+    mockGet.mockReset();
+    mockGet.mockResolvedValue({ status: 200 });
+    act(() => result.current.retry());
+
+    await waitFor(() => expect(result.current.status).toBe('ready'));
   });
 });

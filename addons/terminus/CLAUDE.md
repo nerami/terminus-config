@@ -57,6 +57,14 @@ slug is therefore `local_terminus`.
   the existing shared `queryOptions` patterns (e.g. `haStatusQueryOptions`).
 - **Leave the LangGraph SDK alone.** Chat streaming + threads (`useStream`, `createClient`,
   `client.threads.*`) own their transport — never route them through axios/react-query.
+- **Environment-readiness gates are the membrane, not react-query.** A *pure* boot probe — one
+  that holds the app until the runtime is ready and is never read again — is the boundary that
+  *establishes* the precondition (a live backend) the conventions above assume, so it's
+  deliberately hand-rolled (axios poll, no react-query) and modeled as a boundary component with
+  the app as its children. Today that's `GraphReadyGate` (`src/providers/graph-ready-gate.tsx`,
+  polling `/info` via `useGraphReadyPoll`). Contrast `HaStatusGate`: `/ha/status` is *data that
+  also gates* (the status dot reuses its cache), so it correctly stays on react-query. Rule of
+  thumb: fetched-and-discarded boot probe → hand-rolled gate; fetched-and-reused → react-query.
 
 ## Docker caching strategy
 
