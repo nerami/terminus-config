@@ -1,0 +1,43 @@
+[project]
+name = "terminus"
+# Static placeholder. The add-on's real version lives in config.yaml (the only
+# one bumped on release); keeping this constant avoids busting the Docker
+# pip-install cache layer on every version bump. Do not sync it to config.yaml.
+version = "0.0.0"
+description = "Terminus LangChain Home Assistant add-on backend"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "httpx>=0.28",
+    "websockets>=14",
+    "langchain>=1.0",
+    "langgraph>=1.0",
+    "langchain-anthropic>=1.0",
+    "langchain-mcp-adapters>=0.1",
+    "langfuse>=4,<5",
+]
+
+[project.optional-dependencies]
+server = [
+    "langgraph-cli[inmem]>=0.4",
+]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-m 'not slow'"
+markers = [
+    "slow: opt-in slow/integration tests (real MCP server); deselected by default",
+]

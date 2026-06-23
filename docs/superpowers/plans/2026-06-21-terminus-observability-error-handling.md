@@ -4,7 +4,7 @@
 
 **Goal:** Retrofit structured logging at every degradation point in the Terminus backend, broaden the P0 tool-error catch so tool failures are reported (not crashed) into the agent graph, distinguish "empty" from "failed", and fix the correctness sharp edges (`referenced_ids` recursion, `build_topology` non-str sort, URL parsing, import-time key crash).
 
-**Architecture:** The backend (`addons/terminus-langchain/backend/app/`) is a FastAPI process plus a LangGraph dev server. It currently has zero logging and several broad `except` blocks that swallow failures into empty-but-successful responses. Each module gains a `logging.getLogger(__name__)`; the root level is configured once at FastAPI startup (`web.py`) from a `log_level` option threaded through `run.sh`. Logs go to stdout, which the Supervisor captures via `ha apps logs local_terminus`. Broad catches that degrade gain a `logger.warning`/`logger.exception` before returning the fallback; "fallback" catches are narrowed to their expected exception type so a real ws/auth failure propagates to `web.py`'s `502` handler instead of returning empty-200.
+**Architecture:** The backend (`addons/terminus/backend/app/`) is a FastAPI process plus a LangGraph dev server. It currently has zero logging and several broad `except` blocks that swallow failures into empty-but-successful responses. Each module gains a `logging.getLogger(__name__)`; the root level is configured once at FastAPI startup (`web.py`) from a `log_level` option threaded through `run.sh`. Logs go to stdout, which the Supervisor captures via `ha apps logs local_terminus`. Broad catches that degrade gain a `logger.warning`/`logger.exception` before returning the fallback; "fallback" catches are narrowed to their expected exception type so a real ws/auth failure propagates to `web.py`'s `502` handler instead of returning empty-200.
 
 **Tech Stack:** Python 3.12, FastAPI, httpx, websockets, LangChain/LangGraph, langchain-anthropic, pytest + pytest-asyncio (`asyncio_mode = "auto"`), pytest `caplog` for log assertions.
 
@@ -12,9 +12,9 @@
 
 - **Base image tag:** `3.12-alpine3.18` — never bare `:3.12`. (No Dockerfile edit in this plan, but do not introduce 3.11-incompatible syntax that the base would reject; the floor bump in Task 11 codifies this.)
 - **`requires-python` bumps to `>=3.12`** (`backend/pyproject.toml`) — matches the only supported runtime.
-- **Version lives ONLY in `config.yaml`.** Do NOT bump `backend/pyproject.toml` `version` (stays `0.0.0`) or `frontend/package.json` `version`. The single canonical version is `config.yaml: version`; current is `0.10.0`, this feature releases as `0.11.0`. **Cross-plan release coordination:** the three `terminus-langchain` plans share this branch and bump the same `config.yaml`; in the recommended order C → B → A they release `0.11.0` / `0.12.0` / `0.13.0`. This is Spec C, first in sequence → `0.11.0`. `terminus-rag` is a separate add-on versioned independently (`0.1.0`).
+- **Version lives ONLY in `config.yaml`.** Do NOT bump `backend/pyproject.toml` `version` (stays `0.0.0`) or `frontend/package.json` `version`. The single canonical version is `config.yaml: version`; current is `0.10.0`, this feature releases as `0.11.0`. **Cross-plan release coordination:** the three `terminus` plans share this branch and bump the same `config.yaml`; in the recommended order C → B → A they release `0.11.0` / `0.12.0` / `0.13.0`. This is Spec C, first in sequence → `0.11.0`. `terminus-rag` is a separate add-on versioned independently (`0.1.0`).
 - **Every `config.yaml` version bump adds a matching `CHANGELOG.md` entry** under a heading equal to the new version. No bump without a changelog entry.
-- **`pytest` config:** `asyncio_mode = "auto"`, `testpaths = ["tests"]` (already set in `pyproject.toml`). All tests live under `addons/terminus-langchain/backend/tests/`. Async tests need no `@pytest.mark.asyncio` decorator.
+- **`pytest` config:** `asyncio_mode = "auto"`, `testpaths = ["tests"]` (already set in `pyproject.toml`). All tests live under `addons/terminus/backend/tests/`. Async tests need no `@pytest.mark.asyncio` decorator.
 - **Logging sink:** stdout only — no file handlers, no `logging.FileHandler`, no Prometheus/OTel. The Supervisor captures stdout (`ha apps logs local_terminus`). Use `logging.getLogger(__name__)` per module; configure the root level once in `web.py`.
 - **TDD:** every change is test-first — write the failing test, run it and watch it fail, write the minimal implementation, run it and watch it pass, commit. Use pytest `caplog` to assert log lines.
 - **Conventional Commits** with this exact trailer on every commit:
@@ -24,7 +24,7 @@
   Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn
   ```
 
-- **Working directory for all commands:** `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend`. Paths below are absolute. Run tests from this `backend/` directory (where `pyproject.toml` lives) so `app` and `tests` import cleanly.
+- **Working directory for all commands:** `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend`. Paths below are absolute. Run tests from this `backend/` directory (where `pyproject.toml` lives) so `app` and `tests` import cleanly.
 - **Worktree:** all work happens on branch `features/terminus-rag` in `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/`. The addon source there is byte-identical to the deployed `main/` copy; all line numbers below were verified against it.
 
 ---
@@ -34,13 +34,13 @@
 This task comes **first** — every later task adds `logger.*` calls and asserts them with `caplog`, so the module-level loggers and the startup-level config must exist before anything else. No behavior changes here beyond loggers existing and the root level being settable; the actual `logger.warning`/`logger.exception` calls at degradation points land in Tasks 2-10.
 
 **Files:**
-- Create: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/logging_setup.py`
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/web.py:69-81` (inside `create_app`, before `lifespan` is defined)
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/run.sh:7-13` (add `LOG_LEVEL` export)
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/config.yaml:19-37` (add `log_level` option + schema)
+- Create: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/logging_setup.py`
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/web.py:69-81` (inside `create_app`, before `lifespan` is defined)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/run.sh:7-13` (add `LOG_LEVEL` export)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/config.yaml:19-37` (add `log_level` option + schema)
 - Add module-level `logger = logging.getLogger(__name__)` to each of:
   `app/tools.py`, `app/ha_registry.py`, `app/config.py`, `app/agent.py`, `app/ha_client.py`, `app/title.py`, `app/web.py`
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_logging_setup.py`
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_logging_setup.py`
 
 **Interfaces:**
 - Produces: `app.logging_setup.configure_logging(level: str | None = None) -> None` — reads `level` (falls back to `os.environ["LOG_LEVEL"]`, default `"info"`), maps the case-insensitive name to a `logging` level via `logging.getLevelName(level.upper())`, and calls `logging.basicConfig(level=..., stream=sys.stdout, format="%(asctime)s %(levelname)s %(name)s %(message)s", force=True)`. An unrecognized level falls back to `logging.INFO` and emits one `logger.warning`. Idempotent (`force=True` re-applies cleanly).
@@ -120,7 +120,7 @@ def test_modules_expose_named_loggers():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_logging_setup.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_logging_setup.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'app.logging_setup'`.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -190,7 +190,7 @@ def create_app(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_logging_setup.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_logging_setup.py -v`
 Expected: PASS (7 passed).
 
 - [ ] **Step 5: Wire `run.sh` + `config.yaml` (no test — shell/yaml; validated by deploy)**
@@ -217,24 +217,24 @@ and under `schema:` (after `auto_run_tools: bool`, currently line 35) add:
 
 - [ ] **Step 6: Run the full suite to confirm no regression**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest -q`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest -q`
 Expected: all tests PASS (existing suite + new `test_logging_setup.py`).
 
 - [ ] **Step 7: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/logging_setup.py \
-        addons/terminus-langchain/backend/app/tools.py \
-        addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/app/config.py \
-        addons/terminus-langchain/backend/app/agent.py \
-        addons/terminus-langchain/backend/app/ha_client.py \
-        addons/terminus-langchain/backend/app/title.py \
-        addons/terminus-langchain/backend/app/web.py \
-        addons/terminus-langchain/backend/tests/test_logging_setup.py \
-        addons/terminus-langchain/run.sh \
-        addons/terminus-langchain/config.yaml
+git add addons/terminus/backend/app/logging_setup.py \
+        addons/terminus/backend/app/tools.py \
+        addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/app/config.py \
+        addons/terminus/backend/app/agent.py \
+        addons/terminus/backend/app/ha_client.py \
+        addons/terminus/backend/app/title.py \
+        addons/terminus/backend/app/web.py \
+        addons/terminus/backend/tests/test_logging_setup.py \
+        addons/terminus/run.sh \
+        addons/terminus/config.yaml
 git commit -m "feat(terminus): add stdout logging infrastructure with per-module loggers
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -248,10 +248,10 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The three `@tool` functions catch only `httpx.HTTPError`. `json.JSONDecodeError` (from `.json()` after `raise_for_status()` on a malformed body) and `httpx.InvalidURL` (a bad base URL) are **not** subclasses of `httpx.HTTPError`, so today they escape as unhandled exceptions into the LangGraph ReAct loop on the **state-changing** path. Broaden each catch to also handle these two, log the failure, and return the structured `{"error": ...}` the agent prompt expects.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/tools.py:66-70` (`ha_basic_info` try/except)
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/tools.py:90-94` (`run_scene` try/except)
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/tools.py:120-126` (`trigger_automation` try/except)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_tools.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/tools.py:66-70` (`ha_basic_info` try/except)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/tools.py:90-94` (`run_scene` try/except)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/tools.py:120-126` (`trigger_automation` try/except)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_tools.py` (append)
 
 **Interfaces:**
 - Consumes: `app.tools.logger` (from Task 1); the module-level `import json` already present at line 5.
@@ -308,7 +308,7 @@ def test_ha_basic_info_handles_decode_error(monkeypatch, caplog):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_tools.py -v -k "decode_error or invalid_url"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_tools.py -v -k "decode_error or invalid_url"`
 Expected: FAIL — the uncaught `json.JSONDecodeError` / `httpx.InvalidURL` propagates out of `.invoke()` (error, not a clean `{"error": ...}` dict).
 
 - [ ] **Step 3: Write minimal implementation**
@@ -356,15 +356,15 @@ Replace `trigger_automation`'s try/except (lines 120-126):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_tools.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_tools.py -v`
 Expected: PASS (existing tests + the 3 new ones; note `test_run_scene_handles_http_error` at line 205 still passes since `httpx.ConnectError` ⊂ `httpx.HTTPError` ⊂ `_TOOL_ERRORS`).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/tools.py \
-        addons/terminus-langchain/backend/tests/test_tools.py
+git add addons/terminus/backend/app/tools.py \
+        addons/terminus/backend/tests/test_tools.py
 git commit -m "fix(terminus): broaden tool error catch to decode/URL errors (P0)
 
 json.JSONDecodeError and httpx.InvalidURL do not subclass httpx.HTTPError,
@@ -382,8 +382,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The REST step (line 362) catches bare `Exception`, so a genuine bug (e.g. a `KeyError` in `referenced_ids`, an `httpx.ConnectError`) silently "falls back" to the websocket path. Narrow it to `httpx.HTTPStatusError` (the real 404→trace signal) and log. The outermost `except` (line 389) also catches bare `Exception` and returns empty-200; narrow it so a real ws/auth failure (`HARegistryError`, `ConnectionError`) propagates to `web.py`'s `502` handler, while only expected per-step degradation returns empty.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/ha_registry.py:356-390` (`fetch_automation` body)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_ha_registry.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/ha_registry.py:356-390` (`fetch_automation` body)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_ha_registry.py` (append)
 
 **Interfaces:**
 - Consumes: `app.ha_registry.logger` (Task 1); `HARegistryError` (line 27); `_empty_refs` (line 193); `referenced_ids` (line 152); `httpx`.
@@ -449,7 +449,7 @@ Note: `test_fetch_automation_returns_config_and_refs` (line 222), `test_fetch_au
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v -k "propagates_ws_auth_failure or logs_rest_fallback"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v -k "propagates_ws_auth_failure or logs_rest_fallback"`
 Expected: `test_fetch_automation_propagates_ws_auth_failure` FAILS (currently the outer `except Exception` swallows the `HARegistryError` and returns `{"config": {}, ...}` instead of raising); `test_fetch_automation_logs_rest_fallback` FAILS (no log emitted yet).
 
 - [ ] **Step 3: Write minimal implementation**
@@ -511,15 +511,15 @@ Key changes vs the original: the REST catch is now `httpx.HTTPStatusError` (not 
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v`
 Expected: PASS — all existing `fetch_automation` ladder tests plus the 2 new ones.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "fix(terminus): narrow fetch_automation fallbacks; propagate real ws failures
 
 REST step now catches only httpx.HTTPStatusError (the real 404->trace signal);
@@ -537,8 +537,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The per-automation `search/related` enrichment (line 273) catches bare `Exception` and silently sets `_empty_refs()`. Keep degrading per-automation (correct — one bad automation must not break the snapshot), but log a warning first so the swallowed failure is observable.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/ha_registry.py:268-275` (enrichment loop)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_ha_registry.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/ha_registry.py:268-275` (enrichment loop)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_ha_registry.py` (append)
 
 **Interfaces:**
 - Consumes: `app.ha_registry.logger`; `_empty_refs`; `_search_related`.
@@ -573,7 +573,7 @@ async def test_fetch_topology_logs_enrichment_failure(caplog):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py::test_fetch_topology_logs_enrichment_failure -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py::test_fetch_topology_logs_enrichment_failure -v`
 Expected: FAIL — no warning is emitted (the existing bare-except is silent).
 
 - [ ] **Step 3: Write minimal implementation**
@@ -599,15 +599,15 @@ Replace the enrichment loop (lines 268-275):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v`
 Expected: PASS (including the existing `test_fetch_topology_degrades_when_related_unreadable` at line 189 — the `search/related` failure raises `HARegistryError`, which the narrowed catch still handles).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "fix(terminus): log per-automation enrichment fallback in fetch_topology
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -621,8 +621,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 `walk()` (lines 172-187) recurses with no depth bound. A pathological/deeply-nested config can hit Python's recursion limit and raise `RecursionError`, blowing up the whole `fetch_automation` call. Add an explicit depth guard; stop descending past the bound and log once.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/ha_registry.py:152-190` (`referenced_ids`)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_ha_registry.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/ha_registry.py:152-190` (`referenced_ids`)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_ha_registry.py` (append)
 
 **Interfaces:**
 - Consumes: `app.ha_registry.logger`.
@@ -652,7 +652,7 @@ def test_referenced_ids_shallow_config_unaffected():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py::test_referenced_ids_bounds_recursion -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py::test_referenced_ids_bounds_recursion -v`
 Expected: FAIL with `RecursionError` (the unbounded `walk()` blows the stack).
 
 - [ ] **Step 3: Write minimal implementation**
@@ -720,15 +720,15 @@ def referenced_ids(config: Any) -> dict:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v`
 Expected: PASS — including the existing `test_referenced_ids_walks_nested_config` (line 113), whose nesting is shallow (well under 100).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "fix(terminus): bound referenced_ids recursion depth
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -742,8 +742,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The area sort (line 142) calls `a["name"].lower()`. `out_areas` builds `name` as `a.get("name") or a["area_id"]` (line 138), but a registry row could carry a non-str `name` (e.g. `null` is handled, but an int or dict from a malformed registry is not), making `.lower()` raise and blowing up the whole snapshot. Coerce the sort key to `str` so it can never raise.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/ha_registry.py:137-142` (`out_areas` build + sort)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_ha_registry.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/ha_registry.py:137-142` (`out_areas` build + sort)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_ha_registry.py` (append)
 
 **Interfaces:**
 - Consumes: nothing new.
@@ -769,7 +769,7 @@ def test_build_topology_tolerates_non_str_area_name():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py::test_build_topology_tolerates_non_str_area_name -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py::test_build_topology_tolerates_non_str_area_name -v`
 Expected: FAIL with `AttributeError: 'int' object has no attribute 'lower'`.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -784,15 +784,15 @@ Replace the sort (line 142):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v`
 Expected: PASS — including the existing `test_build_topology_normalizes_and_resolves_areas` (line 87), whose area ordering (`["kitchen", "living"]`) is unaffected by the `str()` coercion.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "fix(terminus): guard build_topology area sort against non-str names
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -806,8 +806,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 `_normalize_ws_url` (lines 43-58) does case-sensitive `startswith` string surgery: an uppercase scheme (`HTTPS://`) falls through to the bare-host branch and yields `ws://HTTPS://...`; a `user:pass@host` credential prefix is passed through untouched (acceptable for ws) but never validated. `rest_target` (lines 61-79) has the symmetric case-sensitivity gap. Make both case-insensitive on the scheme, and have `_normalize_ws_url` log a warning when the input has no host after stripping (obviously-malformed dev URL).
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/config.py:43-79` (`_normalize_ws_url` + `rest_target`)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_config.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/config.py:43-79` (`_normalize_ws_url` + `rest_target`)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_config.py` (append)
 
 **Interfaces:**
 - Consumes: `app.config.logger` (Task 1).
@@ -866,7 +866,7 @@ def test_rest_target_handles_uppercase_ws_scheme():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_config.py -v -k "uppercase or credentials or empty_host"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_config.py -v -k "uppercase or credentials or empty_host"`
 Expected: FAIL — `HTTPS://h:8123` becomes `ws://HTTPS://h:8123/api/websocket` (no uppercase handling); no warning on empty host.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -926,15 +926,15 @@ Replace `rest_target`'s scheme checks (lines 75-78):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_config.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_config.py -v`
 Expected: PASS — the new cases plus all existing `_normalize_ws_url` / `rest_target` tests (lines 41-64).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/config.py \
-        addons/terminus-langchain/backend/tests/test_config.py
+git add addons/terminus/backend/app/config.py \
+        addons/terminus/backend/tests/test_config.py
 git commit -m "fix(terminus): harden ws/rest URL parsing (uppercase, credentials, no host)
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -948,8 +948,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 `load_options` (lines 82-86) catches `FileNotFoundError`, `json.JSONDecodeError`, and `OSError` all the same way, returning `{}`. "Missing, fine" and "corrupt, broken" are indistinguishable in the logs. Split: a missing file is silent (expected in dev), but a present-but-unparseable file logs a warning before returning `{}`.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/config.py:82-86` (`load_options`)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_config.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/config.py:82-86` (`load_options`)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_config.py` (append)
 
 **Interfaces:**
 - Consumes: `app.config.logger`.
@@ -982,7 +982,7 @@ def test_load_options_corrupt_file_warns(caplog, tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_config.py -v -k "load_options"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_config.py -v -k "load_options"`
 Expected: `test_load_options_corrupt_file_warns` FAILS — no warning is emitted today.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1008,15 +1008,15 @@ def load_options(path: Path = OPTIONS_PATH) -> dict:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_config.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_config.py -v`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/config.py \
-        addons/terminus-langchain/backend/tests/test_config.py
+git add addons/terminus/backend/app/config.py \
+        addons/terminus/backend/tests/test_config.py
 git commit -m "fix(terminus): warn on corrupt /data/options.json (missing stays silent)
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1030,8 +1030,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 `build_graph` constructs `ChatAnthropic(model=settings.model)` at line 125, and `graph = build_graph()` runs at **import time** (line 144). A missing/invalid `ANTHROPIC_API_KEY` makes `ChatAnthropic(...)` raise during LangGraph server *load*, surfacing as an opaque proxy `502`. `title.py` already guards this (lazy build + key check at lines 42-56, 116-118). Mirror that: check `settings.anthropic_api_key` before constructing the model and raise a clear, logged `RuntimeError`.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/agent.py:117-144` (`build_graph` + module-level `graph`)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_agent.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/agent.py:117-144` (`build_graph` + module-level `graph`)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_agent.py` (append)
 
 **Interfaces:**
 - Consumes: `app.agent.logger` (Task 1); `app.config.load_settings`.
@@ -1077,7 +1077,7 @@ def test_build_graph_with_injected_model_skips_key_check(monkeypatch):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v -k "without_key or injected_model_skips"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_agent.py -v -k "without_key or injected_model_skips"`
 Expected: `test_build_graph_raises_clear_error_without_key` FAILS — today `ChatAnthropic(model=...)` raises its own (non-`RuntimeError`, unmatched) error and no `app.agent` log is emitted.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1100,15 +1100,15 @@ Replace the model-construction block in `build_graph` (lines 123-125):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_agent.py -v`
 Expected: PASS — the 2 new tests plus all existing agent tests (which inject a `model`, so the guard is skipped).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/agent.py \
-        addons/terminus-langchain/backend/tests/test_agent.py
+git add addons/terminus/backend/app/agent.py \
+        addons/terminus/backend/tests/test_agent.py
 git commit -m "fix(terminus): guard missing ANTHROPIC_API_KEY in build_graph
 
 A missing key made ChatAnthropic fail at import-time graph load, surfacing as
@@ -1125,8 +1125,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 `run_forever` (lines 146-153) records auth failures (`HAAuthError`) and transport errors only into `self._error` (read via `/ha/status`). An auth-failed reconnect loop should be loud. Add `logger.error` for auth failures and `logger.warning` for transport errors before continuing the reconnect loop.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/app/ha_client.py:146-153` (`run_forever` except arms)
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_ha_client.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/app/ha_client.py:146-153` (`run_forever` except arms)
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_ha_client.py` (append)
 
 **Interfaces:**
 - Consumes: `app.ha_client.logger` (Task 1).
@@ -1166,7 +1166,7 @@ async def test_run_forever_logs_transport_failure(caplog):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_client.py -v -k "logs_auth_failure or logs_transport_failure"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_client.py -v -k "logs_auth_failure or logs_transport_failure"`
 Expected: FAIL — no `app.ha_client` log records emitted today.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1192,15 +1192,15 @@ Replace the `except` arms in `run_forever` (lines 146-153):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_client.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_client.py -v`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/app/ha_client.py \
-        addons/terminus-langchain/backend/tests/test_ha_client.py
+git add addons/terminus/backend/app/ha_client.py \
+        addons/terminus/backend/tests/test_ha_client.py
 git commit -m "fix(terminus): log auth/transport failures in run_forever
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1214,8 +1214,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 Match the only supported runtime (`3.12-alpine3.18`) and prevent 3.11-incompatible drift going unnoticed.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/pyproject.toml:8`
-- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_pyproject.py`
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/pyproject.toml:8`
+- Test: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_pyproject.py`
 
 **Interfaces:**
 - Consumes: nothing.
@@ -1246,7 +1246,7 @@ def test_version_stays_frozen():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_pyproject.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_pyproject.py -v`
 Expected: `test_requires_python_floor_is_312` FAILS (`assert '>=3.11' == '>=3.12'`).
 
 - [ ] **Step 3: Write minimal implementation**
@@ -1259,15 +1259,15 @@ requires-python = ">=3.12"
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_pyproject.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_pyproject.py -v`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/pyproject.toml \
-        addons/terminus-langchain/backend/tests/test_pyproject.py
+git add addons/terminus/backend/pyproject.toml \
+        addons/terminus/backend/tests/test_pyproject.py
 git commit -m "chore(terminus): bump requires-python to >=3.12
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1281,7 +1281,7 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 `clean_title` (title.py lines 67-98) has an untested word-boundary branch (when the clamp boundary is at position ≤ 0, the full clip is kept) and an untested all-punctuation→empty collapse. Backfill both — these are characterization tests of existing behavior (no production change).
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_title.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_title.py` (append)
 
 **Interfaces:**
 - Consumes: `app.title.clean_title` (already imported at test line 11).
@@ -1315,14 +1315,14 @@ def test_clean_title_trailing_punctuation_only_strips_one_run():
 
 - [ ] **Step 2: Run test to verify behavior**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_title.py -v -k "no_space_in_clip or all_punctuation or trailing_punctuation_only"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_title.py -v -k "no_space_in_clip or all_punctuation or trailing_punctuation_only"`
 Expected: PASS — these characterize `clean_title`'s existing logic. (If `test_clean_title_no_space_in_clip_keeps_full_clip` were to fail, that reveals a real boundary bug to fix; per the impl at lines 90-96 the `boundary > 0` guard means a no-space clip keeps all 60 chars, so it passes.)
 
 - [ ] **Step 3: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/tests/test_title.py
+git add addons/terminus/backend/tests/test_title.py
 git commit -m "test(terminus): backfill clean_title truncation & all-punctuation cases
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1336,7 +1336,7 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The spec calls out `clean_title` non-str input degrading via the caller's guard. `agenerate_title` (title.py lines 101-127) does `message.strip()` at line 108, so a non-str `message` raises `AttributeError` at the call boundary — the FastAPI `_TitleRequest` model (web.py line 53) enforces `message: str`, so the guard is the Pydantic layer. Backfill a test that the route rejects a non-str body, characterizing the real guard.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_title.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_title.py` (append)
 
 **Interfaces:**
 - Consumes: `app.web.create_app` (imported at test line 12); `fastapi.testclient.TestClient` (line 7); `RunnableLambda` (line 8).
@@ -1359,14 +1359,14 @@ def test_title_route_rejects_non_str_message():
 
 - [ ] **Step 2: Run test to verify it passes (characterization)**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_title.py::test_title_route_rejects_non_str_message -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_title.py::test_title_route_rejects_non_str_message -v`
 Expected: PASS — Pydantic's `message: str` coercion rejects the dict with `422`, confirming the guard. (No production change needed; this documents the boundary.)
 
 - [ ] **Step 3: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/tests/test_title.py
+git add addons/terminus/backend/tests/test_title.py
 git commit -m "test(terminus): assert title route rejects non-str message (caller guard)
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1380,7 +1380,7 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The spec flags these as "currently entirely uncovered" beyond the single `test_normalize_ws_url_variants` (line 58). Task 7 added uppercase/credentials/empty-host cases; this task backfills the remaining documented forms (ws/wss bare, trailing slash, `/api/websocket` suffix, supervisor) as one explicit characterization block, so the full input space is covered in one place.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_config.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_config.py` (append)
 
 **Interfaces:**
 - Consumes: `app.config._normalize_ws_url`, `app.config.rest_target`, `app.config.Settings`.
@@ -1445,14 +1445,14 @@ def test_rest_target_supervisor_ignores_ws_url():
 
 - [ ] **Step 2: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_config.py -v -k "all_forms or all_dev_forms or supervisor_ignores"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_config.py -v -k "all_forms or all_dev_forms or supervisor_ignores"`
 Expected: PASS (relies on Task 7's hardened `_normalize_ws_url` for the uppercase/credentials rows; the `load_settings`/`rest_target`/`_normalize_ws_url` imports are already at test line 1 + Task 7's appended imports).
 
 - [ ] **Step 3: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/tests/test_config.py
+git add addons/terminus/backend/tests/test_config.py
 git commit -m "test(terminus): cover all _normalize_ws_url / rest_target input forms
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1466,7 +1466,7 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 The spec asks for the complete ladder asserted in one place: REST-success / REST-404→trace-config / trace-absent→related / all-fail→propagate. Tasks in `test_ha_registry.py` cover the first three (lines 222, 243, 294) and Task 3 added the propagation case. This task adds the one remaining gap the spec names explicitly: **REST-404 + trace present but its config is absent → degrade to related** (the `_latest_trace_config` returns `None` path), so every rung is pinned.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_ha_registry.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_ha_registry.py` (append)
 
 **Interfaces:**
 - Consumes: `fetch_automation`, `FakeWS`, `fake_connect`, `_settings` (all already in `test_ha_registry.py`); `httpx`.
@@ -1522,14 +1522,14 @@ async def test_fetch_automation_trace_without_config_degrades_to_related():
 
 - [ ] **Step 2: Run test to verify it passes (characterizes Task 3's narrowed impl)**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py::test_fetch_automation_trace_without_config_degrades_to_related -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_ha_registry.py::test_fetch_automation_trace_without_config_degrades_to_related -v`
 Expected: PASS — `_latest_trace_config` returns `None` when the trace has no `config` (line 334-335), so the related rung runs.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "test(terminus): pin fetch_automation trace-without-config rung
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1543,7 +1543,7 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 Today `test_run_scene_requires_human_approval` (test_agent.py line 177) covers only **interrupt creation**. The spec wants the approve/edit/reject continuation: resuming the interrupted graph with `Command(resume=...)` and asserting the gated tool then runs (approve) or is rejected.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend/tests/test_agent.py` (append)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend/tests/test_agent.py` (append)
 
 **Interfaces:**
 - Consumes: `build_graph`, `FakeRunsScene` (test_agent.py line 146), `_dev_settings` (line 225), `app.tools`; `langgraph.types.Command`, `langgraph.checkpoint.memory.InMemorySaver`.
@@ -1608,21 +1608,21 @@ def test_run_scene_resume_reject_does_not_execute(monkeypatch):
 
 - [ ] **Step 2: Run test to verify it fails (or reveals the real resume payload shape)**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v -k "resume_approve or resume_reject"`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_agent.py -v -k "resume_approve or resume_reject"`
 Expected: these are characterization tests of `HumanInTheLoopMiddleware`. If the resume payload shape differs from `[{"type": "approve"}]` in the installed `langchain` version, the test will fail with a clear error showing the expected decision schema — adjust the `resume=` payload to the documented shape for the pinned `langchain>=1.0` (the `allowed_decisions=["approve", "edit", "reject"]` configured at agent.py lines 73-74 defines the accepted `type` values). Once the payload matches, both tests PASS.
 
 > Implementer note: if `langgraph.types.Command` is not importable in the pinned version, use `from langgraph.types import Command` vs `from langchain_core.runnables import ...` — confirm the import via `python -c "from langgraph.types import Command; print(Command)"` before writing, and use the resume schema from the installed `HumanInTheLoopMiddleware` (inspect with `python -c "from langchain.agents.middleware import HumanInTheLoopMiddleware; help(HumanInTheLoopMiddleware)"`). The decision `type` strings must be among the `allowed_decisions`.
 
 - [ ] **Step 3: Run test to verify it passes**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest tests/test_agent.py -v`
 Expected: PASS — full agent suite including the 2 resume round-trip tests.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/backend/tests/test_agent.py
+git add addons/terminus/backend/tests/test_agent.py
 git commit -m "test(terminus): cover approval-middleware resume round-trip
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1636,8 +1636,8 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 All fixes land; cut the release. Bump the single canonical version (`0.10.0` → `0.11.0`) and add the matching `CHANGELOG.md` entry. No code change — this is the release gate.
 
 **Files:**
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/config.yaml` (the `version:` line, currently `"0.10.0"`)
-- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/CHANGELOG.md` (new `## 0.11.0` heading at the top, above `## 0.10.0`)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/config.yaml` (the `version:` line, currently `"0.10.0"`)
+- Modify: `/Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/CHANGELOG.md` (new `## 0.11.0` heading at the top, above `## 0.10.0`)
 
 **Interfaces:**
 - Consumes: nothing.
@@ -1679,15 +1679,15 @@ Insert at the top of `CHANGELOG.md`, immediately after the intro paragraph and b
 
 - [ ] **Step 3: Run the full suite one last time**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest -q`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest -q`
 Expected: all tests PASS (every prior task's tests, green).
 
 - [ ] **Step 4: Commit**
 
 ```bash
 cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag
-git add addons/terminus-langchain/config.yaml \
-        addons/terminus-langchain/CHANGELOG.md
+git add addons/terminus/config.yaml \
+        addons/terminus/CHANGELOG.md
 git commit -m "chore(terminus): release 0.11.0 — observability & error-handling robustness
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -1700,7 +1700,7 @@ Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn"
 
 - [ ] **Run the complete suite:**
 
-Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus-langchain/backend && python -m pytest -q`
+Run: `cd /Users/zrmn/Terminus/home-assistant/features/terminus-rag/addons/terminus/backend && python -m pytest -q`
 Expected: all tests pass (existing + ~26 new test functions across Tasks 1-16).
 
 - [ ] **Confirm the addon `check_config` is unaffected** (YAML untouched by this backend-only work, but `config.yaml` schema changed):

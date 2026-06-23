@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-21
 **Status:** Approved (design)
-**Component:** `addons/terminus-langchain/backend/app/web.py`, `app/ha_registry.py`
+**Component:** `addons/terminus/backend/app/web.py`, `app/ha_registry.py`
 **Spec:** B of 4 — independent of Spec 0/A. Carries the two HIGH-severity findings from the backend audit.
 
 ## Goal

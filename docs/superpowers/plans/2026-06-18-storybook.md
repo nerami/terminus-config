@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add Storybook 10 to the terminus-langchain frontend with one rich story each for the Chat (`Thread`) and Topology (`GraphCanvas`) components.
+**Goal:** Add Storybook 10 to the terminus frontend with one rich story each for the Chat (`Thread`) and Topology (`GraphCanvas`) components.
 
 **Architecture:** Global Storybook decorators provide Jotai + nuqs context. The Chat story bypasses the real `StreamProvider`/`ThreadProvider` by injecting static context values directly. The Topology story creates a pre-seeded Jotai store so `GraphCanvas` reads fixture topology without any API call.
 
@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- All work is under `addons/terminus-langchain/frontend/`
+- All work is under `addons/terminus/frontend/`
 - Storybook version: `^10` (match terminus-ui at `^10.2.10`)
 - Stories location: `stories/` alongside `src/`, never inside it
 - No play functions, no controls, no interactions — static fixture data only
@@ -36,16 +36,16 @@
 ### Task 1: Storybook scaffolding
 
 **Files:**
-- Modify: `addons/terminus-langchain/frontend/package.json`
-- Create: `addons/terminus-langchain/frontend/.storybook/main.ts`
-- Create: `addons/terminus-langchain/frontend/.storybook/preview.tsx`
+- Modify: `addons/terminus/frontend/package.json`
+- Create: `addons/terminus/frontend/.storybook/main.ts`
+- Create: `addons/terminus/frontend/.storybook/preview.tsx`
 
 **Interfaces:**
 - Produces: a running Storybook at `http://localhost:6007` (no stories yet)
 
 - [ ] **Step 1: Install Storybook packages**
 
-Run from `addons/terminus-langchain/frontend/`:
+Run from `addons/terminus/frontend/`:
 
 ```bash
 pnpm add -D storybook@^10 @storybook/react-vite@^10 @storybook/addon-themes@^10 @storybook/addon-docs@^10
@@ -200,10 +200,10 @@ Expected: browser opens at `http://localhost:6007`, Storybook UI loads (no stori
 - [ ] **Step 6: Commit**
 
 ```bash
-git add addons/terminus-langchain/frontend/package.json \
-        addons/terminus-langchain/frontend/pnpm-lock.yaml \
-        addons/terminus-langchain/frontend/.storybook/main.ts \
-        addons/terminus-langchain/frontend/.storybook/preview.tsx
+git add addons/terminus/frontend/package.json \
+        addons/terminus/frontend/pnpm-lock.yaml \
+        addons/terminus/frontend/.storybook/main.ts \
+        addons/terminus/frontend/.storybook/preview.tsx
 git commit -m "chore(frontend): scaffold Storybook 10 with theme + Jotai + nuqs decorators"
 ```
 
@@ -212,8 +212,8 @@ git commit -m "chore(frontend): scaffold Storybook 10 with theme + Jotai + nuqs 
 ### Task 2: Chat story
 
 **Files:**
-- Modify: `addons/terminus-langchain/frontend/src/providers/Thread.tsx` (line 25 — export `ThreadContext`)
-- Create: `addons/terminus-langchain/frontend/stories/chat.stories.tsx`
+- Modify: `addons/terminus/frontend/src/providers/Thread.tsx` (line 25 — export `ThreadContext`)
+- Create: `addons/terminus/frontend/stories/chat.stories.tsx`
 
 **Interfaces:**
 - Consumes: `StreamContext` (default export from `@/providers/Stream`), `ThreadContext` (named export added in this task), `ArtifactProvider` (named export from `@/components/thread/artifact`), `Thread` (named export from `@/components/thread`)
@@ -358,8 +358,8 @@ With Storybook still running (`pnpm storybook`), navigate to **Chat → Default*
 - [ ] **Step 4: Commit**
 
 ```bash
-git add addons/terminus-langchain/frontend/src/providers/Thread.tsx \
-        addons/terminus-langchain/frontend/stories/chat.stories.tsx
+git add addons/terminus/frontend/src/providers/Thread.tsx \
+        addons/terminus/frontend/stories/chat.stories.tsx
 git commit -m "feat(frontend): add Chat Storybook story with fixture conversation"
 ```
 
@@ -368,7 +368,7 @@ git commit -m "feat(frontend): add Chat Storybook story with fixture conversatio
 ### Task 3: Topology story
 
 **Files:**
-- Create: `addons/terminus-langchain/frontend/stories/topology.stories.tsx`
+- Create: `addons/terminus/frontend/stories/topology.stories.tsx`
 
 **Interfaces:**
 - Consumes: `GraphCanvas` (named export from `@/components/graph/GraphCanvas`), `topologyAtom` + `graphViewAtom` (from `@/lib/ha-graph/atoms`), `Topology` type (from `@/lib/ha-graph/types`)
@@ -532,6 +532,6 @@ A console error for `GET /ha/automation/...` is expected and harmless — `useAu
 - [ ] **Step 3: Commit**
 
 ```bash
-git add addons/terminus-langchain/frontend/stories/topology.stories.tsx
+git add addons/terminus/frontend/stories/topology.stories.tsx
 git commit -m "feat(frontend): add Topology Storybook story with fixture Living Room area graph"
 ```

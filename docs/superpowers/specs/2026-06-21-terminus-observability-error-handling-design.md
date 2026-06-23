@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-21
 **Status:** Approved (design)
-**Component:** `addons/terminus-langchain/backend/app/` (all modules)
+**Component:** `addons/terminus/backend/app/` (all modules)
 **Spec:** C of 4 — independent of Spec 0/A/B. Retrofits the existing Terminus backend.
 
 ## Goal

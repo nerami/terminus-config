@@ -38,7 +38,7 @@ These apply to **every** task below — each task's requirements implicitly incl
 | Create | `addons/terminus-rag/Dockerfile` | glibc build, manifest-before-source |
 | Create | `addons/terminus-rag/run.sh` | Plain entrypoint → `exec uvicorn` (via `app.main`) |
 | Create | `addons/terminus-rag/README.md` | First-boot delay, model cache, deploy notes |
-| Create | `addons/terminus-rag/CLAUDE.md` | Versioning + Docker caching rules (mirror terminus-langchain) |
+| Create | `addons/terminus-rag/CLAUDE.md` | Versioning + Docker caching rules (mirror terminus) |
 | Create | `addons/terminus-rag/backend/pyproject.toml` | Deps, pytest config, `0.0.0` pin |
 | Create | `addons/terminus-rag/backend/app/__init__.py` | Package marker |
 | Create | `addons/terminus-rag/backend/app/config.py` | Resolve options + HA connection |
@@ -395,7 +395,7 @@ EOF
 
 ### Task 2: `config.py` — resolve options + HA connection
 
-Mirrors terminus-langchain `config.py`: Supervisor token vs dev fallback, options from `/data/options.json`.
+Mirrors terminus `config.py`: Supervisor token vs dev fallback, options from `/data/options.json`.
 
 **Files:**
 - Create: `addons/terminus-rag/backend/app/config.py`

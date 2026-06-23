@@ -14,7 +14,7 @@
 
 These apply to **every** task below; each task's requirements implicitly include this section.
 
-- **Component:** all changes under `addons/terminus-langchain/backend/` plus the add-on manifest (`addons/terminus-langchain/config.yaml`, `translations/en.yaml`). Paths in tasks are relative to the repo root `main/` worktree mirror — in this feature branch they live under `main/addons/terminus-langchain/`.
+- **Component:** all changes under `addons/terminus/backend/` plus the add-on manifest (`addons/terminus/config.yaml`, `translations/en.yaml`). Paths in tasks are relative to the repo root `main/` worktree mirror — in this feature branch they live under `main/addons/terminus/`.
 - **Base image stays `3.12-alpine3.18`.** Terminus remains on Alpine/musl. Do **NOT** add embedding/ML deps (`fastembed`, `onnxruntime`, numpy index) here — those live in the separate `terminus-rag` add-on (Spec 0, glibc `python:3.12-slim`). The only new dependency Terminus gains is `langchain-mcp-adapters` (a pure-Python wrapper).
 - **Version bump only in `config.yaml`.** `config.yaml` `version` is the single canonical version and the ONLY one bumped on release. Do **NOT** bump `backend/pyproject.toml` or `frontend/package.json` — they stay pinned at `0.0.0` to preserve Docker dep-layer caching. Adding the `langchain-mcp-adapters` dep correctly invalidates the pip layer; that is expected.
 - **CHANGELOG entry per bump.** Every `config.yaml` `version` bump must add a matching `CHANGELOG.md` entry under a heading equal to the new version. No bump without a changelog entry.
@@ -27,7 +27,7 @@ These apply to **every** task below; each task's requirements implicitly include
   Claude-Session: https://claude.ai/code/session_01Qxvd8axgVcBxKXKB3bAacn
   ```
 
-- **Run tests from the backend dir.** All `pytest` commands run from `addons/terminus-langchain/backend/` (where `pyproject.toml` lives and `testpaths = ["tests"]` resolves). Assume the dev extras are installed (`pip install -e ".[server,dev]"`); the new `langchain-mcp-adapters` dep is installed in Task 1.
+- **Run tests from the backend dir.** All `pytest` commands run from `addons/terminus/backend/` (where `pyproject.toml` lives and `testpaths = ["tests"]` resolves). Assume the dev extras are installed (`pip install -e ".[server,dev]"`); the new `langchain-mcp-adapters` dep is installed in Task 1.
 - **Local-add-on deploy (after merge, not per task):** sync via `bin/deploy-addons-ssh.sh`, then on device `ha apps update local_terminus` (since `config.yaml` version is bumped). Do **not** bump the version to test iterations — Rebuild for source-only changes.
 
 ---
@@ -36,16 +36,16 @@ These apply to **every** task below; each task's requirements implicitly include
 
 | Action | Path | Responsibility |
 |--------|------|----------------|
-| Modify | `addons/terminus-langchain/backend/pyproject.toml` | Add `langchain-mcp-adapters` to `[project] dependencies`. |
-| Modify | `addons/terminus-langchain/backend/app/config.py` | Add `rag_url`/`rag_token` to `Settings`; resolve them in `load_settings`; memoize `load_settings` via a cache + `reset_settings_cache()`. |
-| Create | `addons/terminus-langchain/backend/app/mcp_client.py` | Build the `MultiServerMCPClient` for `terminus-rag`, load + cache its tools, return `[]` + log on failure, retry on bounded backoff, pass the bearer header when `rag_token` is set. |
-| Modify | `addons/terminus-langchain/backend/app/agent.py` | `build_graph()` mounts RAG tools beside the local three; rewrite `_BASE_PROMPT` (advertise knowledge tools, drop the apology, discover-before-act, history guidance, degraded-mode text, keep `{approval}` slot); thread a `rag_available` flag into the prompt. |
-| Modify | `addons/terminus-langchain/config.yaml` | Add `rag_url`/`rag_token` options + schema; bump `version`. |
-| Modify | `addons/terminus-langchain/translations/en.yaml` | Document `rag_url`/`rag_token`. |
-| Modify | `addons/terminus-langchain/CHANGELOG.md` | Entry for the new version. |
-| Create | `addons/terminus-langchain/backend/tests/test_mcp_client.py` | Unit tests for `mcp_client` against a fake/in-process MCP server. |
-| Modify | `addons/terminus-langchain/backend/tests/test_config.py` | Tests for `rag_url`/`rag_token` resolution + memoized `load_settings`. |
-| Modify | `addons/terminus-langchain/backend/tests/test_agent.py` | Tests for tool mounting, degraded-mode prompt, approval still gates only the two local tools. |
+| Modify | `addons/terminus/backend/pyproject.toml` | Add `langchain-mcp-adapters` to `[project] dependencies`. |
+| Modify | `addons/terminus/backend/app/config.py` | Add `rag_url`/`rag_token` to `Settings`; resolve them in `load_settings`; memoize `load_settings` via a cache + `reset_settings_cache()`. |
+| Create | `addons/terminus/backend/app/mcp_client.py` | Build the `MultiServerMCPClient` for `terminus-rag`, load + cache its tools, return `[]` + log on failure, retry on bounded backoff, pass the bearer header when `rag_token` is set. |
+| Modify | `addons/terminus/backend/app/agent.py` | `build_graph()` mounts RAG tools beside the local three; rewrite `_BASE_PROMPT` (advertise knowledge tools, drop the apology, discover-before-act, history guidance, degraded-mode text, keep `{approval}` slot); thread a `rag_available` flag into the prompt. |
+| Modify | `addons/terminus/config.yaml` | Add `rag_url`/`rag_token` options + schema; bump `version`. |
+| Modify | `addons/terminus/translations/en.yaml` | Document `rag_url`/`rag_token`. |
+| Modify | `addons/terminus/CHANGELOG.md` | Entry for the new version. |
+| Create | `addons/terminus/backend/tests/test_mcp_client.py` | Unit tests for `mcp_client` against a fake/in-process MCP server. |
+| Modify | `addons/terminus/backend/tests/test_config.py` | Tests for `rag_url`/`rag_token` resolution + memoized `load_settings`. |
+| Modify | `addons/terminus/backend/tests/test_agent.py` | Tests for tool mounting, degraded-mode prompt, approval still gates only the two local tools. |
 
 ### Confirmed `langchain-mcp-adapters` API (verified via context7, `/langchain-ai/langchain-mcp-adapters`)
 
@@ -62,14 +62,14 @@ The implementation below depends on these exact facts — do not guess:
 ## Task 1: Add the `langchain-mcp-adapters` dependency
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/pyproject.toml:9-17`
+- Modify: `addons/terminus/backend/pyproject.toml:9-17`
 
 **Interfaces:**
 - Produces: `langchain_mcp_adapters.client.MultiServerMCPClient` importable in the backend env.
 
 - [ ] **Step 1: Write the failing test**
 
-Add to `addons/terminus-langchain/backend/tests/test_mcp_client.py` (new file):
+Add to `addons/terminus/backend/tests/test_mcp_client.py` (new file):
 
 ```python
 """Tests for the terminus-rag MCP tool loader."""
@@ -84,12 +84,12 @@ def test_langchain_mcp_adapters_is_importable():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py::test_langchain_mcp_adapters_is_importable -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py::test_langchain_mcp_adapters_is_importable -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'langchain_mcp_adapters'`.
 
 - [ ] **Step 3: Add the dependency**
 
-Edit `addons/terminus-langchain/backend/pyproject.toml`, adding the dep to the `[project] dependencies` list (keep the existing entries):
+Edit `addons/terminus/backend/pyproject.toml`, adding the dep to the `[project] dependencies` list (keep the existing entries):
 
 ```toml
 dependencies = [
@@ -107,18 +107,18 @@ dependencies = [
 Then install it into the dev env:
 
 ```bash
-cd addons/terminus-langchain/backend && pip install -e ".[server,dev]"
+cd addons/terminus/backend && pip install -e ".[server,dev]"
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py::test_langchain_mcp_adapters_is_importable -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py::test_langchain_mcp_adapters_is_importable -v`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/pyproject.toml addons/terminus-langchain/backend/tests/test_mcp_client.py
+git add addons/terminus/backend/pyproject.toml addons/terminus/backend/tests/test_mcp_client.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): add langchain-mcp-adapters dependency
 
@@ -136,8 +136,8 @@ EOF
 ## Task 2: Config — `rag_url`/`rag_token` options + memoized `load_settings`
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/config.py:25-34` (`Settings` dataclass), `:82-141` (`load_settings`)
-- Modify: `addons/terminus-langchain/backend/tests/test_config.py`
+- Modify: `addons/terminus/backend/app/config.py:25-34` (`Settings` dataclass), `:82-141` (`load_settings`)
+- Modify: `addons/terminus/backend/tests/test_config.py`
 
 **Interfaces:**
 - Produces:
@@ -151,7 +151,7 @@ EOF
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `addons/terminus-langchain/backend/tests/test_config.py`:
+Append to `addons/terminus/backend/tests/test_config.py`:
 
 ```python
 from app.config import DEFAULT_RAG_URL
@@ -197,12 +197,12 @@ def test_rag_settings_carried_in_supervisor_mode():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_config.py -k rag -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_config.py -k rag -v`
 Expected: FAIL — `ImportError: cannot import name 'DEFAULT_RAG_URL'`.
 
 - [ ] **Step 3: Implement the new fields + resolution**
 
-In `addons/terminus-langchain/backend/app/config.py`, add the constant near the other module constants (after `DEFAULT_TITLE_MODEL`):
+In `addons/terminus/backend/app/config.py`, add the constant near the other module constants (after `DEFAULT_TITLE_MODEL`):
 
 ```python
 DEFAULT_RAG_URL = "http://local-terminus-rag:9000/mcp"
@@ -272,13 +272,13 @@ and the dev-fallback return becomes:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_config.py -k rag -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_config.py -k rag -v`
 Expected: PASS (5 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/config.py addons/terminus-langchain/backend/tests/test_config.py
+git add addons/terminus/backend/app/config.py addons/terminus/backend/tests/test_config.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): resolve rag_url/rag_token add-on options
 
@@ -296,7 +296,7 @@ EOF
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `addons/terminus-langchain/backend/tests/test_config.py`:
+Append to `addons/terminus/backend/tests/test_config.py`:
 
 ```python
 def test_get_settings_memoizes_options_read(monkeypatch):
@@ -336,12 +336,12 @@ def test_reset_settings_cache_forces_reload(monkeypatch):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_config.py -k "memoize or reset" -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_config.py -k "memoize or reset" -v`
 Expected: FAIL — `AttributeError: module 'app.config' has no attribute 'get_settings'` / `reset_settings_cache`.
 
 - [ ] **Step 3: Implement the memoized accessor**
 
-At the bottom of `addons/terminus-langchain/backend/app/config.py`, add:
+At the bottom of `addons/terminus/backend/app/config.py`, add:
 
 ```python
 # Add-on options live in /data/options.json and only change on add-on
@@ -370,13 +370,13 @@ def reset_settings_cache() -> None:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_config.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_config.py -v`
 Expected: PASS (all config tests, including the new memoization ones).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/config.py addons/terminus-langchain/backend/tests/test_config.py
+git add addons/terminus/backend/app/config.py addons/terminus/backend/tests/test_config.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): memoize settings via get_settings()
 
@@ -396,8 +396,8 @@ EOF
 This is the core new module. It is isolated so it can be unit-tested against a **fake/in-process MCP server** with no real `terminus-rag` add-on. The plan builds it in four sub-tasks: (3a) build the connection config, (3b) load tools async against a fake server, (3c) sync entrypoint with degradation + caching, (3d) bounded-backoff retry.
 
 **Files:**
-- Create: `addons/terminus-langchain/backend/app/mcp_client.py`
-- Modify: `addons/terminus-langchain/backend/tests/test_mcp_client.py`
+- Create: `addons/terminus/backend/app/mcp_client.py`
+- Modify: `addons/terminus/backend/tests/test_mcp_client.py`
 
 **Interfaces:**
 - Consumes: `app.config.Settings` (fields `rag_url`, `rag_token`); `langchain_mcp_adapters.client.MultiServerMCPClient`.
@@ -412,7 +412,7 @@ This is the core new module. It is isolated so it can be unit-tested against a *
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `addons/terminus-langchain/backend/tests/test_mcp_client.py`:
+Append to `addons/terminus/backend/tests/test_mcp_client.py`:
 
 ```python
 from app.config import Settings
@@ -451,12 +451,12 @@ def test_build_connection_adds_bearer_header_when_token_set():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -k build_connection -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -k build_connection -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'app.mcp_client'`.
 
 - [ ] **Step 3: Implement `build_connection`**
 
-Create `addons/terminus-langchain/backend/app/mcp_client.py`:
+Create `addons/terminus/backend/app/mcp_client.py`:
 
 ```python
 """Mount the terminus-rag add-on's MCP knowledge tools into the agent.
@@ -507,13 +507,13 @@ def build_connection(settings: Settings) -> dict[str, dict]:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -k build_connection -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -k build_connection -v`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/mcp_client.py addons/terminus-langchain/backend/tests/test_mcp_client.py
+git add addons/terminus/backend/app/mcp_client.py addons/terminus/backend/tests/test_mcp_client.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): build terminus-rag MCP connection config
 
@@ -601,7 +601,7 @@ async def test_load_rag_tools_returns_empty_and_logs_on_failure(caplog):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -k load_rag_tools -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -k load_rag_tools -v`
 Expected: FAIL — `ImportError: cannot import name 'load_rag_tools'`.
 
 - [ ] **Step 3: Implement `load_rag_tools`**
@@ -642,13 +642,13 @@ async def load_rag_tools(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -k load_rag_tools -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -k load_rag_tools -v`
 Expected: PASS (2 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/mcp_client.py addons/terminus-langchain/backend/tests/test_mcp_client.py
+git add addons/terminus/backend/app/mcp_client.py addons/terminus/backend/tests/test_mcp_client.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): load terminus-rag MCP tools with degradation
 
@@ -736,7 +736,7 @@ def test_get_rag_tools_defaults_to_get_settings(monkeypatch):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -k "get_rag_tools" -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -k "get_rag_tools" -v`
 Expected: FAIL — `AttributeError: module 'app.mcp_client' has no attribute 'get_rag_tools'` / `reset_rag_cache`.
 
 - [ ] **Step 3: Implement the sync cached entrypoint**
@@ -818,13 +818,13 @@ def reset_rag_cache() -> None:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -k "get_rag_tools" -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -k "get_rag_tools" -v`
 Expected: PASS (3 tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/mcp_client.py addons/terminus-langchain/backend/tests/test_mcp_client.py
+git add addons/terminus/backend/app/mcp_client.py addons/terminus/backend/tests/test_mcp_client.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): cache terminus-rag tools across turns
 
@@ -881,7 +881,7 @@ def test_get_rag_tools_retries_after_backoff(monkeypatch):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py::test_get_rag_tools_retries_after_backoff -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py::test_get_rag_tools_retries_after_backoff -v`
 Expected: FAIL — within the backoff window the current code re-probes (`calls["n"]` becomes 2 too early) **or** never retries, depending on the exact monotonic values. This pins the backoff semantics.
 
 > If the test already passes against the 3c implementation, that is acceptable — 3c's cache logic already encodes the backoff. In that case, keep the test (it documents and locks the behavior) and proceed to the commit. Re-run to confirm green.
@@ -892,13 +892,13 @@ The 3c implementation already records `_LAST_FAILED_AT = time.monotonic()` on an
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_mcp_client.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_mcp_client.py -v`
 Expected: PASS (all `mcp_client` tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/tests/test_mcp_client.py addons/terminus-langchain/backend/app/mcp_client.py
+git add addons/terminus/backend/tests/test_mcp_client.py addons/terminus/backend/app/mcp_client.py
 git commit -m "$(cat <<'EOF'
 test(terminus): lock terminus-rag bounded-backoff retry
 
@@ -918,8 +918,8 @@ EOF
 The prompt rewrite is a self-contained, testable change: it advertises the knowledge tools, deletes the "can't list what exists" apology, adds discover-before-act + history guidance, and adds a degraded-mode clause keyed off a `rag_available` flag. Tool mounting lands in Task 5; this task wires the prompt to accept the flag.
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/agent.py:26-66` (`_BASE_PROMPT`, `_system_prompt`)
-- Modify: `addons/terminus-langchain/backend/tests/test_agent.py`
+- Modify: `addons/terminus/backend/app/agent.py:26-66` (`_BASE_PROMPT`, `_system_prompt`)
+- Modify: `addons/terminus/backend/tests/test_agent.py`
 
 **Interfaces:**
 - Consumes: nothing new.
@@ -927,7 +927,7 @@ The prompt rewrite is a self-contained, testable change: it advertises the knowl
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `addons/terminus-langchain/backend/tests/test_agent.py`:
+Append to `addons/terminus/backend/tests/test_agent.py`:
 
 ```python
 from app.agent import _system_prompt
@@ -981,12 +981,12 @@ def test_prompt_keeps_approval_and_error_clauses():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -k "prompt_advertises or discover_before or history_guidance or degraded_mode or keeps_approval" -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_agent.py -k "prompt_advertises or discover_before or history_guidance or degraded_mode or keeps_approval" -v`
 Expected: FAIL — `_system_prompt() takes 1 positional argument` / missing `search_ha`, `get_logbook`, etc. in the prompt text.
 
 - [ ] **Step 3: Rewrite `_BASE_PROMPT` and `_system_prompt`**
 
-In `addons/terminus-langchain/backend/app/agent.py`, replace the `_BASE_PROMPT` definition (the block from `_BASE_PROMPT = (` through its closing `)`) and the `_system_prompt` function with:
+In `addons/terminus/backend/app/agent.py`, replace the `_BASE_PROMPT` definition (the block from `_BASE_PROMPT = (` through its closing `)`) and the `_system_prompt` function with:
 
 ```python
 # The base prompt carries two runtime slots:
@@ -1065,7 +1065,7 @@ def _system_prompt(auto_run: bool, rag_available: bool = True) -> str:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_agent.py -v`
 Expected: PASS — the new prompt tests pass, and the **existing** prompt tests (`test_approval_clause_gated_by_default`, `test_approval_clause_reflects_auto_run`, topology tests) still pass since `build_graph` defaults `rag_available=True` for the available clause and the approval copy is unchanged.
 
 > Note: `build_graph` still calls `_system_prompt(auto_run)`; the default `rag_available=True` keeps it valid until Task 5 passes the real flag. Existing `build_graph`-based tests stay green.
@@ -1073,7 +1073,7 @@ Expected: PASS — the new prompt tests pass, and the **existing** prompt tests 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/agent.py addons/terminus-langchain/backend/tests/test_agent.py
+git add addons/terminus/backend/app/agent.py addons/terminus/backend/tests/test_agent.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): rewrite agent prompt for knowledge tools
 
@@ -1093,8 +1093,8 @@ EOF
 ## Task 5: `agent.py` — mount RAG tools in `build_graph()` with graceful degradation
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/agent.py:117-145` (`build_graph`), imports near `:19-20`
-- Modify: `addons/terminus-langchain/backend/tests/test_agent.py`
+- Modify: `addons/terminus/backend/app/agent.py:117-145` (`build_graph`), imports near `:19-20`
+- Modify: `addons/terminus/backend/tests/test_agent.py`
 
 **Interfaces:**
 - Consumes: `app.mcp_client.get_rag_tools(settings=None, *, force=False) -> list[BaseTool]`; `_system_prompt(auto_run, rag_available)`.
@@ -1102,7 +1102,7 @@ EOF
 
 - [ ] **Step 1: Write the failing tests**
 
-Append to `addons/terminus-langchain/backend/tests/test_agent.py`:
+Append to `addons/terminus/backend/tests/test_agent.py`:
 
 ```python
 from langchain_core.tools import tool
@@ -1191,12 +1191,12 @@ def test_build_graph_loads_rag_tools_when_not_injected(monkeypatch):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -k "mounts_rag or degrades_to_local or prompt_is_degraded or advertises_tools_when or loads_rag_tools_when" -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_agent.py -k "mounts_rag or degrades_to_local or prompt_is_degraded or advertises_tools_when or loads_rag_tools_when" -v`
 Expected: FAIL — `build_graph() got an unexpected keyword argument 'rag_tools'`.
 
 - [ ] **Step 3: Wire RAG tools into `build_graph`**
 
-In `addons/terminus-langchain/backend/app/agent.py`, add the import next to the existing tools import (around line 20):
+In `addons/terminus/backend/app/agent.py`, add the import next to the existing tools import (around line 20):
 
 ```python
 from app.config import load_settings
@@ -1250,7 +1250,7 @@ def build_graph(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_agent.py -v`
 Expected: PASS — new mounting tests pass; existing tests still pass (default `rag_tools=None` calls `get_rag_tools()`, which with no real RAG server returns `[]` → degraded, harmless for the existing topology/approval tests that only assert on injected tokens and approval copy). If `get_rag_tools()` attempting a real connection slows tests, the existing tests are unaffected because they assert only on prompt tokens; the connection attempt returns `[]` fast on connection-refused.
 
 > If real connection attempts in `get_rag_tools()` make the existing tests slow or flaky, add an autouse fixture to `tests/test_agent.py` that stubs it:
@@ -1270,7 +1270,7 @@ Expected: PASS — new mounting tests pass; existing tests still pass (default `
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/agent.py addons/terminus-langchain/backend/tests/test_agent.py
+git add addons/terminus/backend/app/agent.py addons/terminus/backend/tests/test_agent.py
 git commit -m "$(cat <<'EOF'
 feat(terminus): mount terminus-rag tools in build_graph
 
@@ -1291,14 +1291,14 @@ EOF
 This task adds a regression test proving the human-approval interrupt fires only for `run_scene`/`trigger_automation` and never for a mounted RAG read tool — the spec's locked approval-gating decision. No production change is expected; this locks behavior.
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/tests/test_agent.py`
+- Modify: `addons/terminus/backend/tests/test_agent.py`
 
 **Interfaces:**
 - Consumes: `_APPROVAL_MIDDLEWARE` (`interrupt_on` keys), `build_graph(rag_tools=...)`.
 
 - [ ] **Step 1: Write the failing/locking test**
 
-Append to `addons/terminus-langchain/backend/tests/test_agent.py`:
+Append to `addons/terminus/backend/tests/test_agent.py`:
 
 ```python
 from langgraph.checkpoint.memory import InMemorySaver
@@ -1376,7 +1376,7 @@ def test_mounted_read_tool_does_not_interrupt():
 
 - [ ] **Step 2: Run tests to verify status**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -k "approval_interrupt_only or mounted_read_tool_does_not" -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_agent.py -k "approval_interrupt_only or mounted_read_tool_does_not" -v`
 Expected: PASS — the approval middleware already lists only the two local tools (from Task 5's wiring + the unchanged `_APPROVAL_MIDDLEWARE`), so the read tool runs without interrupting. (If `interrupt_on` is not directly introspectable as a plain dict on the middleware object, adjust the first assertion to read the attribute the installed `HumanInTheLoopMiddleware` version exposes — e.g. `_APPROVAL_MIDDLEWARE.interrupt_on` is the constructor arg; confirm with `python -c "from app.agent import _APPROVAL_MIDDLEWARE; print(_APPROVAL_MIDDLEWARE.interrupt_on)"`.)
 
 - [ ] **Step 3: (Only if Step 2 fails) align the assertion to the API**
@@ -1385,13 +1385,13 @@ If the middleware stores the interrupt config under a different attribute name i
 
 - [ ] **Step 4: Run the full agent suite to verify green**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_agent.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_agent.py -v`
 Expected: PASS (all agent tests).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/tests/test_agent.py
+git add addons/terminus/backend/tests/test_agent.py
 git commit -m "$(cat <<'EOF'
 test(terminus): lock approval to local actuation only
 
@@ -1409,16 +1409,16 @@ EOF
 ## Task 7: Add-on manifest — `rag_url`/`rag_token` options + version bump + CHANGELOG
 
 **Files:**
-- Modify: `addons/terminus-langchain/config.yaml:16-29`
-- Modify: `addons/terminus-langchain/translations/en.yaml`
-- Modify: `addons/terminus-langchain/CHANGELOG.md`
+- Modify: `addons/terminus/config.yaml:16-29`
+- Modify: `addons/terminus/translations/en.yaml`
+- Modify: `addons/terminus/CHANGELOG.md`
 
 **Interfaces:**
 - Produces: add-on options `rag_url` (`str`, default `http://local-terminus-rag:9000/mcp`) and `rag_token` (`password?`, default `""`), surfaced in the add-on UI with descriptions; new `config.yaml` `version` with a matching CHANGELOG entry.
 
 - [ ] **Step 1: Add the options + schema to `config.yaml`**
 
-Edit `addons/terminus-langchain/config.yaml`. In the `options:` block add the two defaults, and in `schema:` add their types. Also bump `version` (a feature release). **Cross-plan release coordination:** the three `terminus-langchain` plans share this branch; in the recommended order C → B → A they release `0.11.0` / `0.12.0` / `0.13.0`. This is Spec A, so bump `0.12.0` → `0.13.0` (if running standalone before C/B, it is `0.10.0` → `0.11.0`):
+Edit `addons/terminus/config.yaml`. In the `options:` block add the two defaults, and in `schema:` add their types. Also bump `version` (a feature release). **Cross-plan release coordination:** the three `terminus` plans share this branch; in the recommended order C → B → A they release `0.11.0` / `0.12.0` / `0.13.0`. This is Spec A, so bump `0.12.0` → `0.13.0` (if running standalone before C/B, it is `0.10.0` → `0.11.0`):
 
 ```yaml
 version: "0.13.0"
@@ -1447,7 +1447,7 @@ schema:
 
 - [ ] **Step 2: Document the options in `translations/en.yaml`**
 
-Append under `configuration:` in `addons/terminus-langchain/translations/en.yaml`:
+Append under `configuration:` in `addons/terminus/translations/en.yaml`:
 
 ```yaml
   rag_url:
@@ -1469,7 +1469,7 @@ Append under `configuration:` in `addons/terminus-langchain/translations/en.yaml
 
 - [ ] **Step 3: Add the CHANGELOG entry**
 
-Prepend a new entry to `addons/terminus-langchain/CHANGELOG.md` (match the heading style of existing entries — verify the format first with `head -n 20 addons/terminus-langchain/CHANGELOG.md`):
+Prepend a new entry to `addons/terminus/CHANGELOG.md` (match the heading style of existing entries — verify the format first with `head -n 20 addons/terminus/CHANGELOG.md`):
 
 ```markdown
 ## 0.13.0
@@ -1491,7 +1491,7 @@ Prepend a new entry to `addons/terminus-langchain/CHANGELOG.md` (match the headi
 Run:
 
 ```bash
-cd addons/terminus-langchain && python -c "import yaml; yaml.safe_load(open('config.yaml')); yaml.safe_load(open('translations/en.yaml')); print('ok')"
+cd addons/terminus && python -c "import yaml; yaml.safe_load(open('config.yaml')); yaml.safe_load(open('translations/en.yaml')); print('ok')"
 ```
 
 Expected output: `ok`.
@@ -1499,7 +1499,7 @@ Expected output: `ok`.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/config.yaml addons/terminus-langchain/translations/en.yaml addons/terminus-langchain/CHANGELOG.md
+git add addons/terminus/config.yaml addons/terminus/translations/en.yaml addons/terminus/CHANGELOG.md
 git commit -m "$(cat <<'EOF'
 feat(terminus): add rag_url/rag_token options; release 0.13.0
 
@@ -1521,7 +1521,7 @@ EOF
 
 - [ ] **Step 1: Run the entire backend suite**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest -v`
+Run: `cd addons/terminus/backend && python -m pytest -v`
 Expected: PASS — all of `test_config.py`, `test_tools.py`, `test_agent.py`, `test_mcp_client.py` green. No errors, no `RuntimeWarning: coroutine ... was never awaited` from the async bridge.
 
 - [ ] **Step 2: Sanity-check imports load cleanly**
@@ -1529,7 +1529,7 @@ Expected: PASS — all of `test_config.py`, `test_tools.py`, `test_agent.py`, `t
 Run:
 
 ```bash
-cd addons/terminus-langchain/backend && python -c "import app.agent, app.mcp_client, app.config, app.tools; print('imports ok')"
+cd addons/terminus/backend && python -c "import app.agent, app.mcp_client, app.config, app.tools; print('imports ok')"
 ```
 
 Expected output: `imports ok` (this also confirms `graph = build_graph()` at module import doesn't crash when no RAG server is reachable — it must degrade to `[]`, not raise).
@@ -1558,15 +1558,15 @@ If no fixups were needed, skip this commit.
 This is the spec's opt-in integration test: spin a **real** MCP server (FastMCP, in-process) exposing `search_ha`/`list_records`, mount it through the real `MultiServerMCPClient`, and assert the tools reach the agent. Marked slow so it does not run in the default unit pass. It does **not** require the actual `terminus-rag` add-on — it stands up a minimal MCP server with the same tool names.
 
 **Files:**
-- Create: `addons/terminus-langchain/backend/tests/test_mcp_integration.py`
-- Modify: `addons/terminus-langchain/backend/pyproject.toml` (register the `slow` marker)
+- Create: `addons/terminus/backend/tests/test_mcp_integration.py`
+- Modify: `addons/terminus/backend/pyproject.toml` (register the `slow` marker)
 
 **Interfaces:**
 - Consumes: `app.mcp_client.load_rag_tools`; a real `mcp.server.fastmcp.FastMCP` server over Streamable HTTP.
 
 - [ ] **Step 1: Register the `slow` marker**
 
-In `addons/terminus-langchain/backend/pyproject.toml`, under `[tool.pytest.ini_options]`, add:
+In `addons/terminus/backend/pyproject.toml`, under `[tool.pytest.ini_options]`, add:
 
 ```toml
 [tool.pytest.ini_options]
@@ -1579,7 +1579,7 @@ markers = [
 
 - [ ] **Step 2: Write the integration test**
 
-Create `addons/terminus-langchain/backend/tests/test_mcp_integration.py`:
+Create `addons/terminus/backend/tests/test_mcp_integration.py`:
 
 ```python
 """Opt-in integration: mount a real in-process MCP server's tools.
@@ -1672,18 +1672,18 @@ async def test_real_mcp_server_tools_load():
 
 - [ ] **Step 3: Run the integration test (opt-in)**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest -m slow tests/test_mcp_integration.py -v`
+Run: `cd addons/terminus/backend && python -m pytest -m slow tests/test_mcp_integration.py -v`
 Expected: PASS if `mcp[cli]`/`fastmcp` is available in the env; otherwise SKIPPED via `importorskip` (acceptable — it is opt-in and not part of the default gate).
 
 - [ ] **Step 4: Confirm the default unit pass excludes it**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest -v`
+Run: `cd addons/terminus/backend && python -m pytest -v`
 Expected: the `slow` test still runs by default (markers don't auto-exclude). To keep the default pass fast, run unit-only with `-m "not slow"`. Document this in the commit message; do not change CI (there is no CI yet — local docker/pytest is the gate).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/tests/test_mcp_integration.py addons/terminus-langchain/backend/pyproject.toml
+git add addons/terminus/backend/tests/test_mcp_integration.py addons/terminus/backend/pyproject.toml
 git commit -m "$(cat <<'EOF'
 test(terminus): opt-in integration test for real MCP mount
 
@@ -1733,7 +1733,7 @@ EOF
 
 ## Final verification (run before opening the PR)
 
-- [ ] Full unit suite green: `cd addons/terminus-langchain/backend && python -m pytest -m "not slow" -v`
+- [ ] Full unit suite green: `cd addons/terminus/backend && python -m pytest -m "not slow" -v`
 - [ ] Imports load + `build_graph()` degrades cleanly with no RAG server: `python -c "import app.agent; print('ok')"`
 - [ ] `config.yaml` version bumped to `0.13.0` with a matching `CHANGELOG.md` entry.
 - [ ] No bump to `backend/pyproject.toml` `version` (still `0.0.0`) or `frontend/package.json`.

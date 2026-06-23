@@ -166,7 +166,7 @@ descriptions state this so the agent doesn't promise history HA no longer has. E
 Add-on manifest: `homeassistant_api: true`, `init: false`, `boot: auto`, `startup: application`,
 no `ports:`, `slug: terminus_rag`, `map: []` (uses `/data` only). `CHANGELOG.md` from v0.1.0.
 
-## Docker & deploy conventions (match terminus-langchain)
+## Docker & deploy conventions (match terminus)
 
 - **Manifest-before-source layering:** `COPY pyproject.toml` → `pip install` → `COPY backend/` →
   `pip install --no-deps .`, so source-only edits don't reinstall deps. Version pinned `0.0.0` in

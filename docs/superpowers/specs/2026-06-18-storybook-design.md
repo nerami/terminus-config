@@ -1,16 +1,16 @@
-# Storybook for terminus-langchain Frontend
+# Storybook for terminus Frontend
 
 **Date:** 2026-06-18
-**Scope:** `addons/terminus-langchain/frontend/`
+**Scope:** `addons/terminus/frontend/`
 **Status:** Approved
 
 ## Goal
 
-Add Storybook to the terminus-langchain frontend with one rich story each for the Chat (Thread) and Topology (GraphCanvas) components. No interactions, no controls — static but realistic fixtures. Dark/light/system theme support matching the terminus-ui pattern.
+Add Storybook to the terminus frontend with one rich story each for the Chat (Thread) and Topology (GraphCanvas) components. No interactions, no controls — static but realistic fixtures. Dark/light/system theme support matching the terminus-ui pattern.
 
 ## Package Changes
 
-Add to `devDependencies` in `addons/terminus-langchain/frontend/package.json`:
+Add to `devDependencies` in `addons/terminus/frontend/package.json`:
 
 ```json
 "storybook": "^10",
@@ -30,7 +30,7 @@ Port 6007 (terminus-ui is 6285, dev server is 5173 — no conflict).
 ## File Layout
 
 ```
-addons/terminus-langchain/frontend/
+addons/terminus/frontend/
 ├── .storybook/
 │   ├── main.ts
 │   └── preview.tsx

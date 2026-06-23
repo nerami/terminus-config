@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-21
 **Status:** Approved (design)
-**Component:** `addons/terminus-langchain/backend/` (`local_terminus`)
+**Component:** `addons/terminus/backend/` (`local_terminus`)
 **Spec:** A of 4 — **depends on Spec 0** (`terminus-rag`) being deployed. See Spec B (proxy), Spec C (observability).
 
 ## Goal
@@ -43,7 +43,7 @@ Tool mounting happens in `build_graph()` (`agent.py`): resolve `rag_url`/`rag_to
 construct the MCP client, load its tools, and append them to the local tool list. Loading is
 **best-effort and cached** — see degradation below.
 
-## Code changes (`addons/terminus-langchain/backend/app/`)
+## Code changes (`addons/terminus/backend/app/`)
 
 - **`agent.py`** (edit):
   - `build_graph()` mounts RAG tools via `MultiServerMCPClient` and merges them with the local three.

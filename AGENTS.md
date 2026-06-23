@@ -82,15 +82,15 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | local_terminus | Terminus | 0.13.0 |
 | local_terminus_rag | Terminus RAG | 0.1.0 |
 
-### Terminus LangChain Internals
+### Terminus Internals
 
-`addons/terminus-langchain/` (slug `local_terminus`, name "Terminus" — the dir keeps the `-langchain` suffix, the live slug/name do not): Python/FastAPI backend + Vite/React frontend, Dockerized.
+`addons/terminus/` (slug `local_terminus`, name "Terminus"): Python/FastAPI backend + Vite/React frontend, Dockerized.
 
 - **Architecture**: two processes behind ingress port `8099` — FastAPI (uvicorn) is the public face; LangGraph dev server runs on loopback `:2025` and is proxied via `/api/*`. Frontend SPA served from `/` (static build in `frontend/dist`).
 - **HA auth**: `SUPERVISOR_TOKEN` injected automatically (`homeassistant_api: true`) → Core websocket `ws://supervisor/core/websocket`. `ha_url`/`ha_token` options are dev-only fallback.
 - **API key**: set via add-on options UI (`anthropic_api_key`), not `.env`. Model configurable (`model`, default `claude-sonnet-4-6`).
 - After source changes: sync via `bin/deploy-addons-ssh.sh`, then on device run `ha apps update local_terminus` if `config.yaml` version was bumped, else `ha apps rebuild local_terminus`.
-- **Gotchas**: base image tag must be `3.12-alpine3.18` (never bare `:3.12`); `langgraph.json` paths must be absolute (`/app/backend/...`). See `addons/terminus-langchain/README.md` for full details.
+- **Gotchas**: base image tag must be `3.12-alpine3.18` (never bare `:3.12`); `langgraph.json` paths must be absolute (`/app/backend/...`). See `addons/terminus/README.md` for full details.
 - **MCP knowledge tools**: Agent mounts `terminus-rag`'s MCP knowledge tools at `http://local-terminus-rag:9000/mcp` (graceful degradation when absent), configured via `rag_url`/`rag_token` add-on options.
 
 Local add-ons live in `addons/<dir>/` in this repo. Sync to `/addons/`

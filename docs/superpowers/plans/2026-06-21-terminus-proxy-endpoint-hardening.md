@@ -10,10 +10,10 @@
 
 ## Global Constraints
 
-- **Base image:** `3.12-alpine3.18` — the `BUILD_FROM` ARG in `addons/terminus-langchain/Dockerfile` must stay `ghcr.io/home-assistant/aarch64-base-python:3.12-alpine3.18` (never bare `:3.12`). This plan does not touch the Dockerfile.
-- **Single canonical version:** `addons/terminus-langchain/config.yaml` `version` is the ONLY version bumped. Do NOT bump `frontend/package.json` or `backend/pyproject.toml` (pinned `0.0.0` for Docker cache).
-- **CHANGELOG per bump:** every `config.yaml` `version` bump adds a matching `CHANGELOG.md` heading. **Cross-plan release coordination:** the three `terminus-langchain` plans share this branch and bump the same `config.yaml`, so versions are assigned sequentially in the recommended order C → B → A: Spec C releases `0.11.0`, **this plan (B) releases `0.12.0`**, Spec A releases `0.13.0`. (If B is run standalone before C, it is `0.10.0` → `0.11.0` instead.) `terminus-rag` is a separate add-on at its own `0.1.0` — no conflict.
-- **Tests:** pytest with `asyncio_mode = "auto"` (set in `backend/pyproject.toml:36`) — async tests need no `@pytest.mark.asyncio`. All tests live under `addons/terminus-langchain/backend/tests/`. Run from `addons/terminus-langchain/backend/`.
+- **Base image:** `3.12-alpine3.18` — the `BUILD_FROM` ARG in `addons/terminus/Dockerfile` must stay `ghcr.io/home-assistant/aarch64-base-python:3.12-alpine3.18` (never bare `:3.12`). This plan does not touch the Dockerfile.
+- **Single canonical version:** `addons/terminus/config.yaml` `version` is the ONLY version bumped. Do NOT bump `frontend/package.json` or `backend/pyproject.toml` (pinned `0.0.0` for Docker cache).
+- **CHANGELOG per bump:** every `config.yaml` `version` bump adds a matching `CHANGELOG.md` heading. **Cross-plan release coordination:** the three `terminus` plans share this branch and bump the same `config.yaml`, so versions are assigned sequentially in the recommended order C → B → A: Spec C releases `0.11.0`, **this plan (B) releases `0.12.0`**, Spec A releases `0.13.0`. (If B is run standalone before C, it is `0.10.0` → `0.11.0` instead.) `terminus-rag` is a separate add-on at its own `0.1.0` — no conflict.
+- **Tests:** pytest with `asyncio_mode = "auto"` (set in `backend/pyproject.toml:36`) — async tests need no `@pytest.mark.asyncio`. All tests live under `addons/terminus/backend/tests/`. Run from `addons/terminus/backend/`.
 - **HTTP layer:** httpx + FastAPI/Starlette only. Tests use fake transports (`httpx.ASGITransport`, `httpx.MockTransport`) and fake websockets (no live HA, no live `langgraph dev`).
 - **TDD:** every behavior change is failing-test-first → run & watch fail → minimal impl → pass → commit.
 - **Commits:** Conventional Commits. Every commit message ends with the trailer:
@@ -31,7 +31,7 @@
 
 These are the exact lines this plan changes. Read them before starting.
 
-**`addons/terminus-langchain/backend/app/web.py`:**
+**`addons/terminus/backend/app/web.py`:**
 - `_HOP_BY_HOP` set — `web.py:34-40` (currently: `content-length`, `content-encoding`, `transfer-encoding`, `connection`, `keep-alive`). This is used for the **response** direction at `web.py:197-201`.
 - `_TOPOLOGY_TTL = 15.0` — `web.py:60`.
 - Lifespan creates the shared proxy client with `timeout=None` — `web.py:89-91`:
@@ -44,12 +44,12 @@ These are the exact lines this plan changes. Read them before starting.
 - `langgraph_proxy` — `web.py:175-207`. The `@app.api_route("/api/{path:path}", methods=[...])` decorator and handler. Request headers stripped only of `host` at `web.py:186-188`. No allowlist. Builds + sends upstream at `web.py:189-196`.
 - `/api/title` is intercepted locally **before** the proxy — `web.py:168-173`. It must stay reachable (it is not a LangGraph path).
 
-**`addons/terminus-langchain/backend/app/ha_registry.py`:**
+**`addons/terminus/backend/app/ha_registry.py`:**
 - `_command(ws, mid, payload)` — `ha_registry.py:42-50`. The `while True:` recv loop has no timeout (line 44).
 - `fetch_topology` — `ha_registry.py:247-277`. Per-automation `search/related` enrichment loop `for automation in topology["automations"]:` at `ha_registry.py:268-275` is serial and unbounded.
 - `HARegistryError` — `ha_registry.py:27-28`. Reused for the new timeout error.
 
-**Test style to match** (`addons/terminus-langchain/backend/tests/`):
+**Test style to match** (`addons/terminus/backend/tests/`):
 - `test_proxy.py` — `_upstream_transport()` builds a `Starlette` app wrapped in `httpx.ASGITransport`; `create_app(..., proxy_transport=...)`; drives via `fastapi.testclient.TestClient`.
 - `test_web.py` — `_fake_connect(incoming)` returns a `_connect(url)` yielding a `_FakeWS` from an async CM; `StubHA`; `httpx.MockTransport(handler)` for REST.
 - `test_ha_registry.py` — `FakeWS` (records `.sent`, pops `._incoming`), `fake_connect(ws)`, async tests with no marker (auto mode).
@@ -87,29 +87,29 @@ Mapping each SDK method to its concrete `(method, path)` (from `dist/client/thre
 
 ## File structure
 
-- **Modify** `addons/terminus-langchain/backend/app/web.py`:
+- **Modify** `addons/terminus/backend/app/web.py`:
   - Add `_PROXY_ALLOWLIST` table + `_is_allowed(method, path)` helper (module level, near `_HOP_BY_HOP`).
   - Add `_REQUEST_STRIP_HEADERS` set + reuse in `langgraph_proxy`.
   - Add `_PROXY_TIMEOUT = httpx.Timeout(...)`; use it in the lifespan client.
   - Reject non-allowlisted requests in `langgraph_proxy` before building the upstream request.
   - Single-flight `ha_topology` via a new `asyncio.Lock` stored on `app.state.topology_lock`.
-- **Modify** `addons/terminus-langchain/backend/app/ha_registry.py`:
+- **Modify** `addons/terminus/backend/app/ha_registry.py`:
   - Add `_COMMAND_TIMEOUT` + `_ENRICH_BUDGET` module constants.
   - Wrap `_command`'s recv loop in `asyncio.wait_for`; raise `HARegistryError` on timeout.
   - Bound `fetch_topology`'s enrichment loop with a wall-clock budget.
-- **Create/extend tests** under `addons/terminus-langchain/backend/tests/`:
+- **Create/extend tests** under `addons/terminus/backend/tests/`:
   - `test_proxy.py` — allowlist (allow/reject + no-upstream-call assertion), header hygiene, timeout.
   - `test_web.py` — topology single-flight (exactly one fetch under concurrent misses; hit within TTL no refetch).
   - `test_ha_registry.py` — `_command` timeout → `HARegistryError`; enrichment budget honored.
-- **Modify** `addons/terminus-langchain/config.yaml` (`version: "0.12.0"`) and `CHANGELOG.md` (final task).
+- **Modify** `addons/terminus/config.yaml` (`version: "0.12.0"`) and `CHANGELOG.md` (final task).
 
 ---
 
 ## Task 1: H1 — reject non-allowlisted proxy requests before forwarding
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/web.py` (add allowlist near `web.py:34-40`; gate inside `langgraph_proxy` at `web.py:179-196`)
-- Test: `addons/terminus-langchain/backend/tests/test_proxy.py` (extend existing file)
+- Modify: `addons/terminus/backend/app/web.py` (add allowlist near `web.py:34-40`; gate inside `langgraph_proxy` at `web.py:179-196`)
+- Test: `addons/terminus/backend/tests/test_proxy.py` (extend existing file)
 
 **Interfaces:**
 - Produces (module-level in `web.py`):
@@ -119,7 +119,7 @@ Mapping each SDK method to its concrete `(method, path)` (from `dist/client/thre
 
 - [ ] **Step 1: Write the failing test**
 
-Add to `addons/terminus-langchain/backend/tests/test_proxy.py`. First extend `_upstream_transport()` to record calls and to serve the allowed endpoints used by the tests, then add the allow/reject tests.
+Add to `addons/terminus/backend/tests/test_proxy.py`. First extend `_upstream_transport()` to record calls and to serve the allowed endpoints used by the tests, then add the allow/reject tests.
 
 Replace the existing `_upstream_transport()` with a call-recording version and add new tests at the end of the file:
 
@@ -220,7 +220,7 @@ def test_proxy_streams_sse_body():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_proxy.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_proxy.py -v`
 Expected: `test_proxy_rejects_*` FAIL — the proxy currently forwards everything, so `DELETE /api/threads/t1` returns the upstream's `405`/`404` (or `calls` is non-empty), not `403`. `NameError`/route errors if `_recording_upstream` references are incomplete — fix those first.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -284,14 +284,14 @@ Then gate the proxy. In `langgraph_proxy` (`web.py:179`), insert the rejection a
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_proxy.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_proxy.py -v`
 Expected: PASS (all allow/reject tests green; the two original tests still pass).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/web.py \
-        addons/terminus-langchain/backend/tests/test_proxy.py
+git add addons/terminus/backend/app/web.py \
+        addons/terminus/backend/tests/test_proxy.py
 git commit -m "feat(terminus): allowlist the langgraph proxy (H1)"
 ```
 
@@ -302,8 +302,8 @@ git commit -m "feat(terminus): allowlist the langgraph proxy (H1)"
 ## Task 2: H2 — strip sensitive + hop-by-hop request headers before forwarding
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/web.py` (add `_REQUEST_STRIP_HEADERS`; use it at the header-build step `web.py:186-188`)
-- Test: `addons/terminus-langchain/backend/tests/test_proxy.py` (extend)
+- Modify: `addons/terminus/backend/app/web.py` (add `_REQUEST_STRIP_HEADERS`; use it at the header-build step `web.py:186-188`)
+- Test: `addons/terminus/backend/tests/test_proxy.py` (extend)
 
 **Interfaces:**
 - Produces: `_REQUEST_STRIP_HEADERS: frozenset[str]` — lowercase header names dropped from the **forwarded request**: `host`, `authorization`, `content-length`, `connection`, `keep-alive`, `proxy-authorization`, `te`, `trailer`, `transfer-encoding`, `upgrade`.
@@ -352,7 +352,7 @@ Note on `host`: httpx sets `host` to the upstream (`127.0.0.1:2025` / the ASGI t
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_proxy.py::test_proxy_strips_sensitive_request_headers -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_proxy.py::test_proxy_strips_sensitive_request_headers -v`
 Expected: FAIL — `authorization` is currently forwarded (only `host` is stripped at `web.py:186-188`), so `"authorization" not in fwd` fails.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -392,14 +392,14 @@ Then replace the header dict-comprehension in `langgraph_proxy` (`web.py:186-188
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_proxy.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_proxy.py -v`
 Expected: PASS (new header test green; allowlist + original proxy tests still pass).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/web.py \
-        addons/terminus-langchain/backend/tests/test_proxy.py
+git add addons/terminus/backend/app/web.py \
+        addons/terminus/backend/tests/test_proxy.py
 git commit -m "fix(terminus): strip sensitive + hop-by-hop request headers in proxy (H2)"
 ```
 
@@ -408,8 +408,8 @@ git commit -m "fix(terminus): strip sensitive + hop-by-hop request headers in pr
 ## Task 3: H2 — bounded proxy timeouts (replace `timeout=None`)
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/web.py` (add `_PROXY_TIMEOUT`; use at lifespan client `web.py:89-91`)
-- Test: `addons/terminus-langchain/backend/tests/test_proxy.py` (extend)
+- Modify: `addons/terminus/backend/app/web.py` (add `_PROXY_TIMEOUT`; use at lifespan client `web.py:89-91`)
+- Test: `addons/terminus/backend/tests/test_proxy.py` (extend)
 
 **Interfaces:**
 - Produces: `_PROXY_TIMEOUT: httpx.Timeout` — finite `connect`/`read`/`write`/`pool`. `read` is the per-chunk inactivity bound; finite so a wedged SSE upstream raises `httpx.ReadTimeout` instead of hanging forever.
@@ -459,7 +459,7 @@ The proxy sends with `stream=True` (`web.py:196`) and the read timeout fires whi
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_proxy.py::test_proxy_bounded_read_timeout -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_proxy.py::test_proxy_bounded_read_timeout -v`
 Expected: FAIL — `_PROXY_TIMEOUT` does not exist yet (`AttributeError` on the `monkeypatch.setattr`). After it exists but before the lifespan uses it, the test would hang on the 3600s sleep, proving the timeout is load-bearing.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -490,14 +490,14 @@ Note: `httpx.Timeout`'s first positional is the default for any phase not named;
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_proxy.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_proxy.py -v`
 Expected: PASS — the stalling-upstream test raises `httpx.TimeoutException` within ~0.1s; all other proxy tests still pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/web.py \
-        addons/terminus-langchain/backend/tests/test_proxy.py
+git add addons/terminus/backend/app/web.py \
+        addons/terminus/backend/tests/test_proxy.py
 git commit -m "fix(terminus): bound proxy httpx timeouts, drop timeout=None (H2)"
 ```
 
@@ -506,8 +506,8 @@ git commit -m "fix(terminus): bound proxy httpx timeouts, drop timeout=None (H2)
 ## Task 4: M1 — single-flight the topology cache miss path
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/web.py` (init `app.state.topology_lock` in lifespan near `web.py:88`; guard the miss path in `ha_topology` at `web.py:117-131`)
-- Test: `addons/terminus-langchain/backend/tests/test_web.py` (extend)
+- Modify: `addons/terminus/backend/app/web.py` (init `app.state.topology_lock` in lifespan near `web.py:88`; guard the miss path in `ha_topology` at `web.py:117-131`)
+- Test: `addons/terminus/backend/tests/test_web.py` (extend)
 
 **Interfaces:**
 - Produces: `app.state.topology_lock: asyncio.Lock` (created in the lifespan). `ha_topology` acquires it on a miss, double-checks the cache after acquiring, runs `ha_registry.fetch_topology` once, writes the cache, releases.
@@ -594,7 +594,7 @@ These tests use `app.router.lifespan_context(app)` so `app.state.topology_lock` 
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_web.py::test_topology_single_flight_under_concurrent_misses -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_web.py::test_topology_single_flight_under_concurrent_misses -v`
 Expected: FAIL — `counter["opens"] == 2` (both concurrent misses run `fetch_topology`, opening two websockets) because there is no single-flight guard.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -642,14 +642,14 @@ Then rewrite the `ha_topology` miss path (`web.py:117-131`) to double-check unde
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_web.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_web.py -v`
 Expected: PASS — `counter["opens"] == 1` in both new tests; the existing `test_topology_*` tests still pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/web.py \
-        addons/terminus-langchain/backend/tests/test_web.py
+git add addons/terminus/backend/app/web.py \
+        addons/terminus/backend/tests/test_web.py
 git commit -m "fix(terminus): single-flight the topology cache miss path (M1)"
 ```
 
@@ -658,8 +658,8 @@ git commit -m "fix(terminus): single-flight the topology cache miss path (M1)"
 ## Task 5: M2a — per-command websocket timeout in `_command`
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/ha_registry.py` (add `_COMMAND_TIMEOUT`; wrap the recv loop in `_command` at `ha_registry.py:42-50`)
-- Test: `addons/terminus-langchain/backend/tests/test_ha_registry.py` (extend)
+- Modify: `addons/terminus/backend/app/ha_registry.py` (add `_COMMAND_TIMEOUT`; wrap the recv loop in `_command` at `ha_registry.py:42-50`)
+- Test: `addons/terminus/backend/tests/test_ha_registry.py` (extend)
 
 **Interfaces:**
 - Produces: `_COMMAND_TIMEOUT: float` (seconds) module constant; `_command` raises `HARegistryError` when no matching-id reply arrives within `_COMMAND_TIMEOUT`.
@@ -708,7 +708,7 @@ async def test_command_returns_result_before_timeout(monkeypatch):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py::test_command_times_out_to_ha_registry_error -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_ha_registry.py::test_command_times_out_to_ha_registry_error -v`
 Expected: FAIL — `_COMMAND_TIMEOUT` does not exist (`AttributeError` on `monkeypatch.setattr`). Without the timeout the test would hang on the never-resolving future, proving the wrap is load-bearing.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -748,14 +748,14 @@ async def _command(ws, mid: int, payload: dict) -> Any:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v`
 Expected: PASS — the hanging case raises `HARegistryError` within ~0.05s; the prompt case returns `["ok"]`; all existing `ha_registry` tests still pass (they reply promptly, well under 15s).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "fix(terminus): per-command websocket timeout in ha_registry (M2)"
 ```
 
@@ -764,8 +764,8 @@ git commit -m "fix(terminus): per-command websocket timeout in ha_registry (M2)"
 ## Task 6: M2b — bound the per-automation enrichment in `fetch_topology`
 
 **Files:**
-- Modify: `addons/terminus-langchain/backend/app/ha_registry.py` (add `_ENRICH_BUDGET`; bound the enrichment loop at `ha_registry.py:267-275`)
-- Test: `addons/terminus-langchain/backend/tests/test_ha_registry.py` (extend)
+- Modify: `addons/terminus/backend/app/ha_registry.py` (add `_ENRICH_BUDGET`; bound the enrichment loop at `ha_registry.py:267-275`)
+- Test: `addons/terminus/backend/tests/test_ha_registry.py` (extend)
 
 **Interfaces:**
 - Produces: `_ENRICH_BUDGET: float` (seconds) module constant. `fetch_topology`'s per-automation `search/related` loop stops enriching once the cumulative wall-clock spent in enrichment exceeds `_ENRICH_BUDGET`; automations not reached get `_empty_refs()` so the topology still renders. The registry-list phase (areas/devices/entities/states) is unaffected — only the enrichment loop is budgeted.
@@ -840,7 +840,7 @@ async def test_fetch_topology_enrichment_respects_budget(monkeypatch):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py::test_fetch_topology_enrichment_respects_budget -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_ha_registry.py::test_fetch_topology_enrichment_respects_budget -v`
 Expected: FAIL — `_ENRICH_BUDGET` does not exist (`AttributeError`). The current loop enriches all 5 automations, so `elapsed` would be ~0.20s and `empties` would be empty.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -884,14 +884,14 @@ import time
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest tests/test_ha_registry.py -v`
+Run: `cd addons/terminus/backend && python -m pytest tests/test_ha_registry.py -v`
 Expected: PASS — budget test returns in <0.15s with some empty-ref automations; existing `test_fetch_topology_*` tests still pass (they have ≤1 automation, replied promptly, well under the 8s budget, so all get real refs).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/backend/app/ha_registry.py \
-        addons/terminus-langchain/backend/tests/test_ha_registry.py
+git add addons/terminus/backend/app/ha_registry.py \
+        addons/terminus/backend/tests/test_ha_registry.py
 git commit -m "fix(terminus): bound topology enrichment wall-clock budget (M2)"
 ```
 
@@ -900,19 +900,19 @@ git commit -m "fix(terminus): bound topology enrichment wall-clock budget (M2)"
 ## Task 7: Full suite green + release (version bump + CHANGELOG)
 
 **Files:**
-- Modify: `addons/terminus-langchain/config.yaml` (`version: "0.11.0"` → `"0.12.0"`)
-- Modify: `addons/terminus-langchain/CHANGELOG.md` (add `## 0.12.0` heading at top, under the intro)
+- Modify: `addons/terminus/config.yaml` (`version: "0.11.0"` → `"0.12.0"`)
+- Modify: `addons/terminus/CHANGELOG.md` (add `## 0.12.0` heading at top, under the intro)
 
 **Interfaces:** none (release bookkeeping).
 
 - [ ] **Step 1: Run the full backend suite**
 
-Run: `cd addons/terminus-langchain/backend && python -m pytest -v`
+Run: `cd addons/terminus/backend && python -m pytest -v`
 Expected: PASS — every test in `tests/` green (proxy allowlist/headers/timeout, web topology single-flight, ha_registry command-timeout + enrichment-budget, plus all pre-existing tests). If anything is red, fix it before bumping (do not bump on red).
 
 - [ ] **Step 2: Bump the canonical version**
 
-Edit `addons/terminus-langchain/config.yaml`:
+Edit `addons/terminus/config.yaml`:
 
 ```yaml
 version: "0.12.0"
@@ -920,7 +920,7 @@ version: "0.12.0"
 
 - [ ] **Step 3: Add the CHANGELOG entry**
 
-In `addons/terminus-langchain/CHANGELOG.md`, insert immediately above the `## 0.11.0` heading (added by Spec C; if running standalone, above `## 0.10.0`):
+In `addons/terminus/CHANGELOG.md`, insert immediately above the `## 0.11.0` heading (added by Spec C; if running standalone, above `## 0.10.0`):
 
 ```markdown
 ## 0.12.0
@@ -950,7 +950,7 @@ In `addons/terminus-langchain/CHANGELOG.md`, insert immediately above the `## 0.
 
 Run:
 ```bash
-cd addons/terminus-langchain && \
+cd addons/terminus && \
   grep -E '^version:' config.yaml && \
   grep -E '^## 0\.12\.0' CHANGELOG.md
 ```
@@ -959,8 +959,8 @@ Expected: both lines print (`version: "0.12.0"` and `## 0.12.0`).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add addons/terminus-langchain/config.yaml \
-        addons/terminus-langchain/CHANGELOG.md
+git add addons/terminus/config.yaml \
+        addons/terminus/CHANGELOG.md
 git commit -m "chore(terminus): release 0.12.0 — proxy & endpoint hardening"
 ```
 
