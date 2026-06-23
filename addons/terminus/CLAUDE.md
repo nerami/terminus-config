@@ -48,6 +48,16 @@ slug is therefore `local_terminus`.
   `pnpm install --frozen-lockfile`). Use `pnpm install` locally — not `npm install`, which would
   regenerate a redundant `package-lock.json`.
 
+## Frontend data fetching
+
+- **Plain REST → axios + react-query.** The backend's REST endpoints (`/ha/*`, `/info`,
+  `/title`) go through the shared axios instance (`src/lib/http.ts` — auth headers via its
+  interceptor) and TanStack react-query (provider/client in `src/lib/query-client.ts`). Don't
+  add raw `fetch` for these: build URLs with `endpoints()` (`src/runtime-config.ts`) and reuse
+  the existing shared `queryOptions` patterns (e.g. `haStatusQueryOptions`).
+- **Leave the LangGraph SDK alone.** Chat streaming + threads (`useStream`, `createClient`,
+  `client.threads.*`) own their transport — never route them through axios/react-query.
+
 ## Docker caching strategy
 
 The `Dockerfile` is structured so that **source-only edits don't reinstall

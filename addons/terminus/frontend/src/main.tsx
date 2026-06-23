@@ -4,12 +4,14 @@ import './lib/parent-url-restore';
 
 import { StrictMode } from 'react';
 
+import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { Provider as JotaiProvider } from 'jotai';
 import { ThemeProvider } from 'next-themes';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { createRoot } from 'react-dom/client';
 
+import { queryClient } from './lib/query-client';
 import { router } from './router';
 import '@fontsource-variable/inter';
 import './index.css';
@@ -18,9 +20,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <JotaiProvider>
-        <NuqsAdapter>
-          <RouterProvider router={router} />
-        </NuqsAdapter>
+        <QueryClientProvider client={queryClient}>
+          <NuqsAdapter>
+            <RouterProvider router={router} />
+          </NuqsAdapter>
+        </QueryClientProvider>
       </JotaiProvider>
     </ThemeProvider>
   </StrictMode>,

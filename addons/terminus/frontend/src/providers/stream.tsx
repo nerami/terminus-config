@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useState } from 'react';
 
 import { type Message } from '@langchain/langgraph-sdk';
 import { useStream } from '@langchain/langgraph-sdk/react';
@@ -12,6 +12,7 @@ import {
 import { ArrowRight } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 
+import { useGraphReady } from './graph-ready';
 import { useThreads } from './thread';
 
 import { ErrorScreen } from '@/components/error-screen';
@@ -45,23 +46,6 @@ const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
 async function sleep(ms = 4000) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function checkGraphStatus(apiUrl: string, apiKey: string | null, authScheme?: string): Promise<boolean> {
-  try {
-    const headers = new Headers();
-    if (apiKey) headers.set('X-Api-Key', apiKey);
-    if (authScheme) headers.set('X-Auth-Scheme', authScheme);
-
-    const res = await fetch(`${apiUrl}/info`, {
-      headers,
-    });
-
-    return res.ok;
-  } catch (e) {
-    console.error(e);
-    return false;
-  }
 }
 
 const StreamSession = ({
@@ -108,52 +92,6 @@ const StreamSession = ({
 
   return <StreamContext.Provider value={streamValue}>{children}</StreamContext.Provider>;
 };
-
-type ReadyStatus = 'checking' | 'ready' | 'error';
-
-// Polls the LangGraph server until it answers, so the UI can show a "warming
-// up" state right after an add-on update/restart (the graph server takes a few
-// seconds to come up) instead of a one-shot connection error.
-function useGraphReady(
-  apiUrl: string,
-  apiKey: string | null,
-  authScheme?: string,
-): { status: ReadyStatus; retry: () => void } {
-  const [status, setStatus] = useState<ReadyStatus>('checking');
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 40; // ~80s of polling before giving up
-    const INTERVAL_MS = 2000;
-
-    setStatus('checking');
-    const tick = async () => {
-      const ok = await checkGraphStatus(apiUrl, apiKey, authScheme);
-      if (cancelled) return;
-      if (ok) {
-        setStatus('ready');
-        return;
-      }
-      attempts += 1;
-      if (attempts >= MAX_ATTEMPTS) {
-        setStatus('error');
-        return;
-      }
-      timer = setTimeout(tick, INTERVAL_MS);
-    };
-    tick();
-
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, [apiUrl, apiKey, authScheme, reloadKey]);
-
-  return { status, retry: () => setReloadKey((k) => k + 1) };
-}
 
 // Gates the chat on the LangGraph server being reachable, showing a warming-up
 // indicator while it starts and a retryable error if it never comes up.

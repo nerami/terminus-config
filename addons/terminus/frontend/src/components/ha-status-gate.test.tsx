@@ -1,10 +1,28 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HaStatusGate } from './ha-status-gate';
 
+import { http } from '@/lib/http';
+
+vi.mock('@/lib/http', () => ({ http: { get: vi.fn(), post: vi.fn() } }));
+
+const mockGet = vi.mocked(http.get);
+
+function renderGated() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <HaStatusGate>
+        <div>App content</div>
+      </HaStatusGate>
+    </QueryClientProvider>,
+  );
+}
+
 afterEach(() => {
-  vi.unstubAllGlobals();
+  vi.clearAllMocks();
 });
 
 describe('HaStatusGate', () => {
@@ -13,37 +31,23 @@ describe('HaStatusGate', () => {
     const pending = new Promise((resolve) => {
       settle = resolve;
     });
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => pending),
-    );
+    mockGet.mockReturnValue(pending as never);
 
-    render(
-      <HaStatusGate>
-        <div>App content</div>
-      </HaStatusGate>,
-    );
+    renderGated();
 
     // While the status request is in flight, the app is gated behind the loader.
     expect(screen.queryByText('App content')).not.toBeInTheDocument();
     expect(screen.getByText(/starting terminus/i)).toBeInTheDocument();
 
-    settle({ ok: true, json: async () => ({ status: 'connected' }) });
+    settle({ data: { status: 'connected' } });
 
     await waitFor(() => expect(screen.getByText('App content')).toBeInTheDocument());
   });
 
   it('renders the app even when the status check fails (error still settles the gate)', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.reject(new Error('network down'))),
-    );
+    mockGet.mockRejectedValue(new Error('network down'));
 
-    render(
-      <HaStatusGate>
-        <div>App content</div>
-      </HaStatusGate>,
-    );
+    renderGated();
 
     await waitFor(() => expect(screen.getByText('App content')).toBeInTheDocument());
   });

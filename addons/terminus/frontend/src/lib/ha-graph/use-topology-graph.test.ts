@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import { Provider as JotaiProvider, createStore } from 'jotai';
 import React from 'react';
@@ -43,8 +44,9 @@ function setup(initialView: Parameters<ReturnType<typeof createStore>['set']>[1]
   const store = createStore();
   store.set(topologyAtom, FIXTURE);
   store.set(graphViewAtom, initialView as never);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: React.ReactNode }) =>
-    React.createElement(JotaiProvider, { store }, children);
+    React.createElement(QueryClientProvider, { client }, React.createElement(JotaiProvider, { store }, children));
   const view = renderHook(() => useTopologyGraph(), { wrapper });
   return { store, ...view };
 }

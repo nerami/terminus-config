@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
+import { http } from '@/lib/http';
 import { endpoints } from '@/runtime-config';
 
 export type HaConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'auth_failed';
@@ -19,37 +20,32 @@ const INITIAL: HaStatus = {
   error: null,
 };
 
+/**
+ * Shared query options for the backend `/ha/status` endpoint. Reused by
+ * {@link useHaStatus} (polling indicator) and the first-paint status gate so a
+ * single cache entry serves both. `retry: false` so a failed poll surfaces as
+ * `disconnected` immediately rather than after backoff.
+ */
+export function haStatusQueryOptions(intervalMs?: number) {
+  return queryOptions({
+    queryKey: ['ha', 'status'] as const,
+    queryFn: async () => (await http.get<HaStatus>(endpoints().haStatusUrl)).data,
+    retry: false,
+    refetchInterval: intervalMs,
+  });
+}
+
 /** Polls the backend `/ha/status` endpoint and returns the latest status. */
 export function useHaStatus(intervalMs = 5000): HaStatus {
-  const [status, setStatus] = useState<HaStatus>(INITIAL);
+  const query = useQuery(haStatusQueryOptions(intervalMs));
 
-  useEffect(() => {
-    let active = true;
-    const url = endpoints().haStatusUrl;
-
-    const tick = async () => {
-      try {
-        const res = await fetch(url);
-        const data = (await res.json()) as HaStatus;
-        if (active) setStatus(data);
-      } catch (err) {
-        if (active) {
-          setStatus((prev) => ({
-            ...prev,
-            status: 'disconnected',
-            error: err instanceof Error ? err.message : String(err),
-          }));
-        }
-      }
+  if (query.isError) {
+    return {
+      ...(query.data ?? INITIAL),
+      status: 'disconnected',
+      error: query.error instanceof Error ? query.error.message : String(query.error),
     };
+  }
 
-    void tick();
-    const id = window.setInterval(() => void tick(), intervalMs);
-    return () => {
-      active = false;
-      window.clearInterval(id);
-    };
-  }, [intervalMs]);
-
-  return status;
+  return query.data ?? INITIAL;
 }

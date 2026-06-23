@@ -1,20 +1,30 @@
+import axios from 'axios';
+
 import type { AutomationDetail, EntityState, Topology } from './types';
 
+import { http } from '@/lib/http';
 import { endpoints } from '@/runtime-config';
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    let detail = `${res.status} ${res.statusText}`;
-    try {
-      const body = (await res.json()) as { error?: string };
-      if (body?.error) detail = body.error;
-    } catch {
-      // non-JSON error body; keep the status line.
-    }
-    throw new Error(detail);
+// Mirror the previous fetch-based extraction: prefer the backend's JSON
+// `error` field, fall back to the HTTP status line, and finally to the raw
+// error message when there is no response (network failure / CORS).
+function extractError(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined;
+    if (data?.error) return data.error;
+    if (err.response) return `${err.response.status} ${err.response.statusText}`;
+    return err.message;
   }
-  return (await res.json()) as T;
+  return err instanceof Error ? err.message : String(err);
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  try {
+    const res = await http.get<T>(url);
+    return res.data;
+  } catch (err) {
+    throw new Error(extractError(err));
+  }
 }
 
 /** Fetch the full Home Assistant topology snapshot. */

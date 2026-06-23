@@ -8,6 +8,7 @@ import { createClient } from './client';
 
 import { getApiKey } from '@/lib/api-key';
 import { ARCHIVE_METADATA, filterActiveThreads } from '@/lib/thread-archive';
+import { postThreadTitle } from '@/lib/title-api';
 import { endpoints, ASSISTANT_ID } from '@/runtime-config';
 
 interface ThreadContextType {
@@ -94,18 +95,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
   const generateThreadTitle = useCallback(
     async (threadId: string, message: string): Promise<void> => {
       if (!apiUrl || !message.trim()) return;
-      let title = '';
-      try {
-        const res = await fetch(`${apiUrl}/title`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message }),
-        });
-        if (!res.ok) return;
-        title = ((await res.json())?.title ?? '').trim();
-      } catch {
-        return;
-      }
+      const title = await postThreadTitle(apiUrl, message);
       if (title) await updateThreadTitle(threadId, title);
     },
     [apiUrl, updateThreadTitle],
