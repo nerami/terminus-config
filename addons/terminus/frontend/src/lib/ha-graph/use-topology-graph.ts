@@ -3,7 +3,14 @@ import { useCallback, useMemo } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 
 import { useAutomationDetail, useTopologyData } from '@/hooks/use-topology';
-import { entityModalAtom, selectedNodeAtom, viewScope } from '@/lib/ha-graph/atoms';
+import {
+  entityModalAtom,
+  groupingOf,
+  isMissingTarget,
+  rootViewFor,
+  selectedNodeAtom,
+  viewScope,
+} from '@/lib/ha-graph/atoms';
 import {
   automationHasStructure,
   buildAreaGraph,
@@ -13,6 +20,7 @@ import {
   buildEntitiesGraph,
   buildSceneGraph,
   buildScenesGraph,
+  decorateAvailability,
   type GraphNodeData,
   type RFGraph,
 } from '@/lib/ha-graph/build';
@@ -39,12 +47,16 @@ export interface TopologyGraph {
   baseGraph: RFGraph;
   /** Clear the current selection (clicking empty canvas). */
   clearSelection: () => void;
+  /** Navigate to the parent list view (used by the not-found overlay). */
+  goBack: () => void;
   /** Set of node ids to highlight around the selection, or null when nothing is
    *  selected. Mirrors the 2D highlight logic for every view (incl. the
    *  automation upstream-ancestor closure). */
   highlightSet: Set<string> | null;
   /** Whether the current view uses upstream (ancestor) highlighting. */
   isUpstreamMode: boolean;
+  /** The kind of a deleted/absent target, or null when the view is healthy. */
+  notFoundKind: 'automation' | 'scene' | 'area' | null;
   /** Stable string scope for the current view, used to key persisted positions. */
   scope: string;
   selected: string | null;
@@ -67,28 +79,30 @@ export function useTopologyGraph(): TopologyGraph {
   const scope = viewScope(view);
   const automationId = view.kind === 'automation' ? view.automationId : null;
 
+  const notFound = isMissingTarget(topology, view);
+  const notFoundKind =
+    notFound && (view.kind === 'automation' || view.kind === 'scene' || view.kind === 'area') ? view.kind : null;
+  const goBack = useCallback(() => setView(rootViewFor(groupingOf(view))), [setView, view]);
+
   // Automation drill-down needs the config; falls back to topology references.
   const { detail: automationDetail, loading: automationLoading } = useAutomationDetail(automationId);
 
   // Build the base graph for the current view.
   const baseGraph = useMemo<RFGraph>(() => {
     if (!topology) return EMPTY_GRAPH;
-    if (view.kind === 'areas') return buildAreasGraph(topology);
-    if (view.kind === 'area') return buildAreaGraph(topology, view.areaId);
-    if (view.kind === 'scene') {
+    let g: RFGraph = EMPTY_GRAPH;
+    if (view.kind === 'areas') g = buildAreasGraph(topology);
+    else if (view.kind === 'area') g = buildAreaGraph(topology, view.areaId);
+    else if (view.kind === 'scene') {
       const scene = topology.scenes.find((s) => s.entity_id === view.sceneId);
-      return scene ? buildSceneGraph(topology, scene) : EMPTY_GRAPH;
-    }
-    if (view.kind === 'automation') {
+      g = scene ? buildSceneGraph(topology, scene) : EMPTY_GRAPH;
+    } else if (view.kind === 'automation') {
       const automation = topology.automations.find((a) => a.entity_id === view.automationId);
-      return automation && automationDetail
-        ? buildAutomationGraph(topology, automation, automationDetail)
-        : EMPTY_GRAPH;
-    }
-    if (view.kind === 'scenes') return buildScenesGraph(topology);
-    if (view.kind === 'automations') return buildAutomationsGraph(topology);
-    if (view.kind === 'entities') return buildEntitiesGraph(topology);
-    return EMPTY_GRAPH;
+      g = automation && automationDetail ? buildAutomationGraph(topology, automation, automationDetail) : EMPTY_GRAPH;
+    } else if (view.kind === 'scenes') g = buildScenesGraph(topology);
+    else if (view.kind === 'automations') g = buildAutomationsGraph(topology);
+    else if (view.kind === 'entities') g = buildEntitiesGraph(topology);
+    return decorateAvailability(g, topology);
   }, [topology, view, automationDetail]);
 
   // In the automation drill-down we highlight the *upstream path to the trigger*
@@ -181,7 +195,11 @@ export function useTopologyGraph(): TopologyGraph {
   // return its config) the flow is just a flat fallback, so nudge the user to
   // run it once to get the real diagram.
   const showAutomationHint =
-    view.kind === 'automation' && !automationLoading && !!automationDetail && !automationHasStructure(automationDetail);
+    !notFoundKind &&
+    view.kind === 'automation' &&
+    !automationLoading &&
+    !!automationDetail &&
+    !automationHasStructure(automationDetail);
 
   return {
     baseGraph,
@@ -194,5 +212,7 @@ export function useTopologyGraph(): TopologyGraph {
     automationId,
     automationLoading,
     showAutomationHint,
+    goBack,
+    notFoundKind,
   };
 }

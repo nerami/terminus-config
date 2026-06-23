@@ -1,6 +1,8 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
+  AlertTriangle,
   Boxes,
+  CircleHelp,
   Clapperboard,
   Cog,
   Columns2,
@@ -52,6 +54,8 @@ function NodeShell({
   icon: LucideIcon;
   className?: string;
 }) {
+  const unavailable = data.availability === 'unavailable';
+  const unknown = data.availability === 'unknown';
   return (
     <div
       className={cn(
@@ -60,12 +64,27 @@ function NodeShell({
         data.dimmed && 'opacity-25',
         data.emphasized && 'ring-2 ring-offset-1',
         data.isSelected && 'ring-primary ring-2 ring-offset-2',
+        unavailable && 'border-dashed',
         className,
       )}
       style={data.emphasized && !data.isSelected ? ({ '--tw-ring-color': accent } as React.CSSProperties) : undefined}
     >
-      <span className="flex size-7 shrink-0 items-center justify-center text-white" style={{ backgroundColor: accent }}>
+      <span
+        className="relative flex size-7 shrink-0 items-center justify-center text-white"
+        style={{ backgroundColor: unavailable ? 'var(--muted-foreground)' : accent }}
+      >
         <Icon className="size-4" />
+        {(unavailable || unknown) && (
+          <span
+            aria-label={unavailable ? 'Unavailable' : 'Unknown state'}
+            className={cn(
+              'absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full text-white',
+              unavailable ? 'bg-amber-500' : 'bg-slate-400',
+            )}
+          >
+            {unavailable ? <AlertTriangle className="size-2.5" /> : <CircleHelp className="size-2.5" />}
+          </span>
+        )}
       </span>
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{data.label}</div>

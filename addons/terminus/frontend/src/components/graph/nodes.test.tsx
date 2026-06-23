@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { KIND_FILL } from './graph-3d-style';
 import { nodeTypes } from './nodes';
 
-type TestNodeProps = { data: { label: string; sublabel?: string; interactive?: boolean } };
+type TestNodeProps = {
+  data: { label: string; sublabel?: string; interactive?: boolean; availability?: 'ok' | 'unavailable' | 'unknown' };
+};
 
 const GroupNode = nodeTypes.group as unknown as ComponentType<TestNodeProps>;
 const EntityNode = nodeTypes.entity as unknown as ComponentType<TestNodeProps>;
@@ -42,5 +44,27 @@ describe('regular node', () => {
     );
     const swatch = container.querySelector('span[style]') as HTMLElement;
     expect(swatch).toHaveStyle({ backgroundColor: KIND_FILL.entity });
+  });
+});
+
+describe('availability flags', () => {
+  it('marks an unavailable node with a dashed border and a warning badge', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <EntityNode data={{ label: 'Dead', interactive: false, availability: 'unavailable' }} />
+      </ReactFlowProvider>,
+    );
+    expect(screen.getByLabelText('Unavailable')).toBeInTheDocument();
+    expect(container.querySelector('.border-dashed')).not.toBeNull();
+  });
+
+  it('marks an unknown node with its own badge and keeps a solid border', () => {
+    const { container } = render(
+      <ReactFlowProvider>
+        <EntityNode data={{ label: 'Hmm', interactive: false, availability: 'unknown' }} />
+      </ReactFlowProvider>,
+    );
+    expect(screen.getByLabelText('Unknown state')).toBeInTheDocument();
+    expect(container.querySelector('.border-dashed')).toBeNull();
   });
 });

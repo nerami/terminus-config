@@ -22,11 +22,23 @@ export type NodeKind =
   | 'sequence'
   | 'stop';
 
+export type Availability = 'ok' | 'unavailable' | 'unknown';
+
+/** Map an HA state string to a node health bucket. Missing/other states are ok. */
+export function availabilityOf(state: string | null | undefined): Availability {
+  if (state === 'unavailable') return 'unavailable';
+  if (state === 'unknown') return 'unknown';
+  return 'ok';
+}
+
 export interface GraphNodeData {
   [key: string]: unknown;
   /** Navigation payloads. */
   areaId?: string;
   automationId?: string;
+  /** Live-state health for entity/scene/automation nodes (unset for flow steps,
+   *  groups, and areas). Stamped by decorateAvailability. */
+  availability?: Availability;
   /** Decoration flags, filled in at render time by GraphCanvas. */
   dimmed?: boolean;
   domain?: string;
@@ -461,6 +473,26 @@ export function buildAutomationGraph(topology: Topology, automation: HaAutomatio
 
   applyDagre(nodes, edges, 'TB');
   return { nodes, edges };
+}
+
+/**
+ * Stamp `data.availability` onto every entity/scene/automation node by looking
+ * up the node's `entityId` in the topology's live-state map. Nodes without an
+ * `entityId` in that map (flow steps, group headers, areas) are left untouched.
+ * Pure: returns a new graph, mutates nothing.
+ */
+export function decorateAvailability(graph: RFGraph, topology: Topology): RFGraph {
+  const stateById = new Map<string, string | null | undefined>();
+  for (const e of topology.entities) stateById.set(e.entity_id, e.state);
+  for (const s of topology.scenes) stateById.set(s.entity_id, s.state);
+  for (const a of topology.automations) stateById.set(a.entity_id, a.state);
+
+  const nodes = graph.nodes.map((n) => {
+    const id = n.data.entityId;
+    if (!id || !stateById.has(id)) return n;
+    return { ...n, data: { ...n.data, availability: availabilityOf(stateById.get(id)) } };
+  });
+  return { nodes, edges: graph.edges };
 }
 
 function applyDagre(nodes: RFNode[], edges: Edge[], direction: 'TB' | 'LR') {

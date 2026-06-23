@@ -13,7 +13,7 @@ import {
 import { useAtom } from 'jotai';
 import { useTheme } from 'next-themes';
 
-import { AutomationHint, CanvasSpinner } from './canvas-overlays';
+import { AutomationHint, CanvasNotFound, CanvasSpinner } from './canvas-overlays';
 import { GraphControls } from './graph-controls';
 import { nodeTypes } from './nodes';
 
@@ -28,8 +28,10 @@ export function GraphCanvas() {
     automationLoading,
     baseGraph,
     clearSelection,
+    goBack,
     highlightSet,
     isUpstreamMode,
+    notFoundKind,
     scope,
     selected,
     showAutomationHint,
@@ -153,6 +155,7 @@ export function GraphCanvas() {
       />
       {showAutomationHint && <AutomationHint key={automationId} />}
       {showSpinner && <CanvasSpinner />}
+      {notFoundKind && <CanvasNotFound kind={notFoundKind} onBack={goBack} />}
     </div>
   );
 }

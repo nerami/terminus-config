@@ -119,6 +119,17 @@ describe('useTopologyGraph', () => {
     expect(store.get(entityModalAtom)).toBe('light.lr_led_strip');
   });
 
+  it('flags a deleted automation as not found and suppresses the hint', () => {
+    const { result } = setup('?group=automations&automation=automation.ghost');
+    expect(result.current.notFoundKind).toBe('automation');
+    expect(result.current.showAutomationHint).toBe(false);
+  });
+
+  it('reports no missing target for a healthy list view', () => {
+    const { result } = setup('?group=automations');
+    expect(result.current.notFoundKind).toBeNull();
+  });
+
   it('highlights the selected node and its direct neighbours', async () => {
     // Seed view = {kind:'area', areaId:'living_room'} → ?area=living_room
     const { rerender, result } = setup('?area=living_room');

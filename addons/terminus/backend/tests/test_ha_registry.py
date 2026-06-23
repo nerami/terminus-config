@@ -570,3 +570,28 @@ async def test_fetch_topology_enrichment_respects_budget(monkeypatch):
         if a["references"] == {"entities": [], "scenes": [], "devices": []}
     ]
     assert empties, "expected some automations to fall back to empty refs under budget"
+
+
+def test_build_topology_carries_live_state():
+    states = [
+        {
+            "entity_id": "automation.dead",
+            "state": "unavailable",
+            "attributes": {"friendly_name": "Dead", "id": "42"},
+        },
+        {"entity_id": "light.lamp", "state": "on", "attributes": {"friendly_name": "Lamp"}},
+        {
+            "entity_id": "scene.movie",
+            "state": "2024-01-01T00:00:00",
+            "attributes": {"friendly_name": "Movie", "entity_id": ["light.lamp"]},
+        },
+    ]
+    topo = build_topology([], [], [], states)
+    assert {a["entity_id"]: a["state"] for a in topo["automations"]} == {"automation.dead": "unavailable"}
+    assert {e["entity_id"]: e["state"] for e in topo["entities"]} == {"light.lamp": "on"}
+    assert {s["entity_id"]: s["state"] for s in topo["scenes"]} == {"scene.movie": "2024-01-01T00:00:00"}
+
+
+def test_build_topology_state_defaults_to_none_when_absent():
+    topo = build_topology([], [], [], [{"entity_id": "light.x", "attributes": {}}])
+    assert topo["entities"][0]["state"] is None

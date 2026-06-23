@@ -16,7 +16,7 @@ import repeatIcon from 'lucide-static/icons/repeat.svg?raw';
 import workflow from 'lucide-static/icons/workflow.svg?raw';
 import zap from 'lucide-static/icons/zap.svg?raw';
 
-import type { NodeKind } from '@/lib/ha-graph/build';
+import type { Availability, NodeKind } from '@/lib/ha-graph/build';
 
 // Concrete hex palette keyed by node kind. The 2D view uses CSS custom
 // properties (var(--chart-*)) which three.js can't parse, so the 3D nodes use a
@@ -138,3 +138,22 @@ const RAW_SVG: Record<NodeKind, string> = {
 export const KIND_ICON_URI: Record<NodeKind, string> = Object.fromEntries(
   (Object.keys(RAW_SVG) as NodeKind[]).map((k) => [k, toIconUri(RAW_SVG[k])]),
 ) as Record<NodeKind, string>;
+
+// Degraded-node tones. 3D solids can't show the 2D dashed border / badge, so we
+// signal health through fill + ring color instead (same spirit as the 2D→3D
+// palette parallel above).
+const UNAVAILABLE_FILL = '#64748b'; // slate-500
+const WARN_RING = '#f59e0b'; // amber-500
+const UNKNOWN_RING = '#94a3b8'; // slate-400
+
+/** Solid fill for a 3D node: gray when unavailable, the kind color otherwise. */
+export function fill3dFor(kind: NodeKind, availability?: Availability): string {
+  return availability === 'unavailable' ? UNAVAILABLE_FILL : KIND_FILL[kind];
+}
+
+/** Resting ring color: amber (unavailable), slate (unknown), else the kind color. */
+export function ring3dFor(kind: NodeKind, availability?: Availability): string {
+  if (availability === 'unavailable') return WARN_RING;
+  if (availability === 'unknown') return UNKNOWN_RING;
+  return KIND_FILL[kind];
+}

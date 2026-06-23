@@ -11,7 +11,7 @@ import unicorn from 'eslint-plugin-unicorn';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 export default defineConfig([
-  globalIgnores(['dist', 'storybook-static']),
+  globalIgnores(['dist', 'storybook-static', '.vite']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

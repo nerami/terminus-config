@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import {
   automationHasStructure,
+  availabilityOf,
   buildAreaGraph,
   buildAreasGraph,
   buildAutomationGraph,
   buildSceneGraph,
+  decorateAvailability,
 } from './build';
 
 import type { AutomationDetail, HaAutomation, HaScene, Topology } from './types';
+import type { RFGraph } from './build';
 
 const topology: Topology = {
   areas: [{ area_id: 'living', name: 'Living Room' }],
@@ -169,5 +172,46 @@ describe('buildSceneGraph', () => {
     const { nodes } = buildSceneGraph(topology, scene);
     const child = nodes.find((n) => n.id === 'light.lamp');
     expect(child?.data.interactive).toBe(true);
+  });
+});
+
+describe('availabilityOf', () => {
+  it('flags unavailable and unknown, treats everything else as ok', () => {
+    expect(availabilityOf('unavailable')).toBe('unavailable');
+    expect(availabilityOf('unknown')).toBe('unknown');
+    expect(availabilityOf('on')).toBe('ok');
+    expect(availabilityOf(null)).toBe('ok');
+    expect(availabilityOf(undefined)).toBe('ok');
+  });
+});
+
+describe('decorateAvailability', () => {
+  it('stamps availability on nodes by entityId and leaves flow steps untouched', () => {
+    const topo: Topology = {
+      areas: [],
+      entities: [
+        {
+          entity_id: 'light.x',
+          name: 'X',
+          domain: 'light',
+          area_id: null,
+          device_id: null,
+          device_name: null,
+          state: 'unavailable',
+        },
+      ],
+      scenes: [],
+      automations: [],
+    };
+    const graph: RFGraph = {
+      nodes: [
+        { id: 'light.x', position: { x: 0, y: 0 }, data: { kind: 'entity', label: 'X', entityId: 'light.x' } },
+        { id: 'action/0', position: { x: 0, y: 0 }, data: { kind: 'action', label: 'do' } },
+      ],
+      edges: [],
+    };
+    const out = decorateAvailability(graph, topo);
+    expect(out.nodes[0].data.availability).toBe('unavailable');
+    expect(out.nodes[1].data.availability).toBeUndefined();
   });
 });

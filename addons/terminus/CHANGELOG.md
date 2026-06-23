@@ -4,6 +4,19 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.21.0
+
+- **Unavailable and unknown entities are now flagged in the topology diagram.**
+  Orphaned/offline nodes (state `unavailable`) render with a dashed border and an
+  amber warning badge; entities reporting `unknown` get their own badge and keep a
+  solid border. The 3D view mirrors this with a gray fill + amber ring
+  (unavailable) and a slate ring (unknown).
+- **Navigating to a deleted automation / scene / area now shows a clear "no
+  longer exists" message with a back button**, instead of an empty canvas with a
+  misleading "run it once" hint.
+- The automation "run it once" hint moved from the top to the bottom-middle of
+  the canvas so it no longer overlaps the breadcrumb and controls.
+
 ## 0.20.0
 
 - **The topology view lives entirely in the URL.** The current diagram view —

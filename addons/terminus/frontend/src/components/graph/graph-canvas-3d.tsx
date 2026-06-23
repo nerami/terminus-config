@@ -18,9 +18,9 @@ import {
   lightTheme,
 } from 'reagraph';
 
-import { AutomationHint, CanvasSpinner } from './canvas-overlays';
+import { AutomationHint, CanvasNotFound, CanvasSpinner } from './canvas-overlays';
 import { Graph3dLegend } from './graph-3d-legend';
-import { KIND_FILL, KIND_ORDER, sizeForKind } from './graph-3d-style';
+import { KIND_ORDER, fill3dFor, ring3dFor, sizeForKind } from './graph-3d-style';
 import { GraphControls } from './graph-controls';
 import { PlatonicNode } from './node-geometry';
 import { NodeLabel } from './node-label';
@@ -51,8 +51,10 @@ export function GraphCanvas3D() {
     automationLoading,
     baseGraph,
     clearSelection,
+    goBack,
     highlightSet,
     isUpstreamMode,
+    notFoundKind,
     scope,
     selected,
     showAutomationHint,
@@ -98,7 +100,7 @@ export function GraphCanvas3D() {
           id: n.id,
           label: data.label,
           subLabel: data.sublabel,
-          fill: KIND_FILL[data.kind],
+          fill: fill3dFor(data.kind, data.availability),
           size: sizeForKind(data.kind),
           data,
           ...(pos ? { fx: pos.x, fy: pos.y, fz: pos.z } : {}),
@@ -155,9 +157,9 @@ export function GraphCanvas3D() {
   // highlight color and the label emphasizes when selected/on the active path.
   const renderNode = useCallback<NodeRenderer>(
     ({ active, animated, color, id, node, opacity, selected: sel, size }) => {
-      const kind = (node.data as GraphNodeData).kind;
+      const { availability, kind } = node.data as GraphNodeData;
       const hot = sel || active;
-      const ringColor = hot ? color : KIND_FILL[kind];
+      const ringColor = hot ? color : ring3dFor(kind, availability);
       const ringOpacity = opacity * (hot ? 0.8 : 0.25);
       return (
         <group>
@@ -246,6 +248,7 @@ export function GraphCanvas3D() {
       <Graph3dLegend kinds={legendKinds} />
       {showAutomationHint && <AutomationHint key={automationId} />}
       {automationLoading && <CanvasSpinner />}
+      {notFoundKind && <CanvasNotFound kind={notFoundKind} onBack={goBack} />}
     </div>
   );
 }

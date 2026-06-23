@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Info, LoaderCircle, X } from 'lucide-react';
+import { Info, LoaderCircle, SearchX, X } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,7 +24,7 @@ export function AutomationHint() {
   return (
     <Alert
       variant="default"
-      className="bg-card/95 absolute top-3 right-3 left-3 z-10 pr-9 shadow-md backdrop-blur sm:right-auto sm:left-1/2 sm:max-w-md sm:min-w-[20rem] sm:-translate-x-1/2"
+      className="bg-card/95 absolute right-3 bottom-3 left-3 z-10 pr-9 shadow-md backdrop-blur sm:right-auto sm:left-1/2 sm:max-w-md sm:min-w-[20rem] sm:-translate-x-1/2"
     >
       <Info />
       <AlertTitle>Run this automation to see its real flow</AlertTitle>
@@ -41,5 +41,29 @@ export function AutomationHint() {
         <X className="size-4" />
       </button>
     </Alert>
+  );
+}
+
+const NOT_FOUND_COPY: Record<'automation' | 'scene' | 'area', { body: string; back: string }> = {
+  automation: { body: 'This automation no longer exists — it may have been deleted.', back: 'Back to automations' },
+  scene: { body: 'This scene no longer exists — it may have been deleted.', back: 'Back to scenes' },
+  area: { body: 'This area no longer exists — it may have been deleted.', back: 'Back to areas' },
+};
+
+/** Full-canvas error shown when the URL targets an entity absent from topology. */
+export function CanvasNotFound({ kind, onBack }: { kind: 'automation' | 'scene' | 'area'; onBack: () => void }) {
+  const copy = NOT_FOUND_COPY[kind];
+  return (
+    <div className="bg-background/80 absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 text-center backdrop-blur-sm">
+      <SearchX className="text-muted-foreground size-10" />
+      <p className="text-muted-foreground max-w-xs text-sm">{copy.body}</p>
+      <button
+        type="button"
+        onClick={onBack}
+        className="border-border hover:bg-muted cursor-pointer border px-3 py-1.5 text-sm font-medium shadow-sm"
+      >
+        {copy.back}
+      </button>
+    </div>
   );
 }

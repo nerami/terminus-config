@@ -149,6 +149,7 @@ def build_topology(
                     "entity_id": entity_id,
                     "name": name,
                     "area_id": area_id,
+                    "state": state.get("state"),
                     "entities": list(attrs.get("entity_id") or []),
                 }
             )
@@ -158,6 +159,7 @@ def build_topology(
                     "entity_id": entity_id,
                     "name": name,
                     "area_id": area_id,
+                    "state": state.get("state"),
                     "numeric_id": attrs.get("id"),
                 }
             )
@@ -168,6 +170,7 @@ def build_topology(
                     "name": name,
                     "domain": domain,
                     "area_id": area_id,
+                    "state": state.get("state"),
                     "device_id": reg.get("device_id"),
                     "device_name": device_name(reg.get("device_id")),
                 }

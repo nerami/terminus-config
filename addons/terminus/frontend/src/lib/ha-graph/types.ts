@@ -13,6 +13,7 @@ export interface HaEntity {
   domain: string;
   entity_id: string;
   name: string;
+  state?: string | null;
 }
 
 export interface HaScene {
@@ -21,6 +22,7 @@ export interface HaScene {
   entities: string[];
   entity_id: string;
   name: string;
+  state?: string | null;
 }
 
 export interface HaAutomation {
@@ -31,6 +33,7 @@ export interface HaAutomation {
   numeric_id: string | null;
   /** Entities/scenes/devices the automation references (parsed from config). */
   references: ReferencedIds;
+  state?: string | null;
 }
 
 export interface Topology {

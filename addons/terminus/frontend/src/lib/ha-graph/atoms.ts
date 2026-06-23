@@ -1,6 +1,8 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
+import { UNASSIGNED_AREA_ID, type Topology } from './types';
+
 /** Whether the thread history sidebar is open. */
 export const chatHistoryOpenAtom = atom(false);
 
@@ -137,3 +139,24 @@ export const nodePositions3dAtom = atomWithStorage<Record<string, Record<string,
   'terminus-graph-positions-3d',
   {},
 );
+
+/**
+ * Whether the view targets a specific id (automation/scene/area) that is absent
+ * from the loaded topology — i.e. the entity was deleted. Returns false while
+ * topology is still loading (null) and for list/aggregate views, so a fresh load
+ * never flashes a false "not found". The synthetic unassigned area always counts
+ * as present.
+ */
+export function isMissingTarget(topology: Topology | null, view: GraphView): boolean {
+  if (!topology) return false;
+  switch (view.kind) {
+    case 'automation':
+      return !topology.automations.some((a) => a.entity_id === view.automationId);
+    case 'scene':
+      return !topology.scenes.some((s) => s.entity_id === view.sceneId);
+    case 'area':
+      return view.areaId !== UNASSIGNED_AREA_ID && !topology.areas.some((a) => a.area_id === view.areaId);
+    default:
+      return false;
+  }
+}

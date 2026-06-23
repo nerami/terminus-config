@@ -54,6 +54,7 @@ vi.mock('@/lib/ha-graph/atoms', () => ({
   nodePositionsAtom: {},
   selectedNodeAtom: {},
   viewScope: () => 'areas',
+  isMissingTarget: () => false,
 }));
 
 vi.mock('next-themes', () => ({ useTheme: () => ({ resolvedTheme: 'light' }) }));
