@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTopology } from '@/hooks/use-topology';
-import { closeTopologyAtom, exitFullscreenAtom, panelLayoutAtom, topologyAtom } from '@/lib/ha-graph/atoms';
+import { closeTopologyAtom, exitFullscreenAtom, panelLayoutAtom } from '@/lib/ha-graph/atoms';
 import { topology3dAtom } from '@/lib/settings';
 
 // Each renderer is its own lazy chunk so neither react-flow nor reagraph/three.js
@@ -26,10 +26,9 @@ export function GraphPanel() {
   const closeTopology = useSetAtom(closeTopologyAtom);
   const exitFullscreen = useSetAtom(exitFullscreenAtom);
   const fullscreen = layout === 'topology-full';
-  const topology = useAtomValue(topologyAtom);
   const topology3d = useAtomValue(topology3dAtom);
   const isMobile = useIsMobile();
-  const { error, loading, reload } = useTopology(true);
+  const { data: topology, error, loading, reload } = useTopology(true);
 
   // The current view is owned by the URL (see TopologyUrlSync): a fresh toolbar
   // open resets it to the areas overview, while a deep-link/back restore keeps

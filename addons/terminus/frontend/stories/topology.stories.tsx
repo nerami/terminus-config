@@ -2,6 +2,7 @@ import '@xyflow/react/dist/style.css';
 
 import React from 'react';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { createStore } from 'jotai';
 import { Provider as JotaiProvider } from 'jotai';
@@ -10,7 +11,8 @@ import type { Topology } from '@/lib/ha-graph/types';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GraphCanvas } from '@/components/graph/graph-canvas';
-import { topologyAtom, graphViewAtom } from '@/lib/ha-graph/atoms';
+import { graphViewAtom } from '@/lib/ha-graph/atoms';
+import { topologyQueryOptions } from '@/lib/ha-graph/queries';
 
 const FIXTURE_TOPOLOGY: Topology = {
   areas: [
@@ -93,29 +95,33 @@ const FIXTURE_TOPOLOGY: Topology = {
 
 // Creates a fresh Jotai store pre-seeded with topology + area view.
 // Called once via useState initializer so the store survives re-renders.
-function createTopologyStore() {
+function createStores() {
   const store = createStore();
-  store.set(topologyAtom, FIXTURE_TOPOLOGY);
   // Writing graphViewAtom invokes its write function: sets graphViewBaseAtom
   // and clears selectedNodeAtom — same as navigating in the real app.
   store.set(graphViewAtom, { kind: 'area', areaId: 'living_room' });
-  return store;
+  // Topology is server state — seed the react-query cache it now reads from.
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(topologyQueryOptions().queryKey, FIXTURE_TOPOLOGY);
+  return { queryClient, store };
 }
 
 function TopologyStory() {
-  // Stable store across re-renders (useState with initializer function).
-  const [store] = React.useState(createTopologyStore);
+  // Stable store + client across re-renders (useState with initializer function).
+  const [{ queryClient, store }] = React.useState(createStores);
 
   return (
-    // Inner JotaiProvider shadows the global one from preview.tsx.
-    // GraphCanvas resolves atoms from the nearest Provider — this store.
-    <JotaiProvider store={store}>
-      <ReactFlowProvider>
-        <div style={{ width: '100%', height: '100vh' }}>
-          <GraphCanvas />
-        </div>
-      </ReactFlowProvider>
-    </JotaiProvider>
+    // Inner providers shadow the global ones. GraphCanvas resolves atoms from the
+    // nearest Jotai Provider and topology from the nearest QueryClient.
+    <QueryClientProvider client={queryClient}>
+      <JotaiProvider store={store}>
+        <ReactFlowProvider>
+          <div style={{ width: '100%', height: '100vh' }}>
+            <GraphCanvas />
+          </div>
+        </ReactFlowProvider>
+      </JotaiProvider>
+    </QueryClientProvider>
   );
 }
 

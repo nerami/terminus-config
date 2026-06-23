@@ -1,7 +1,8 @@
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { graphViewAtom, topologyAtom } from '@/lib/ha-graph/atoms';
+import { useTopologyData } from '@/hooks/use-topology';
+import { graphViewAtom } from '@/lib/ha-graph/atoms';
 import { navLevels } from '@/lib/ha-graph/group-nav';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +17,7 @@ import { cn } from '@/lib/utils';
  * rather than a native <select>, so the open popup respects the app theme.
  */
 export function GroupByControls() {
-  const topology = useAtomValue(topologyAtom);
+  const topology = useTopologyData();
   const [view, setView] = useAtom(graphViewAtom);
 
   if (!topology) return null;

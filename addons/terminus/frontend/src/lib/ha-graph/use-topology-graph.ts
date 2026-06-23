@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 
-import { useAutomationDetail } from '@/hooks/use-topology';
-import { entityModalAtom, graphViewAtom, selectedNodeAtom, topologyAtom, viewScope } from '@/lib/ha-graph/atoms';
+import { useAutomationDetail, useTopologyData } from '@/hooks/use-topology';
+import { entityModalAtom, graphViewAtom, selectedNodeAtom, viewScope } from '@/lib/ha-graph/atoms';
 import {
   automationHasStructure,
   buildAreaGraph,
@@ -58,7 +58,7 @@ export interface TopologyGraph {
  * they behave identically off the same dataset.
  */
 export function useTopologyGraph(): TopologyGraph {
-  const topology = useAtomValue(topologyAtom);
+  const topology = useTopologyData();
   const [view, setView] = useAtom(graphViewAtom);
   const [selected, setSelected] = useAtom(selectedNodeAtom);
   const setEntityModal = useSetAtom(entityModalAtom);

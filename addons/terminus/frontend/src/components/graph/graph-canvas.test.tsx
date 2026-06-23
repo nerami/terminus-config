@@ -30,6 +30,7 @@ vi.mock('./nodes', () => ({ nodeTypes: {} }));
 vi.mock('./GroupByControls', () => ({ GroupByControls: () => null }));
 vi.mock('@/hooks/use-topology', () => ({
   useAutomationDetail: () => ({ detail: null, loading: false }),
+  useTopologyData: () => null,
 }));
 vi.mock('@/lib/ha-graph/build', () => ({
   automationHasStructure: () => true,
@@ -53,7 +54,6 @@ vi.mock('@/lib/ha-graph/atoms', () => ({
   graphViewAtom: {},
   nodePositionsAtom: {},
   selectedNodeAtom: {},
-  topologyAtom: {},
   viewScope: () => 'areas',
 }));
 

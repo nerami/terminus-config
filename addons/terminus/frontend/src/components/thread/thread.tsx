@@ -43,6 +43,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useThreadId } from '@/hooks/use-thread-id';
+import { useTopologyData } from '@/hooks/use-topology';
 import { contextItems, formatContextBlock } from '@/lib/chat-context';
 import { DO_NOT_RENDER_ID_PREFIX, ensureToolCallsHaveResponses } from '@/lib/ensure-tool-responses';
 import {
@@ -51,7 +52,6 @@ import {
   openTopologyAtom,
   panelLayoutAtom,
   selectedNodeAtom,
-  topologyAtom,
 } from '@/lib/ha-graph/atoms';
 import { storedThreadTitle } from '@/lib/thread-title';
 import { cn } from '@/lib/utils';
@@ -134,7 +134,7 @@ export function Thread() {
   // Home-topology context the user can attach to a message via chips.
   const graphView = useAtomValue(graphViewAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
-  const topology = useAtomValue(topologyAtom);
+  const topology = useTopologyData();
   const [activeContextIds, setActiveContextIds] = useState<Set<string>>(new Set());
   const availableContext = contextItems(graphView, selectedNode, topology);
   const toggleContext = (id: string) =>

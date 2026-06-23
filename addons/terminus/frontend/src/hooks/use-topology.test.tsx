@@ -1,13 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { Provider as JotaiProvider, createStore } from 'jotai';
 import { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useAutomationDetail, useTopology } from './use-topology';
+import { useAutomationDetail, useTopology, useTopologyData } from './use-topology';
 
 import { fetchAutomation, fetchTopology } from '@/lib/ha-graph/api';
-import { topologyAtom } from '@/lib/ha-graph/atoms';
+import { topologyQueryOptions } from '@/lib/ha-graph/queries';
 import type { HaAutomation, Topology } from '@/lib/ha-graph/types';
 
 vi.mock('@/lib/ha-graph/api', () => ({ fetchTopology: vi.fn(), fetchAutomation: vi.fn() }));
@@ -32,14 +31,12 @@ const AUTO_NO_ID: HaAutomation = {
 const TOPOLOGY: Topology = { areas: [], automations: [AUTO, AUTO_NO_ID], entities: [], scenes: [] };
 
 function createWrapper() {
-  const store = createStore();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>
-      <JotaiProvider store={store}>{children}</JotaiProvider>
-    </QueryClientProvider>
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  return { store, wrapper };
+  const seedTopology = () => client.setQueryData(topologyQueryOptions().queryKey, TOPOLOGY);
+  return { client, wrapper, seedTopology };
 }
 
 afterEach(() => {
@@ -47,14 +44,14 @@ afterEach(() => {
 });
 
 describe('useTopology', () => {
-  it('fetches the topology, populates topologyAtom, and reload refetches', async () => {
+  it('fetches the topology, returns it, and reload refetches', async () => {
     mockFetchTopology.mockResolvedValue(TOPOLOGY);
-    const { store, wrapper } = createWrapper();
+    const { wrapper } = createWrapper();
 
     const { result } = renderHook(() => useTopology(true), { wrapper });
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(store.get(topologyAtom)).toEqual(TOPOLOGY);
+    await waitFor(() => expect(result.current.data).toEqual(TOPOLOGY));
+    expect(result.current.loading).toBe(false);
     expect(mockFetchTopology).toHaveBeenCalledTimes(1);
 
     await act(async () => {
@@ -67,10 +64,11 @@ describe('useTopology', () => {
     mockFetchTopology.mockResolvedValue(TOPOLOGY);
     const { wrapper } = createWrapper();
 
-    renderHook(() => useTopology(false), { wrapper });
+    const { result } = renderHook(() => useTopology(false), { wrapper });
 
     await Promise.resolve();
     expect(mockFetchTopology).not.toHaveBeenCalled();
+    expect(result.current.data).toBeNull();
   });
 
   it('dedupes concurrent consumers into a single fetch', async () => {
@@ -85,8 +83,29 @@ describe('useTopology', () => {
       { wrapper },
     );
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.data).toEqual(TOPOLOGY));
     expect(mockFetchTopology).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useTopologyData', () => {
+  it('reads the shared cache without triggering a fetch', () => {
+    const { seedTopology, wrapper } = createWrapper();
+    seedTopology();
+
+    const { result } = renderHook(() => useTopologyData(), { wrapper });
+
+    expect(result.current).toEqual(TOPOLOGY);
+    expect(mockFetchTopology).not.toHaveBeenCalled();
+  });
+
+  it('returns null when nothing has loaded the topology yet', () => {
+    const { wrapper } = createWrapper();
+
+    const { result } = renderHook(() => useTopologyData(), { wrapper });
+
+    expect(result.current).toBeNull();
+    expect(mockFetchTopology).not.toHaveBeenCalled();
   });
 });
 
@@ -99,8 +118,8 @@ describe('useAutomationDetail', () => {
   });
 
   it('falls back to topology references when the automation has no numeric id', () => {
-    const { store, wrapper } = createWrapper();
-    store.set(topologyAtom, TOPOLOGY);
+    const { seedTopology, wrapper } = createWrapper();
+    seedTopology();
 
     const { result } = renderHook(() => useAutomationDetail('automation.y'), { wrapper });
 
@@ -116,8 +135,8 @@ describe('useAutomationDetail', () => {
       config: { alias: 'x' },
       referenced: { entities: ['light.b'], scenes: [], devices: [] },
     });
-    const { store, wrapper } = createWrapper();
-    store.set(topologyAtom, TOPOLOGY);
+    const { seedTopology, wrapper } = createWrapper();
+    seedTopology();
 
     const { result } = renderHook(() => useAutomationDetail('automation.x'), { wrapper });
 
@@ -131,8 +150,8 @@ describe('useAutomationDetail', () => {
       config: {},
       referenced: { entities: [], scenes: [], devices: [] },
     });
-    const { store, wrapper } = createWrapper();
-    store.set(topologyAtom, TOPOLOGY);
+    const { seedTopology, wrapper } = createWrapper();
+    seedTopology();
 
     const { result } = renderHook(() => useAutomationDetail('automation.x'), { wrapper });
 
@@ -142,8 +161,8 @@ describe('useAutomationDetail', () => {
 
   it('falls back and reports the error when the fetch fails', async () => {
     mockFetchAutomation.mockRejectedValue(new Error('nope'));
-    const { store, wrapper } = createWrapper();
-    store.set(topologyAtom, TOPOLOGY);
+    const { seedTopology, wrapper } = createWrapper();
+    seedTopology();
 
     const { result } = renderHook(() => useAutomationDetail('automation.x'), { wrapper });
 

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import { LoaderCircle } from 'lucide-react';
 
 import type { EntityState } from '@/lib/ha-graph/types';
 
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTopologyData } from '@/hooks/use-topology';
 import { fetchEntity } from '@/lib/ha-graph/api';
-import { entityModalAtom, topologyAtom } from '@/lib/ha-graph/atoms';
+import { entityModalAtom } from '@/lib/ha-graph/atoms';
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -21,7 +22,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function EntityDetailModal() {
   const [entityId, setEntityId] = useAtom(entityModalAtom);
-  const topology = useAtomValue(topologyAtom);
+  const topology = useTopologyData();
   const [state, setState] = useState<EntityState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

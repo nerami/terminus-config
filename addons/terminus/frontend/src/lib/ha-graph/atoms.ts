@@ -1,8 +1,6 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
-import type { Topology } from './types';
-
 /**
  * Single source of truth for the chat<->topology layout relationship.
  *  - chat-full:     topology not shown (chat occupies the row; an artifact may
@@ -54,9 +52,6 @@ export const exitFullscreenAtom = atom(null, (get, set) => {
 
 /** Whether the thread history sidebar is open. */
 export const chatHistoryOpenAtom = atom(false);
-
-/** The loaded topology snapshot (set by `useTopology`). */
-export const topologyAtom = atom<Topology | null>(null);
 
 /**
  * The current view in the diagram. Each view carries the ids needed both to

@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Topology } from './types';
 
-import { entityModalAtom, graphViewAtom, selectedNodeAtom, topologyAtom } from './atoms';
+import { entityModalAtom, graphViewAtom, selectedNodeAtom } from './atoms';
+import { topologyQueryOptions } from './queries';
 import { useTopologyGraph } from './use-topology-graph';
 
 const FIXTURE: Topology = {
@@ -42,9 +43,9 @@ const FIXTURE: Topology = {
 
 function setup(initialView: Parameters<ReturnType<typeof createStore>['set']>[1] = { kind: 'areas' }) {
   const store = createStore();
-  store.set(topologyAtom, FIXTURE);
   store.set(graphViewAtom, initialView as never);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(topologyQueryOptions().queryKey, FIXTURE);
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client }, React.createElement(JotaiProvider, { store }, children));
   const view = renderHook(() => useTopologyGraph(), { wrapper });

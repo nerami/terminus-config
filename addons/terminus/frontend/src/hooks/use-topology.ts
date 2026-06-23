@@ -1,44 +1,45 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-import { useAtomValue, useSetAtom } from 'jotai';
 
-import type { AutomationDetail } from '@/lib/ha-graph/types';
+import type { AutomationDetail, Topology } from '@/lib/ha-graph/types';
 
-import { fetchAutomation, fetchTopology } from '@/lib/ha-graph/api';
-import { topologyAtom } from '@/lib/ha-graph/atoms';
+import { fetchAutomation } from '@/lib/ha-graph/api';
+import { topologyQueryOptions } from '@/lib/ha-graph/queries';
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
 export interface UseTopology {
+  data: Topology | null;
   error: string | null;
   loading: boolean;
   reload: () => void;
 }
 
 /**
- * Loads the topology snapshot once `enabled` becomes true (i.e. when the
- * diagram panel opens) and mirrors it into `topologyAtom` so the many atom
- * readers (graph panel, controls, detail modal, context chips) keep working.
- * react-query owns the fetch/cache; the atom is a read-through projection.
+ * Active topology fetcher — used by the diagram panel. react-query is the single
+ * source of truth; this query is shared (same key) with every passive reader via
+ * {@link useTopologyData}. Fetches when `enabled` (i.e. once the panel opens).
  */
-export function useTopology(enabled: boolean): UseTopology {
-  const setTopology = useSetAtom(topologyAtom);
-  const query = useQuery({ queryKey: ['ha', 'topology'], queryFn: fetchTopology, enabled });
-
-  // Project the cache into the atom. Never write null — keep the last good
-  // snapshot on error, matching the previous hook.
-  useEffect(() => {
-    if (query.data) setTopology(query.data);
-  }, [query.data, setTopology]);
-
+export function useTopology(enabled = true): UseTopology {
+  const query = useQuery({ ...topologyQueryOptions(), enabled });
   return {
+    data: query.data ?? null,
     loading: query.isFetching,
     error: query.isError ? errorMessage(query.error) : null,
     reload: () => void query.refetch(),
   };
+}
+
+/**
+ * Passive topology reader for components that consume the snapshot without
+ * triggering the fetch (it loads when the diagram panel opens). Subscribes to
+ * the shared cache; returns undefined until the active fetcher has loaded it.
+ */
+export function useTopologyData(): Topology | null {
+  return useQuery({ ...topologyQueryOptions(), enabled: false }).data ?? null;
 }
 
 /**
@@ -47,7 +48,7 @@ export function useTopology(enabled: boolean): UseTopology {
  * references already present in the topology so the view still renders.
  */
 export function useAutomationDetail(automationId: string | null) {
-  const topology = useAtomValue(topologyAtom);
+  const topology = useTopologyData();
   const meta = automationId ? topology?.automations.find((a) => a.entity_id === automationId) : undefined;
 
   const query = useQuery({
