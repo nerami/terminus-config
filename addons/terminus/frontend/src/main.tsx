@@ -1,6 +1,8 @@
 // Restore the iframe location from the parent (HA) URL hash BEFORE the router is
 // imported/evaluated. Must stay the first import.
 import './lib/parent-url-restore';
+// Then fall back to the localStorage checkpoint if the URL is still blank.
+import './lib/navigation-checkpoint-restore';
 
 import { StrictMode } from 'react';
 

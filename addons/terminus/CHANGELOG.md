@@ -4,6 +4,31 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.20.0
+
+- **The topology view lives entirely in the URL.** The current diagram view —
+  the area / scene / automation you've drilled into — is now encoded in the
+  `?group/area/scene/automation` params, so deep links, refresh, and
+  back/forward restore it exactly. Closing the topology resets it to the areas
+  overview. (Completes the move of all navigation to the URL; the old in-memory
+  view store is gone.)
+
+## 0.19.0
+
+- **Navigation is URL-driven with a localStorage checkpoint.** The panel layout
+  now lives solely in the `?layout` URL param (`chat` / `topology` / `split`);
+  localStorage is a write-through fallback that restores your last view when you
+  return to the add-on, while the URL stays the source of truth. Layout and
+  group changes now persist reliably (previously a stale subscription could miss
+  them).
+
+## 0.18.1
+
+- **Cleaner layout URLs.** The split layout is now encoded as `?layout=split`
+  instead of `?layout=chat,topology`, so the `?layout` param mirrors the
+  internal layout state one-to-one (`chat` / `topology` / `split`). Older
+  `?layout=chat,topology` links fall back to the chat view.
+
 ## 0.18.0
 
 - **Scoped error recovery for the chat and topology panes.** A render crash in

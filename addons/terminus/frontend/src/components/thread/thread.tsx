@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useRef } from 'react';
 import { useState, FormEvent } from 'react';
 
 import { Checkpoint, Message } from '@langchain/langgraph-sdk';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import {
   Archive,
   ArrowDown,
@@ -20,8 +20,7 @@ import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GraphPanel } from '../graph/graph-panel';
-import { TopologyUrlSync } from '../graph/topology-url-sync';
-import { ParentUrlSync } from '../parent-url-sync';
+import { NavigationCheckpointSync } from '../navigation-checkpoint-sync';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 
@@ -46,13 +45,9 @@ import { useThreadId } from '@/hooks/use-thread-id';
 import { useTopologyData } from '@/hooks/use-topology';
 import { contextItems, formatContextBlock } from '@/lib/chat-context';
 import { DO_NOT_RENDER_ID_PREFIX, ensureToolCallsHaveResponses } from '@/lib/ensure-tool-responses';
-import {
-  enterFullscreenAtom,
-  graphViewAtom,
-  openTopologyAtom,
-  panelLayoutAtom,
-  selectedNodeAtom,
-} from '@/lib/ha-graph/atoms';
+import { selectedNodeAtom } from '@/lib/ha-graph/atoms';
+import { useGraphView } from '@/lib/ha-graph/use-graph-view';
+import { usePanelLayout } from '@/lib/ha-graph/use-panel-layout';
 import { storedThreadTitle } from '@/lib/thread-title';
 import { cn } from '@/lib/utils';
 import { useStreamContext } from '@/providers/stream';
@@ -94,9 +89,7 @@ export function Thread() {
   // The topology toggle lives in the sidebar now; here we only read the open
   // state to size the right column. The diagram and the artifact panel share
   // that column, so either one opening drives the layout.
-  const layout = useAtomValue(panelLayoutAtom);
-  const openTopology = useSetAtom(openTopologyAtom);
-  const enterFullscreen = useSetAtom(enterFullscreenAtom);
+  const { enterFullscreen, layout, openTopology } = usePanelLayout();
   const isMobile = useIsMobile();
   const { isMobile: isSidebarMobile, open: sidebarOpen, openMobile: sidebarOpenMobile, toggleSidebar } = useSidebar();
   const sidebarVisible = isSidebarMobile ? sidebarOpenMobile : sidebarOpen;
@@ -112,7 +105,7 @@ export function Thread() {
   // opening one closes the other.
   const showTopology = () => {
     closeArtifact();
-    openTopology(); // chat-full -> split
+    openTopology(); // chat -> split
   };
 
   const [threadId, _setThreadId] = useThreadId();
@@ -132,7 +125,7 @@ export function Thread() {
   const [firstTokenReceived, setFirstTokenReceived] = useState(false);
 
   // Home-topology context the user can attach to a message via chips.
-  const graphView = useAtomValue(graphViewAtom);
+  const [graphView] = useGraphView();
   const selectedNode = useAtomValue(selectedNodeAtom);
   const topology = useTopologyData();
   const [activeContextIds, setActiveContextIds] = useState<Set<string>>(new Set());
@@ -288,8 +281,7 @@ export function Thread() {
 
   return (
     <div className="flex h-full w-full overflow-hidden">
-      <TopologyUrlSync />
-      <ParentUrlSync />
+      <NavigationCheckpointSync />
       <RenameThreadDialog open={renameOpen} onOpenChange={setRenameOpen} threadId={threadId} initialTitle={chatTitle} />
 
       <ResizableGroup
@@ -325,7 +317,7 @@ export function Thread() {
 
               <div className="flex items-center gap-1">
                 {/* Topology can be opened from here as well as the sidebar. */}
-                {layout === 'chat-full' && (
+                {layout === 'chat' && (
                   <TooltipIconButton tooltip="Home topology" onClick={showTopology}>
                     <Network />
                   </TooltipIconButton>
@@ -498,7 +490,7 @@ export function Thread() {
           className="relative flex h-full flex-col"
         >
           <div className="absolute inset-0 flex flex-col">
-            {layout !== 'chat-full' ? (
+            {layout !== 'chat' ? (
               <GraphPanel />
             ) : (
               <RegionErrorBoundary

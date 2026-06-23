@@ -51,13 +51,18 @@ vi.mock('jotai', () => ({
 }));
 vi.mock('@/lib/ha-graph/atoms', () => ({
   entityModalAtom: {},
-  graphViewAtom: {},
   nodePositionsAtom: {},
   selectedNodeAtom: {},
   viewScope: () => 'areas',
 }));
 
 vi.mock('next-themes', () => ({ useTheme: () => ({ resolvedTheme: 'light' }) }));
+
+// nuqs: stub useQueryStates so useGraphView works without a real adapter.
+vi.mock('nuqs', () => ({
+  parseAsString: { parseServerSide: () => null },
+  useQueryStates: () => [{ group: null, area: null, scene: null, automation: null }, vi.fn()],
+}));
 
 import { GraphCanvas } from './graph-canvas';
 

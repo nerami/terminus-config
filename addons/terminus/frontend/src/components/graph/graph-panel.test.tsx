@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { Provider, createStore } from 'jotai';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { withNuqsTestingAdapter, type OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let mobile = false;
 
@@ -9,61 +9,62 @@ vi.mock('@/hooks/use-topology', () => ({
 }));
 vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => mobile }));
 
-import { panelLayoutAtom } from '@/lib/ha-graph/atoms';
-
 import { GraphPanel } from './graph-panel';
 
-function renderPanel(store: ReturnType<typeof createStore>) {
-  return render(
-    <Provider store={store}>
-      <GraphPanel />
-    </Provider>,
-  );
-}
-
-function openStore(fullscreen: boolean) {
-  const store = createStore();
-  store.set(panelLayoutAtom, fullscreen ? 'topology-full' : 'split');
-  return store;
+function renderPanel(searchParams = '') {
+  const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+  render(<GraphPanel />, {
+    wrapper: withNuqsTestingAdapter({ searchParams, onUrlUpdate }),
+  });
+  return { onUrlUpdate };
 }
 
 beforeEach(() => {
   mobile = false;
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('GraphPanel', () => {
-  it('shows "Open chat" in full screen and switches to split view on desktop', () => {
-    const store = openStore(true);
-    renderPanel(store);
+  it('shows "Open chat" in full screen and switches to split view on desktop', async () => {
+    const { onUrlUpdate } = renderPanel('?layout=topology');
 
-    fireEvent.click(screen.getByRole('button', { name: /open chat/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /open chat/i }));
+      await vi.runAllTimersAsync();
+    });
 
     // Desktop: exit full screen but keep the diagram open (split view).
-    expect(store.get(panelLayoutAtom)).toBe('split');
+    expect(onUrlUpdate).toHaveBeenCalled();
+    expect(onUrlUpdate.mock.calls.at(-1)![0].queryString).toContain('layout=split');
   });
 
-  it('closes the panel on mobile when "Open chat" is clicked', () => {
+  it('closes the panel on mobile when "Open chat" is clicked', async () => {
     mobile = true;
-    const store = openStore(true);
-    renderPanel(store);
+    const { onUrlUpdate } = renderPanel('?layout=topology');
 
-    fireEvent.click(screen.getByRole('button', { name: /open chat/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /open chat/i }));
+      await vi.runAllTimersAsync();
+    });
 
     // Mobile has no split view: go back to the chat entirely.
-    expect(store.get(panelLayoutAtom)).toBe('chat-full');
+    expect(onUrlUpdate).toHaveBeenCalled();
+    expect(onUrlUpdate.mock.calls.at(-1)![0].queryString).toContain('layout=chat');
   });
 
   it('hides "Open chat" in split view on desktop', () => {
-    const store = openStore(false);
-    renderPanel(store);
+    renderPanel('?layout=split');
 
     expect(screen.queryByRole('button', { name: /open chat/i })).not.toBeInTheDocument();
   });
 
   it('shows "Open chat" on mobile even when not full screen', () => {
     mobile = true;
-    const store = openStore(false);
-    renderPanel(store);
+    renderPanel('?layout=split');
 
     expect(screen.getByRole('button', { name: /open chat/i })).toBeInTheDocument();
   });

@@ -12,7 +12,7 @@ import {
   TOPOLOGY_PANEL_ID,
 } from './split-layout';
 
-import { closeTopologyAtom, enterFullscreenAtom, openTopologyAtom, type PanelLayout } from '@/lib/ha-graph/atoms';
+import { usePanelLayout, type PanelLayout } from '@/lib/ha-graph/use-panel-layout';
 import { clampSplitFraction, splitFractionAtom } from '@/lib/settings';
 
 interface ResizableSplitInputs {
@@ -34,18 +34,16 @@ export function useResizableSplit({ artifactOpen, isMobile, layout }: ResizableS
 
   const storedFraction = clampSplitFraction(useAtomValue(splitFractionAtom));
   const setFraction = useSetAtom(splitFractionAtom);
-  const closeTopology = useSetAtom(closeTopologyAtom);
-  const enterFullscreen = useSetAtom(enterFullscreenAtom);
-  const openTopology = useSetAtom(openTopologyAtom);
+  const { closeTopology, enterFullscreen, openTopology } = usePanelLayout();
 
   // The Group's visual arrangement (incl. artifact + mobile), distinct from the
   // canonical layout. Topology occupies the right panel only when it's open.
-  const topologyVisible = layout !== 'chat-full';
-  const mode = deriveMode({ open: topologyVisible || artifactOpen, fullscreen: layout === 'topology-full', isMobile });
+  const topologyVisible = layout !== 'chat';
+  const mode = deriveMode({ open: topologyVisible || artifactOpen, fullscreen: layout === 'topology', isMobile });
   const isSplit = mode === 'split';
   // Panels are ALWAYS collapsible so the programmatic open/close/fullscreen
-  // transitions work for every target layout — applyMode reaches chat-full /
-  // topology-full by collapsing a panel, and collapse() is a no-op on a
+  // transitions work for every target layout — applyMode reaches chat /
+  // topology by collapsing a panel, and collapse() is a no-op on a
   // non-collapsible panel.
   const collapsible = true;
   // The divider is draggable only when topology occupies the split. An artifact

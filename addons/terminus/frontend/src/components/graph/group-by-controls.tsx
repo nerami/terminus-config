@@ -1,9 +1,7 @@
-import { useAtom } from 'jotai';
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTopologyData } from '@/hooks/use-topology';
-import { graphViewAtom } from '@/lib/ha-graph/atoms';
 import { navLevels } from '@/lib/ha-graph/group-nav';
+import { useGraphView } from '@/lib/ha-graph/use-graph-view';
 import { cn } from '@/lib/utils';
 
 /**
@@ -18,7 +16,7 @@ import { cn } from '@/lib/utils';
  */
 export function GroupByControls() {
   const topology = useTopologyData();
-  const [view, setView] = useAtom(graphViewAtom);
+  const [view, setView] = useGraphView();
 
   if (!topology) return null;
   const levels = navLevels(topology, view);

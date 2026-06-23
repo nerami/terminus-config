@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 
 import { useAutomationDetail, useTopologyData } from '@/hooks/use-topology';
-import { entityModalAtom, graphViewAtom, selectedNodeAtom, viewScope } from '@/lib/ha-graph/atoms';
+import { entityModalAtom, selectedNodeAtom, viewScope } from '@/lib/ha-graph/atoms';
 import {
   automationHasStructure,
   buildAreaGraph,
@@ -16,6 +16,7 @@ import {
   type GraphNodeData,
   type RFGraph,
 } from '@/lib/ha-graph/build';
+import { useGraphView } from '@/lib/ha-graph/use-graph-view';
 
 const EMPTY_GRAPH: RFGraph = { nodes: [], edges: [] };
 
@@ -59,7 +60,7 @@ export interface TopologyGraph {
  */
 export function useTopologyGraph(): TopologyGraph {
   const topology = useTopologyData();
-  const [view, setView] = useAtom(graphViewAtom);
+  const [view, setView] = useGraphView();
   const [selected, setSelected] = useAtom(selectedNodeAtom);
   const setEntityModal = useSetAtom(entityModalAtom);
 

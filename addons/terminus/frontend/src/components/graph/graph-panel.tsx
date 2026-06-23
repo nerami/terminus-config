@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { BotMessageSquare, LoaderCircle, RefreshCw, XIcon } from 'lucide-react';
 
 import { CanvasSpinner } from './canvas-overlays';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTopology } from '@/hooks/use-topology';
-import { closeTopologyAtom, exitFullscreenAtom, panelLayoutAtom } from '@/lib/ha-graph/atoms';
+import { usePanelLayout } from '@/lib/ha-graph/use-panel-layout';
 import { topology3dAtom } from '@/lib/settings';
 
 // Each renderer is its own lazy chunk so neither react-flow nor reagraph/three.js
@@ -22,15 +22,13 @@ const Topology2D = lazy(() => import('./topology-2d').then((m) => ({ default: m.
 const Topology3D = lazy(() => import('./topology-3d').then((m) => ({ default: m.Topology3D })));
 
 export function GraphPanel() {
-  const layout = useAtomValue(panelLayoutAtom);
-  const closeTopology = useSetAtom(closeTopologyAtom);
-  const exitFullscreen = useSetAtom(exitFullscreenAtom);
-  const fullscreen = layout === 'topology-full';
+  const { closeTopology, exitFullscreen, layout } = usePanelLayout();
+  const fullscreen = layout === 'topology';
   const topology3d = useAtomValue(topology3dAtom);
   const isMobile = useIsMobile();
   const { data: topology, error, loading, reload } = useTopology(true);
 
-  // The current view is owned by the URL (see TopologyUrlSync): a fresh toolbar
+  // The current view is owned by the URL (see useGraphView): a fresh toolbar
   // open resets it to the areas overview, while a deep-link/back restore keeps
   // whatever view the URL encodes — so the panel must NOT force a view here.
 

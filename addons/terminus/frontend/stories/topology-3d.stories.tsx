@@ -1,15 +1,15 @@
 import React from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createStore } from 'jotai';
-import { Provider as JotaiProvider } from 'jotai';
+import { Provider as JotaiProvider, createStore } from 'jotai';
 import { ThemeProvider } from 'next-themes';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 
 import type { Topology } from '@/lib/ha-graph/types';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { GraphCanvas3D } from '@/components/graph/graph-canvas-3d';
-import { graphViewAtom, selectedNodeAtom } from '@/lib/ha-graph/atoms';
+import { selectedNodeAtom } from '@/lib/ha-graph/atoms';
 import { topologyQueryOptions } from '@/lib/ha-graph/queries';
 
 const FIXTURE_TOPOLOGY: Topology = {
@@ -76,10 +76,11 @@ const FIXTURE_TOPOLOGY: Topology = {
   ],
 };
 
-// Fresh Jotai store pre-seeded with topology + area view (mirrors the 2D story).
+// Fresh Jotai store pre-seeded with topology. View is URL-sourced;
+// NuqsAdapter provides no seed, so the story opens at the default Areas
+// overview (mirrors the 2D story).
 function createStores(selectedId?: string) {
   const store = createStore();
-  store.set(graphViewAtom, { kind: 'area', areaId: 'living_room' });
   if (selectedId) store.set(selectedNodeAtom, selectedId);
   // Topology is server state — seed the react-query cache it now reads from.
   const queryClient = new QueryClient();
@@ -94,13 +95,15 @@ function createStores(selectedId?: string) {
 function Topology3DStory({ forcedTheme, selectedId }: { forcedTheme?: string; selectedId?: string }) {
   const [{ queryClient, store }] = React.useState(() => createStores(selectedId));
   const canvas = (
-    <QueryClientProvider client={queryClient}>
-      <JotaiProvider store={store}>
-        <div style={{ width: '100%', height: '100vh' }}>
-          <GraphCanvas3D />
-        </div>
-      </JotaiProvider>
-    </QueryClientProvider>
+    <NuqsAdapter>
+      <QueryClientProvider client={queryClient}>
+        <JotaiProvider store={store}>
+          <div style={{ width: '100%', height: '100vh' }}>
+            <GraphCanvas3D />
+          </div>
+        </JotaiProvider>
+      </QueryClientProvider>
+    </NuqsAdapter>
   );
   if (!forcedTheme) return canvas;
   return (

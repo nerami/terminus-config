@@ -1,4 +1,3 @@
-import { useAtomValue, useSetAtom } from 'jotai';
 import { Network, SquarePen } from 'lucide-react';
 
 import { SettingsMenu } from './settings-menu';
@@ -20,7 +19,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useNewThread } from '@/hooks/use-new-thread';
-import { closeTopologyAtom, enterFullscreenAtom, panelLayoutAtom } from '@/lib/ha-graph/atoms';
+import { usePanelLayout } from '@/lib/ha-graph/use-panel-layout';
 
 /**
  * The application sidebar: Terminus logo, primary actions (new session, the
@@ -29,9 +28,7 @@ import { closeTopologyAtom, enterFullscreenAtom, panelLayoutAtom } from '@/lib/h
  */
 export function AppSidebar() {
   const newThread = useNewThread();
-  const layout = useAtomValue(panelLayoutAtom);
-  const enterFullscreen = useSetAtom(enterFullscreenAtom);
-  const closeTopology = useSetAtom(closeTopologyAtom);
+  const { closeTopology, enterFullscreen, layout } = usePanelLayout();
   const [, closeArtifact] = useArtifactOpen();
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -47,7 +44,7 @@ export function AppSidebar() {
   // Opening the diagram shows it full screen (and closes the artifact, since
   // they share the right column); closing returns to the chat.
   const toggleGraphPanel = () => {
-    if (layout === 'chat-full') {
+    if (layout === 'chat') {
       closeArtifact();
       enterFullscreen();
     } else {
@@ -78,7 +75,7 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton isActive={layout !== 'chat-full'} onClick={toggleGraphPanel}>
+              <SidebarMenuButton isActive={layout !== 'chat'} onClick={toggleGraphPanel}>
                 <Network />
                 <span>Topology</span>
               </SidebarMenuButton>

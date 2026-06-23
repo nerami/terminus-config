@@ -1,55 +1,6 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
-/**
- * Single source of truth for the chat<->topology layout relationship.
- *  - chat-full:     topology not shown (chat occupies the row; an artifact may
- *                   still open the right column — tracked separately).
- *  - split:         chat + topology side by side.
- *  - topology-full: topology fills the row, chat hidden.
- */
-export type PanelLayout = 'chat-full' | 'split' | 'topology-full';
-
-export const panelLayoutAtom = atomWithStorage<PanelLayout>('terminus-panel-layout', 'chat-full', undefined, {
-  getOnInit: true,
-});
-
-/** Names of the two panels the layout param lists, in canonical URL order. */
-export type PanelName = 'chat' | 'topology';
-
-/** Visible panels for a layout (already in canonical order for stable URLs). */
-export function layoutToPanels(layout: PanelLayout): PanelName[] {
-  switch (layout) {
-    case 'chat-full':
-      return ['chat'];
-    case 'topology-full':
-      return ['topology'];
-    case 'split':
-      return ['chat', 'topology'];
-  }
-}
-
-/** Map a (possibly messy) list of visible panel names back to a layout. */
-export function panelsToLayout(names: readonly string[] | null): PanelLayout {
-  const set = new Set(names ?? []);
-  const chat = set.has('chat');
-  const topology = set.has('topology');
-  if (chat && topology) return 'split';
-  if (topology) return 'topology-full';
-  return 'chat-full';
-}
-
-// Named write-only actions — the single write path for buttons, drag, and URL.
-// Each no-ops when the target equals the current value (free equality-gating).
-export const openTopologyAtom = atom(null, (get, set) => {
-  if (get(panelLayoutAtom) === 'chat-full') set(panelLayoutAtom, 'split');
-});
-export const closeTopologyAtom = atom(null, (_get, set) => set(panelLayoutAtom, 'chat-full'));
-export const enterFullscreenAtom = atom(null, (_get, set) => set(panelLayoutAtom, 'topology-full'));
-export const exitFullscreenAtom = atom(null, (get, set) => {
-  if (get(panelLayoutAtom) === 'topology-full') set(panelLayoutAtom, 'split');
-});
-
 /** Whether the thread history sidebar is open. */
 export const chatHistoryOpenAtom = atom(false);
 
@@ -107,25 +58,11 @@ export function rootViewFor(grouping: GraphGrouping): GraphView {
   }
 }
 
-const graphViewBaseAtom = atomWithStorage<GraphView>('terminus-graph-view', { kind: 'areas' });
-
 /** Currently selected node id (drives highlight/dim). Null = nothing selected. */
 export const selectedNodeAtom = atom<string | null>(null);
 
 /** Entity id whose detail modal is open, or null. */
 export const entityModalAtom = atom<string | null>(null);
-
-/**
- * Navigate to a new view. Selecting a view always clears the current node
- * selection so the new canvas starts in its default (all-dimmed-edges) state.
- */
-export const graphViewAtom = atom(
-  (get) => get(graphViewBaseAtom),
-  (_get, set, view: GraphView) => {
-    set(graphViewBaseAtom, view);
-    set(selectedNodeAtom, null);
-  },
-);
 
 /**
  * A stable, fully-qualified key for a view (includes the area context). Unlike

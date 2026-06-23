@@ -1,11 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { Provider, createStore } from 'jotai';
-import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { withNuqsTestingAdapter, type OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { HaStatus } from '@/hooks/use-ha-status';
-
-import { panelLayoutAtom } from '@/lib/ha-graph/atoms';
 
 const newThread = vi.fn();
 
@@ -35,19 +32,25 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { AppSidebar } from './app-sidebar';
 
-function renderSidebar(store = createStore()) {
-  return render(
-    <Provider store={store}>
-      <NuqsTestingAdapter>
-        <SidebarProvider>
-          <AppSidebar />
-        </SidebarProvider>
-      </NuqsTestingAdapter>
-    </Provider>,
+function renderSidebar(searchParams = '') {
+  const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+  render(
+    <SidebarProvider>
+      <AppSidebar />
+    </SidebarProvider>,
+    { wrapper: withNuqsTestingAdapter({ searchParams, onUrlUpdate }) },
   );
+  return { onUrlUpdate };
 }
 
-beforeEach(() => newThread.mockReset());
+beforeEach(() => {
+  newThread.mockReset();
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('AppSidebar', () => {
   it('renders the core navigation and footer controls', () => {
@@ -65,13 +68,15 @@ describe('AppSidebar', () => {
     expect(newThread).toHaveBeenCalledTimes(1);
   });
 
-  it('opens the topology straight into full screen', () => {
-    const store = createStore();
-    store.set(panelLayoutAtom, 'chat-full');
-    renderSidebar(store);
+  it('opens the topology straight into full screen when layout is chat', async () => {
+    const { onUrlUpdate } = renderSidebar('?layout=chat');
 
-    fireEvent.click(screen.getByRole('button', { name: /topology/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /topology/i }));
+      await vi.runAllTimersAsync();
+    });
 
-    expect(store.get(panelLayoutAtom)).toBe('topology-full');
+    expect(onUrlUpdate).toHaveBeenCalled();
+    expect(onUrlUpdate.mock.calls.at(-1)![0].queryString).toContain('layout=topology');
   });
 });
