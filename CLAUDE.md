@@ -218,8 +218,14 @@ All in `.gitignore`.
 
 `.mcp.json` wires HA MCP server. Claude reads live entity state during edits — verify entity IDs exist before referencing in new YAML. Token should be read-only; promote only for intentional service-call use.
 
+## Branches & Commits
+
+- **Branch names**: `<type>/<kebab-slug>`, where `<type>` is the Conventional Commit type the work lands as — `feat/`, `fix/`, `chore/`, `docs/`. Examples: `feat/terminus-rag-frontend-modernization`, `fix/ui-tweaks`. The worktree directory name must match the branch name exactly.
+- **Commits**: Conventional Commits — `type(scope): summary`. Types: `feat`, `fix`, `chore`, `docs`. Scope = area or add-on (`feat(terminus-rag):`, `chore(terminus):`, `docs(claude-md):`, `feat(master_bedroom):`). One feature per commit; keep them small.
+- **Merge to `main`**: always squash — one commit per feature, linear history.
+- Worktree/bare-repo mechanics (where dirs live, how to create them) are local to this clone — see the repo-root `CLAUDE.md`, not this file.
+
 ## Working Style
 
-- Small per-feature commits. Conventional Commits (`feat:`, `fix:`, `chore:`).
 - Don't rewrite `automations.yaml` wholesale — diff churn hides intent. Use `packages/`.
 - After deploy, check `Settings → System → Logs` even on passing `check_config` — some integrations only fail at runtime.
