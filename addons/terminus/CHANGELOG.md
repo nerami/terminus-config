@@ -4,6 +4,21 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.22.0
+
+- **The topology toolbar's group-by dropdowns are now searchable.** Pick the
+  grouping dimension and drill into an area / scene / automation by typing to
+  filter, instead of scrolling a plain list.
+- **New per-node filters: search, status, and domain.** Narrow the nodes in the
+  current view by name, by availability (OK / Unavailable / Unknown), or by
+  entity domain (light, switch, …). Matching nodes stay highlighted while the
+  rest dim and their edges fade. Filters reset when you navigate.
+- **Every toolbar control now has a clear (×) button** — clear the search text,
+  reset the status to All, drop the selected domains, or step a navigation level
+  back up.
+- The toolbar was restyled for a cleaner, consistent look: uniform control
+  heights, lighter chrome, and correct dark-mode rendering.
+
 ## 0.21.0
 
 - **Unavailable and unknown entities are now flagged in the topology diagram.**
