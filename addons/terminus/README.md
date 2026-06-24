@@ -42,8 +42,8 @@ command, then open the Vite URL:
 
 ```bash
 cp .env.example .env      # add ANTHROPIC_API_KEY (+ HASS_URL/HASS_TOKEN)
-./dev.sh                  # LangGraph :2025 + uvicorn :8099 + Vite :5173, hot-reload
-# open http://localhost:5173   (Ctrl-C stops everything)
+./dev.sh                  # LangGraph :2025 + uvicorn :8099 + Vite :63740, hot-reload
+# open http://localhost:63740   (Ctrl-C stops everything)
 ```
 
 First run bootstraps the backend venv and `pnpm install`; later runs go straight

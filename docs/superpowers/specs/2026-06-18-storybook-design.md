@@ -21,11 +21,11 @@ Add to `devDependencies` in `addons/terminus/frontend/package.json`:
 
 Add scripts:
 ```json
-"storybook": "storybook dev -p 6007",
+"storybook": "storybook dev -p 63741",
 "build-storybook": "storybook build"
 ```
 
-Port 6007 (terminus-ui is 6285, dev server is 5173 — no conflict).
+Port 63741 (terminus-ui is 63748, dev server is 63740 — no conflict).
 
 ## File Layout
 

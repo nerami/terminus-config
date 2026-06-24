@@ -39,9 +39,9 @@ def build_tracer(settings: Settings):
     Langfuse(
         public_key=settings.langfuse_public_key,
         secret_key=settings.langfuse_secret_key,
-        host=settings.langfuse_host,
+        base_url=settings.langfuse_base_url,
     )
-    logger.info("Langfuse tracing enabled → %s", settings.langfuse_host)
+    logger.info("Langfuse tracing enabled → %s", settings.langfuse_base_url)
     return CallbackHandler()
 
 
@@ -59,14 +59,14 @@ def should_trace(settings: Settings) -> bool:
     if not (
         settings.langfuse_public_key
         and settings.langfuse_secret_key
-        and settings.langfuse_host
+        and settings.langfuse_base_url
     ):
         logger.warning(
-            "langfuse_tracing is on but credentials/host are incomplete; "
+            "langfuse_tracing is on but credentials/base_url are incomplete; "
             "tracing disabled"
         )
         return False
-    host = urlparse(settings.langfuse_host).hostname or ""
+    host = urlparse(settings.langfuse_base_url).hostname or ""
     try:
         is_private = ip_address(host).is_private
     except ValueError:
@@ -74,8 +74,8 @@ def should_trace(settings: Settings) -> bool:
         is_private = False
     if not is_private:
         logger.warning(
-            "langfuse_host %r is not a private-LAN address; tracing disabled",
-            settings.langfuse_host,
+            "langfuse_base_url %r is not a private-LAN address; tracing disabled",
+            settings.langfuse_base_url,
         )
         return False
     return True

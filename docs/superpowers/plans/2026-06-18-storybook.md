@@ -15,7 +15,7 @@
 - Stories location: `stories/` alongside `src/`, never inside it
 - No play functions, no controls, no interactions — static fixture data only
 - Light / dark / system theme support via `@storybook/addon-themes` (class-based: `dark` class on `<html>`)
-- Dev port: 6007 (avoids conflict with Vite dev at 5173 and terminus-ui at 6285)
+- Dev port: 63741 (avoids conflict with Vite dev at 63740 and terminus-ui at 63748)
 - Package manager: pnpm
 
 ---
@@ -41,7 +41,7 @@
 - Create: `addons/terminus/frontend/.storybook/preview.tsx`
 
 **Interfaces:**
-- Produces: a running Storybook at `http://localhost:6007` (no stories yet)
+- Produces: a running Storybook at `http://localhost:63741` (no stories yet)
 
 - [ ] **Step 1: Install Storybook packages**
 
@@ -58,7 +58,7 @@ Expected: packages resolve and `pnpm-lock.yaml` updates. No peer-dep errors.
 Open `package.json` and add to `"scripts"`:
 
 ```json
-"storybook": "storybook dev -p 6007",
+"storybook": "storybook dev -p 63741",
 "build-storybook": "storybook build"
 ```
 
@@ -195,7 +195,7 @@ export default preview;
 pnpm storybook
 ```
 
-Expected: browser opens at `http://localhost:6007`, Storybook UI loads (no stories yet, shows empty state or welcome screen). No build errors in the terminal.
+Expected: browser opens at `http://localhost:63741`, Storybook UI loads (no stories yet, shows empty state or welcome screen). No build errors in the terminal.
 
 - [ ] **Step 6: Commit**
 

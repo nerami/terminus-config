@@ -38,7 +38,7 @@ docker compose ps          # wait for all services healthy
 ```
 
 First boot runs DB migrations; give it a minute. The UI is at
-<http://localhost:3000> — create an account + project, then copy the project's
+<http://localhost:63742> — create an account + project, then copy the project's
 **public** (`pk-lf-…`) and **secret** (`sk-lf-…`) keys.
 
 ## 3. Confirm the add-on can reach it (the decisive test)
@@ -47,7 +47,7 @@ From the Green's SSH add-on shell (same Docker-bridge limitation as Terminus,
 so it's a valid proxy):
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}\n' http://192.168.100.176:3000
+curl -sS -o /dev/null -w '%{http_code}\n' http://192.168.100.176:63742
 # 200/3xx → reachable. hang/timeout → not on the same LAN; tracing won't work.
 ```
 
@@ -60,12 +60,16 @@ graph is built and cached for the process lifetime, so a restart is required
 
 ```yaml
 langfuse_tracing: true
-langfuse_host: http://192.168.100.176:3000   # MUST be a private-LAN address
+langfuse_base_url: http://192.168.100.176:63742   # MUST be a private-LAN address
 langfuse_public_key: pk-lf-...
 langfuse_secret_key: sk-lf-...
 ```
 
-`langfuse_host` must resolve to a private-LAN / loopback IP — the add-on's
+> The option was renamed `langfuse_host` → `langfuse_base_url` (matches the
+> Langfuse v4 SDK). The old `langfuse_host` key is still accepted as a
+> deprecated alias, so existing configs keep working — but prefer the new name.
+
+`langfuse_base_url` must resolve to a private-LAN / loopback IP — the add-on's
 `should_trace` gate is fail-closed and **refuses public hosts** (a non-RFC1918
 IP or any hostname) so prompts + HA state never leave the network. That refusal
 is the whole point of self-hosting instead of using Langfuse Cloud.
@@ -76,18 +80,18 @@ After the restart, check the add-on log (`ha apps logs local_terminus`, or the
 add-on **Log** tab). When the gate passes you'll see:
 
 ```
-Langfuse tracing enabled → http://192.168.100.176:3000
+Langfuse tracing enabled → http://192.168.100.176:63742
 ```
 
 Then send a message in the Terminus chat (e.g. "what version of Home Assistant
-is this?") and open <http://localhost:3000> → **Tracing → Traces**. A new trace
+is this?") and open <http://localhost:63742> → **Tracing → Traces**. A new trace
 with the LLM call and any tool calls should appear within a few seconds.
 
 If nothing appears, the gate likely refused the config — the log says why
 (see [Troubleshooting](#troubleshooting)). The fail-closed behavior is
 deliberate and worth confirming:
 
-- **Public host** (`langfuse_host: https://cloud.langfuse.com`) → log warns
+- **Public host** (`langfuse_base_url: https://cloud.langfuse.com`) → log warns
   `… is not a private-LAN address; tracing disabled`, and **no traces leave**.
 - **Incomplete config** (e.g. blank secret key) → log warns
   `credentials/host are incomplete; tracing disabled`.
@@ -128,6 +132,6 @@ new dependency layer installs.
   never blocked or slowed.
 - **Turn it on to debug, off otherwise** (flip `langfuse_tracing`). No reason
   to leave six containers running on the laptop full time.
-- **Never expose `:3000` to the public internet** (no Tailscale Funnel) — it
+- **Never expose `:63742` to the public internet** (no Tailscale Funnel) — it
   holds your prompts and HA state. LAN/tailnet-only.
 - Image tags are pinned to the v3 major / datastore majors; bump deliberately.

@@ -5,7 +5,7 @@
 #   cp .env.example .env   # fill in ANTHROPIC_API_KEY (+ HASS_URL/HASS_TOKEN)
 #   ./dev.sh
 #
-# Open the Vite URL (http://localhost:5173). Ctrl-C stops everything.
+# Open the Vite URL (http://localhost:63740). Ctrl-C stops everything.
 set -euo pipefail
 
 ADDON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,7 +76,7 @@ log "FastAPI (uvicorn --reload) → http://127.0.0.1:8099"
     --host 127.0.0.1 --port 8099 --reload ) &
 pids+=($!)
 
-log "Vite (HMR) → http://localhost:5173   <-- open this"
+log "Vite (HMR) → http://localhost:63740   <-- open this"
 ( cd "$FRONTEND" && exec pnpm dev ) &
 pids+=($!)
 

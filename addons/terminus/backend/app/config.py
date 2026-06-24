@@ -42,7 +42,7 @@ class Settings:
     langfuse_tracing: bool = False
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
-    langfuse_host: str = ""
+    langfuse_base_url: str = ""
 
 
 def _as_bool(value: object) -> bool:
@@ -169,8 +169,14 @@ def load_settings(
     langfuse_secret_key = str(
         options.get("langfuse_secret_key") or env.get("LANGFUSE_SECRET_KEY", "")
     )
-    langfuse_host = str(
-        options.get("langfuse_host") or env.get("LANGFUSE_HOST", "")
+    # `langfuse_base_url` is canonical (matches the Langfuse v4 SDK); the
+    # `langfuse_host` option / LANGFUSE_HOST env are deprecated aliases kept so
+    # existing on-device config keeps working.
+    langfuse_base_url = str(
+        options.get("langfuse_base_url")
+        or options.get("langfuse_host")
+        or env.get("LANGFUSE_BASE_URL")
+        or env.get("LANGFUSE_HOST", "")
     )
 
     supervisor_token = env.get("SUPERVISOR_TOKEN")
@@ -188,7 +194,7 @@ def load_settings(
             langfuse_tracing=langfuse_tracing,
             langfuse_public_key=langfuse_public_key,
             langfuse_secret_key=langfuse_secret_key,
-            langfuse_host=langfuse_host,
+            langfuse_base_url=langfuse_base_url,
         )
 
     raw_url = str(
@@ -213,7 +219,7 @@ def load_settings(
         langfuse_tracing=langfuse_tracing,
         langfuse_public_key=langfuse_public_key,
         langfuse_secret_key=langfuse_secret_key,
-        langfuse_host=langfuse_host,
+        langfuse_base_url=langfuse_base_url,
     )
 
 

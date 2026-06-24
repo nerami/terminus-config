@@ -38,11 +38,11 @@ describe('resolveEndpoints', () => {
 
   it('works at the dev server root', () => {
     const ep = resolveEndpoints({
-      origin: 'http://localhost:5173',
+      origin: 'http://localhost:63740',
       pathname: '/',
     });
-    expect(ep.apiUrl).toBe('http://localhost:5173/api');
-    expect(ep.haStatusUrl).toBe('http://localhost:5173/ha/status');
+    expect(ep.apiUrl).toBe('http://localhost:63740/api');
+    expect(ep.haStatusUrl).toBe('http://localhost:63740/ha/status');
   });
 
   it('strips a trailing file segment when present', () => {

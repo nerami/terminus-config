@@ -53,10 +53,10 @@ services:
     # Exposed on ALL interfaces so the HA Green add-on can reach it by LAN IP.
     # This is the only service that leaves the laptop.
     ports:
-      - "3000:3000"
+      - "63742:3000"
     environment:
       <<: *langfuse-env
-      NEXTAUTH_URL: http://localhost:3000     # browser auth redirects (laptop)
+      NEXTAUTH_URL: http://localhost:63742    # browser auth redirects (laptop)
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
 
   langfuse-worker:

@@ -26,7 +26,7 @@ def _settings(**overrides) -> Settings:
         langfuse_tracing=True,
         langfuse_public_key="pk-lf-abc",
         langfuse_secret_key="sk-lf-abc",
-        langfuse_host="http://192.168.100.176:3000",
+        langfuse_base_url="http://192.168.100.176:3000",
     )
     base.update(overrides)
     return Settings(**base)
@@ -42,7 +42,7 @@ def test_should_trace_false_when_switch_off():
     [
         {"langfuse_public_key": ""},
         {"langfuse_secret_key": ""},
-        {"langfuse_host": ""},
+        {"langfuse_base_url": ""},
     ],
 )
 def test_should_trace_false_and_warns_when_config_incomplete(missing, caplog):
@@ -62,7 +62,7 @@ def test_should_trace_false_and_warns_when_config_incomplete(missing, caplog):
     ],
 )
 def test_should_trace_true_for_private_lan_host(host):
-    assert should_trace(_settings(langfuse_host=host)) is True
+    assert should_trace(_settings(langfuse_base_url=host)) is True
 
 
 @pytest.mark.parametrize(
@@ -76,7 +76,7 @@ def test_should_trace_true_for_private_lan_host(host):
 def test_should_trace_false_and_warns_for_public_host(host, caplog):
     # Refusing a public host is the whole reason we picked self-hosted Langfuse.
     with caplog.at_level(logging.WARNING, logger="app.tracing"):
-        assert should_trace(_settings(langfuse_host=host)) is False
+        assert should_trace(_settings(langfuse_base_url=host)) is False
     assert any(r.levelno >= logging.WARNING for r in caplog.records)
 
 

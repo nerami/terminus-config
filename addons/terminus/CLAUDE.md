@@ -42,6 +42,30 @@ slug is therefore `local_terminus`.
   (`cd frontend && pnpm dev`) and only Rebuild the add-on to verify the integrated/ingress
   build. Backend-only Python changes still need a Rebuild (or run the backend locally).
 
+## Ports
+
+**Laptop dev (localhost):**
+
+| Port | Service | Notes |
+|---|---|---|
+| `63740` | Vite dev server (frontend SPA, HMR) | `cd frontend && pnpm dev`; proxies `/ha` + `/api` → `:8099` (`vite.config.ts`) |
+| `63741` | Storybook | `pnpm storybook` |
+| `63742` | Langfuse UI | `observability/langfuse` docker-compose; laptop host port → container `:3000` |
+| `63748` | **terminus-ui registry** (external `../../terminus-ui` repo) | its Vite dev server serves `/r/*.json`; `components.json` `@terminus` points here. Only reachable while that repo's `pnpm dev` runs |
+| `63749` | terminus-ui Storybook | external repo |
+
+**In-container / runtime (built image):**
+
+| Port | Service | Notes |
+|---|---|---|
+| `8099` | FastAPI / uvicorn — public face | HA `ingress_port` (`config.yaml`); also the Vite proxy target in dev |
+| `2025` | LangGraph dev server | bound to `127.0.0.1` only; FastAPI proxies `/api/*` to it |
+| `9000` | terminus-rag MCP (sibling add-on) | `http://local-terminus-rag:9000/mcp` |
+
+When changing a laptop dev port, update both repos: ours (`vite.config.ts`, `package.json`,
+`dev.sh`, `README.md`, `runtime-config.test.ts`, langfuse `docker-compose.yml`/`README.md`)
+and — for the registry port — `components.json` must match terminus-ui's `vite.config.ts`.
+
 ## Package manager
 
 - The frontend uses **pnpm** (`pnpm-lock.yaml` is the source of truth; the Docker build runs

@@ -2,7 +2,7 @@ name: Terminus
 # Canonical add-on version — the ONLY version bumped on release. The frontend
 # (package.json) and backend (pyproject.toml) versions are intentionally static
 # ("0.0.0") to preserve Docker dependency-layer caching.
-version: "0.23.1"
+version: "0.24.0"
 slug: terminus
 description: Agent chat UI backed by a local LangChain/LangGraph agent (Anthropic).
 arch:
@@ -26,7 +26,7 @@ options:
   langfuse_tracing: false
   langfuse_public_key: ""
   langfuse_secret_key: ""
-  langfuse_host: ""
+  langfuse_base_url: ""
 schema:
   anthropic_api_key: password
   model: str
@@ -40,6 +40,7 @@ schema:
   langfuse_tracing: bool?
   langfuse_public_key: str?
   langfuse_secret_key: password?
-  langfuse_host: str?
+  langfuse_base_url: str?
+  langfuse_host: str?  # deprecated alias for langfuse_base_url; kept so existing config validates
 boot: auto
 startup: application

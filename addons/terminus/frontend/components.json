@@ -19,6 +19,6 @@
   },
   "iconLibrary": "lucide",
   "registries": {
-    "@terminus": "http://localhost:6284/r/{name}.json"
+    "@terminus": "http://localhost:63748/r/{name}.json"
   }
 }

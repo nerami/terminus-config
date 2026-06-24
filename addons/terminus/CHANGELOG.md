@@ -4,6 +4,17 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.24.0
+
+- **The Langfuse tracing option was renamed `langfuse_host` → `langfuse_base_url`**
+  to match the Langfuse v4 SDK. The old `langfuse_host` name still works as a
+  deprecated alias (so existing setups keep tracing without any change), but
+  prefer the new name. The `LANGFUSE_HOST` dev env var was likewise renamed to
+  `LANGFUSE_BASE_URL`, with the old name kept as a fallback.
+- Internal: local-dev ports moved into the 6374x range (Vite 63740, Storybook
+  63741, self-hosted Langfuse 63742) and the `@terminus` UI registry now points
+  at terminus-ui's actual dev-server port (63748). No runtime change.
+
 ## 0.23.1
 
 - **The topology panel's close (×) button is now hidden when the chat is

@@ -22,7 +22,7 @@ export default defineConfig({
     dedupe: ['three', '@react-three/fiber', '@react-three/drei'],
   },
   server: {
-    port: 5173,
+    port: 63740,
     proxy: {
       // Dev: forward backend routes to the FastAPI process.
       '/ha': { target: 'http://localhost:8099', changeOrigin: true },
