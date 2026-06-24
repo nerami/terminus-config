@@ -4,6 +4,19 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.23.0
+
+- **A "What's new" dialog now surfaces the changelog in-app.** After the add-on
+  updates, a dialog announces what changed in the new version. You can re-open it
+  any time from the **What's new** button in the sidebar.
+- **The sidebar shows the running add-on version.** A small version badge sits
+  next to the Terminus logo in the sidebar header.
+- **The sidebar footer was redesigned.** Settings is now a labelled button whose
+  menu opens with a Home Assistant connection block — the live connection status
+  and the Home Assistant Core version — above the existing preferences.
+- The sidebar, recent-sessions, and chat option menus were rebuilt on a single
+  shared dropdown component for consistent styling and behaviour.
+
 ## 0.22.0
 
 - **The topology toolbar's group-by dropdowns are now searchable.** Pick the
