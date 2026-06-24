@@ -1,18 +1,28 @@
 import { useAtom } from 'jotai';
-import { Check, Minus, Plus, Settings } from 'lucide-react';
+import { Minus, Plus, Settings } from 'lucide-react';
 
+import { HaStatusIndicator } from '@/components/thread/ha-status-indicator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
-import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { useViewTools } from '@/hooks/use-view-tools';
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, clampFontSize, fontSizeAtom, topology3dAtom } from '@/lib/settings';
-import { cn } from '@/lib/utils';
 
 /**
- * The sidebar Settings dropdown. Exposes a toggle for showing tool-call messages
- * and a stepper for the base font size. Both persist to localStorage.
+ * The sidebar footer's Settings menu: a full-width {@link SidebarMenuButton}
+ * that opens a dropdown of preferences (tool-call visibility, base font size,
+ * 3D topology). The Home Assistant status dot rides on the trailing edge of the
+ * trigger. All preferences persist to localStorage.
  */
 export function SettingsMenu() {
   const [viewTools, setViewTools] = useViewTools();
@@ -21,64 +31,79 @@ export function SettingsMenu() {
   const size = clampFontSize(fontSize);
 
   return (
-    <Menu>
-      <MenuTrigger
-        aria-label="Settings"
-        className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors"
-      >
-        <Settings className="size-4" />
-      </MenuTrigger>
-      <MenuContent align="start" className="w-60">
-        <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">Chatbot</div>
-        <MenuItem closeOnClick={false} className="justify-between gap-6" onClick={() => setViewTools(!viewTools)}>
-          Show tool calls
-          <Check className={cn('size-4 shrink-0', viewTools ? 'opacity-100' : 'opacity-0')} />
-        </MenuItem>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                aria-label="Settings"
+                className="data-[popup-open]:bg-sidebar-accent data-[popup-open]:text-sidebar-accent-foreground"
+              >
+                <Settings />
+                <span>Settings</span>
+                <span className="ml-auto flex items-center">
+                  <HaStatusIndicator />
+                </span>
+              </SidebarMenuButton>
+            }
+          />
+          <DropdownMenuContent side="right" align="end" sideOffset={4} className="w-60">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Chatbot</DropdownMenuLabel>
+              <DropdownMenuCheckboxItem checked={viewTools} closeOnClick={false} onCheckedChange={setViewTools}>
+                Show tool calls
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuGroup>
 
-        <Separator className="my-1" />
+            <DropdownMenuSeparator />
 
-        <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">Appearance</div>
-        <div className="flex items-center justify-between gap-6 px-2 py-1.5 text-sm">
-          <span>Font size</span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-xs"
-              aria-label="Decrease font size"
-              disabled={size <= MIN_FONT_SIZE}
-              onClick={(e) => {
-                e.stopPropagation();
-                setFontSize(clampFontSize(size - 1));
-              }}
-            >
-              <Minus />
-            </Button>
-            <span className="w-9 text-center tabular-nums">{size}px</span>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              aria-label="Increase font size"
-              disabled={size >= MAX_FONT_SIZE}
-              onClick={(e) => {
-                e.stopPropagation();
-                setFontSize(clampFontSize(size + 1));
-              }}
-            >
-              <Plus />
-            </Button>
-          </div>
-        </div>
-        <div
-          className="flex items-center justify-between gap-6 px-2 py-1.5 text-sm"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className="flex items-center gap-2">
-            3D topology
-            <Badge variant="secondary">Beta</Badge>
-          </span>
-          <Switch checked={topology3d} onCheckedChange={setTopology3d} aria-label="3D topology" />
-        </div>
-      </MenuContent>
-    </Menu>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+              <div className="flex items-center justify-between gap-6 px-1.5 py-1 text-sm">
+                <span>Font size</span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon-xs"
+                    aria-label="Decrease font size"
+                    disabled={size <= MIN_FONT_SIZE}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFontSize(clampFontSize(size - 1));
+                    }}
+                  >
+                    <Minus />
+                  </Button>
+                  <span className="w-9 text-center tabular-nums">{size}px</span>
+                  <Button
+                    variant="outline"
+                    size="icon-xs"
+                    aria-label="Increase font size"
+                    disabled={size >= MAX_FONT_SIZE}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFontSize(clampFontSize(size + 1));
+                    }}
+                  >
+                    <Plus />
+                  </Button>
+                </div>
+              </div>
+              <div
+                className="flex items-center justify-between gap-6 px-1.5 py-1 text-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="flex items-center gap-2">
+                  3D topology
+                  <Badge variant="secondary">Beta</Badge>
+                </span>
+                <Switch checked={topology3d} onCheckedChange={setTopology3d} aria-label="3D topology" />
+              </div>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

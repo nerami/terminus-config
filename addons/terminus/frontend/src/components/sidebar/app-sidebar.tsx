@@ -5,7 +5,6 @@ import { SidebarSessionList } from './sidebar-session-list';
 
 import TerminusLogo from '@/components/brand/terminus-logo/terminus-logo.svg?react';
 import { useArtifactOpen } from '@/components/thread/artifact';
-import { HaStatusIndicator } from '@/components/thread/ha-status-indicator';
 import {
   Sidebar,
   SidebarContent,
@@ -99,10 +98,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="flex items-center justify-between px-2 py-1">
-          <SettingsMenu />
-          <HaStatusIndicator />
-        </div>
+        <SettingsMenu />
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,6 +1,22 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider, createStore } from 'jotai';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { HaStatus } from '@/hooks/use-ha-status';
+
+// The Settings trigger now hosts the HA status dot, so SettingsMenu pulls in
+// useHaStatus (react-query). Mock it to keep the test free of a QueryClient.
+vi.mock('@/hooks/use-ha-status', () => ({
+  useHaStatus: (): HaStatus => ({
+    status: 'connected',
+    ha_version: '2026.6.0',
+    terminus_version: '0.22.0',
+    last_connected: null,
+    error: null,
+  }),
+}));
+
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { SettingsMenu } from './settings-menu';
 
@@ -15,8 +31,10 @@ function Probe() {
 function renderMenu(store = createStore()) {
   return render(
     <Provider store={store}>
-      <SettingsMenu />
-      <Probe />
+      <SidebarProvider>
+        <SettingsMenu />
+        <Probe />
+      </SidebarProvider>
     </Provider>,
   );
 }
@@ -39,7 +57,7 @@ describe('SettingsMenu', () => {
     expect(screen.getByTestId('probe')).toHaveTextContent('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /show tool calls/i }));
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /show tool calls/i }));
 
     expect(screen.getByTestId('probe')).toHaveTextContent('false');
   });
