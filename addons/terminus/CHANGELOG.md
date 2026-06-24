@@ -4,6 +4,15 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.23.1
+
+- **The topology panel's close (×) button is now hidden when the chat is
+  closed.** In full screen (and on mobile) it had no useful destination — use
+  the "Open chat" button to leave the panel instead.
+- Internal: Storybook stories are now co-located with their components and cover
+  the full component set (chat, topology, sidebar, agent inbox, dialogs), on a
+  shared set of fixtures and provider decorators. No runtime change.
+
 ## 0.23.0
 
 - **A "What's new" dialog now surfaces the changelog in-app.** After the add-on
