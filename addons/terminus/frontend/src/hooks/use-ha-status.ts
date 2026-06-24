@@ -8,6 +8,8 @@ export type HaConnectionStatus = 'connecting' | 'connected' | 'disconnected' | '
 export type HaStatus = {
   status: HaConnectionStatus;
   ha_version: string | null;
+  /** The Terminus add-on's own version (config.yaml), or null outside the Supervisor build. */
+  terminus_version: string | null;
   last_connected: string | null;
   error: string | null;
   url?: string;
@@ -16,6 +18,7 @@ export type HaStatus = {
 const INITIAL: HaStatus = {
   status: 'connecting',
   ha_version: null,
+  terminus_version: null,
   last_connected: null,
   error: null,
 };

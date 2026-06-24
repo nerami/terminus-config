@@ -3,7 +3,7 @@ import { Network, SquarePen } from 'lucide-react';
 import { SettingsMenu } from './settings-menu';
 import { SidebarSessionList } from './sidebar-session-list';
 
-import { TerminusLogoSVG } from '@/components/brand/terminus-logo/terminus-logo';
+import TerminusLogo from '@/components/brand/terminus-logo/terminus-logo.svg?react';
 import { useArtifactOpen } from '@/components/thread/artifact';
 import { HaStatusIndicator } from '@/components/thread/ha-status-indicator';
 import {
@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useHaStatus } from '@/hooks/use-ha-status';
 import { useNewThread } from '@/hooks/use-new-thread';
 import { usePanelLayout } from '@/lib/ha-graph/use-panel-layout';
 
@@ -31,6 +32,7 @@ export function AppSidebar() {
   const { closeTopology, enterFullscreen, layout } = usePanelLayout();
   const [, closeArtifact] = useArtifactOpen();
   const { isMobile, setOpenMobile } = useSidebar();
+  const { terminus_version: terminusVersion } = useHaStatus();
 
   const closeOnMobile = () => {
     if (isMobile) setOpenMobile(false);
@@ -56,13 +58,20 @@ export function AppSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader className="h-14 justify-center">
-        <button
-          aria-label="New chat"
-          onClick={startNewSession}
-          className="flex w-fit cursor-pointer items-center px-2 py-1"
-        >
-          <TerminusLogoSVG className="text-primary h-6" />
-        </button>
+        <div className="flex w-fit items-baseline gap-1.5 px-2">
+          <button
+            aria-label="New chat"
+            onClick={startNewSession}
+            className="flex cursor-pointer items-center py-1"
+          >
+            <TerminusLogo className="text-primary h-6" />
+          </button>
+          {terminusVersion && (
+            <span className="text-muted-foreground font-mono text-[10px] leading-none">
+              v{terminusVersion}
+            </span>
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent>

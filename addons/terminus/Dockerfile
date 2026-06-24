@@ -33,5 +33,12 @@ COPY --from=frontend /build/dist /app/frontend/dist
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
+# The Supervisor passes the add-on's config.yaml version as the BUILD_VERSION
+# build-arg. Bake it into the runtime env so the backend can surface it (sidebar
+# version badge via /ha/status). Declared last so a release-only version bump
+# rebuilds just this tiny trailing layer, not the cached dep/source layers above.
+ARG BUILD_VERSION
+ENV TERMINUS_VERSION=${BUILD_VERSION}
+
 EXPOSE 8099
 CMD ["/run.sh"]

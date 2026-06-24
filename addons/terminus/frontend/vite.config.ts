@@ -4,13 +4,14 @@ import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import svgr from 'vite-plugin-svgr';
 
 // Built as a plain SPA served by the add-on's FastAPI process behind HA ingress.
 // `base: "./"` keeps asset URLs relative so they resolve under the dynamic
 // /api/hassio_ingress/<token>/ prefix.
 export default defineConfig({
   base: './',
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), svgr()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

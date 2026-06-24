@@ -48,11 +48,12 @@ def test_ha_status_returns_client_status():
         "url": "ws://supervisor/core/websocket",
     }
     stub = StubHA(status)
-    app = create_app(settings=_settings("ws://x"), client=stub)
+    app = create_app(settings=_settings("ws://x"), client=stub, terminus_version=None)
     with TestClient(app) as tc:
         resp = tc.get("/ha/status")
         assert resp.status_code == 200
-        assert resp.json() == status
+        # The add-on version is merged into the payload alongside the live status.
+        assert resp.json() == {**status, "terminus_version": None}
     assert stub.started is True
     assert stub.stopped is True
 
@@ -65,6 +66,21 @@ def test_ha_status_not_configured_when_no_client():
         body = resp.json()
         assert body["status"] == "disconnected"
         assert "not configured" in body["error"]
+
+
+def test_ha_status_includes_terminus_version_when_connected():
+    stub = StubHA({"status": "connected", "ha_version": "2026.5.4"})
+    app = create_app(settings=_settings("ws://x"), client=stub, terminus_version="0.22.0")
+    with TestClient(app) as tc:
+        assert tc.get("/ha/status").json()["terminus_version"] == "0.22.0"
+
+
+def test_ha_status_includes_terminus_version_when_not_configured():
+    app = create_app(settings=_settings(""), client=None, terminus_version="0.22.0")
+    with TestClient(app) as tc:
+        body = tc.get("/ha/status").json()
+        assert body["status"] == "disconnected"
+        assert body["terminus_version"] == "0.22.0"
 
 
 class _FakeWS:
@@ -197,7 +213,7 @@ def test_spa_does_not_shadow_ha_status(tmp_path):
     with TestClient(app) as tc:
         resp = tc.get("/ha/status")
         assert resp.status_code == 200
-        assert resp.json() == status
+        assert resp.json() == {**status, "terminus_version": None}
 
 
 def test_spa_does_not_shadow_api_proxy(tmp_path):

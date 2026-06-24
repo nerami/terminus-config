@@ -35,6 +35,13 @@ logger = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 LANGGRAPH_URL = os.environ.get("LANGGRAPH_URL", "http://127.0.0.1:2025")
 
+# The add-on's own version, surfaced to the frontend (sidebar badge) via
+# ``/ha/status``. Baked into the image as an ENV from the Supervisor's
+# ``BUILD_VERSION`` build-arg (which equals config.yaml's ``version``); ``None``
+# outside the Supervisor build (e.g. ``vite dev`` / bare backend), where the
+# frontend simply hides the badge. config.yaml stays the single source of truth.
+TERMINUS_VERSION = os.environ.get("TERMINUS_VERSION") or None
+
 # Bounded proxy timeouts (H2). A wedged upstream must not pin a connection
 # forever. ``read`` is the per-chunk inactivity bound: generous enough for a
 # slow LLM token stream, finite so an SSE stream that goes silent eventually
@@ -149,6 +156,7 @@ def create_app(
     registry_connect: Optional[ha_registry.ConnectFn] = None,
     ha_rest_transport: Optional[httpx.BaseTransport] = None,
     title_chain=None,
+    terminus_version: Optional[str] = TERMINUS_VERSION,
 ) -> FastAPI:
     configure_logging()
     settings = settings or load_settings()
@@ -186,9 +194,10 @@ def create_app(
     @app.get("/ha/status")
     async def ha_status():
         ha = getattr(app.state, "ha", None)
-        if ha is None:
-            return JSONResponse(_NOT_CONFIGURED)
-        return JSONResponse(ha.get_status())
+        status = _NOT_CONFIGURED if ha is None else ha.get_status()
+        # Merge the add-on version in (non-destructively) so the sidebar badge
+        # can read it from the same poll the status dot already uses.
+        return JSONResponse({**status, "terminus_version": terminus_version})
 
     @app.get("/ha/topology")
     async def ha_topology():

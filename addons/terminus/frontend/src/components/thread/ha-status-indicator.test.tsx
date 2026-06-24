@@ -14,6 +14,7 @@ function status(overrides: Partial<HaStatus>): HaStatus {
   return {
     status: 'connecting',
     ha_version: null,
+    terminus_version: null,
     last_connected: null,
     error: null,
     ...overrides,

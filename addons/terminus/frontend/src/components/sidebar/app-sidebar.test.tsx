@@ -19,10 +19,14 @@ vi.mock('@/providers/thread', () => ({
   }),
 }));
 vi.mock('@/components/thread/artifact', () => ({ useArtifactOpen: () => [false, vi.fn()] }));
+
+// Mutable holder so individual tests can vary the add-on version the sidebar sees.
+const haStatus = vi.hoisted(() => ({ terminusVersion: '0.22.0' as string | null }));
 vi.mock('@/hooks/use-ha-status', () => ({
   useHaStatus: (): HaStatus => ({
     status: 'connected',
     ha_version: '2026.6.0',
+    terminus_version: haStatus.terminusVersion,
     last_connected: null,
     error: null,
   }),
@@ -45,6 +49,7 @@ function renderSidebar(searchParams = '') {
 
 beforeEach(() => {
   newThread.mockReset();
+  haStatus.terminusVersion = '0.22.0';
   vi.useFakeTimers();
 });
 
@@ -60,6 +65,17 @@ describe('AppSidebar', () => {
     expect(screen.getByText(/recent sessions/i)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveAttribute('aria-label', expect.stringContaining('Home Assistant'));
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+  });
+
+  it('shows the Terminus add-on version badge', () => {
+    renderSidebar();
+    expect(screen.getByText('v0.22.0')).toBeInTheDocument();
+  });
+
+  it('hides the version badge when the add-on version is unknown', () => {
+    haStatus.terminusVersion = null;
+    renderSidebar();
+    expect(screen.queryByText(/^v/)).not.toBeInTheDocument();
   });
 
   it('starts a new session when New session is clicked', () => {
