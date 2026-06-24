@@ -18,6 +18,7 @@ OZW_Log.txt
 .cache/
 deps/
 tts/
+.ps4-games*.json
 
 # Backups / blueprints user data
 backups/
