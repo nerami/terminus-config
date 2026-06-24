@@ -81,6 +81,13 @@ const preview: Preview = {
     withJotaiAndNuqs,
   ],
   parameters: {
+    // Deliberate top-level sidebar order (the groups themselves come from
+    // titlePrefix in main.ts); anything unlisted sorts after, alphabetically.
+    options: {
+      storySort: {
+        order: ['Chat', 'Topology', 'Agent Inbox', 'Sidebar', 'Dialogs', 'Screens', 'Error Boundaries', '*'],
+      },
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,

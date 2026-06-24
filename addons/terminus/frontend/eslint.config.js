@@ -53,14 +53,23 @@ export default defineConfig([
     // Project conventions: kebab-case file/folder names and named (not default)
     // exports across our own source. Scoped to src/ and excludes the vendored
     // shadcn components under ui/ (kept byte-identical to upstream) and the
-    // vendored use-mobile hook. Storybook stories and root tooling configs keep
-    // their required default exports because they live outside src/.
+    // vendored use-mobile hook. Co-located Storybook stories are exempted from
+    // the default-export ban below (Storybook CSF requires `export default meta`).
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['src/components/ui/**', 'src/hooks/use-mobile.ts'],
     plugins: { unicorn },
     rules: {
       'unicorn/filename-case': ['error', { case: 'kebabCase' }],
       'import-x/no-default-export': 'error',
+    },
+  },
+  {
+    // Co-located Storybook stories (src/**/*.stories.tsx). CSF mandates a default
+    // export (the meta object), so the project-wide default-export ban does not
+    // apply here. Stories are dev-only tooling and ship in no production bundle.
+    files: ['**/*.stories.{ts,tsx}'],
+    rules: {
+      'import-x/no-default-export': 'off',
     },
   },
   {

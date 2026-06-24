@@ -31,7 +31,7 @@ export const MIST = {
 };
 
 const brand = {
-  brandTitle: 'Terminus UI',
+  brandTitle: 'Terminus Addon',
   brandUrl: 'https://github.com/terminus/terminus-ui',
   fontBase: FONT_MONO,
   fontCode: FONT_MONO,

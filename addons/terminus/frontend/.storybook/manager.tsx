@@ -81,6 +81,17 @@ const shadcnComponents = [
   'Typography',
 ];
 
+// Story titles are kebab filenames (auto-titles preserve filename casing since
+// SB 6.5). Humanize group/component labels for display — "markdown-text" →
+// "Markdown Text" — without touching story leaf names ("Default", "Dark").
+const humanizeLabel = (name: string) =>
+  name
+    .replace(/[-_]+/g, ' ')
+    .trim()
+    .split(' ')
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(' ');
+
 // Re-apply the full manager config so the theme tracks the OS light/dark setting,
 // mirroring the preview's system-theme sync.
 const applyConfig = () => {
@@ -97,7 +108,9 @@ const applyConfig = () => {
           );
         }
 
-        return item.name;
+        // Leaf story/docs names are authored (keep verbatim); group/component
+        // nodes come from kebab filenames, so start-case them for the sidebar.
+        return item.type === 'story' || item.type === 'docs' ? item.name : humanizeLabel(item.name);
       },
     },
   });

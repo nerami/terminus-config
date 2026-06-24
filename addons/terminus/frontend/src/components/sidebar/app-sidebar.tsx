@@ -63,17 +63,11 @@ export function AppSidebar() {
     <Sidebar variant="inset">
       <SidebarHeader className="h-14 justify-center">
         <div className="flex w-fit items-baseline gap-1.5 px-2">
-          <button
-            aria-label="New chat"
-            onClick={startNewSession}
-            className="flex cursor-pointer items-center py-1"
-          >
+          <button aria-label="New chat" onClick={startNewSession} className="flex cursor-pointer items-center py-1">
             <TerminusLogo className="text-primary h-6" />
           </button>
           {terminusVersion && (
-            <span className="text-muted-foreground font-mono text-[10px] leading-none">
-              v{terminusVersion}
-            </span>
+            <span className="text-muted-foreground font-mono text-[10px] leading-none">v{terminusVersion}</span>
           )}
         </div>
       </SidebarHeader>

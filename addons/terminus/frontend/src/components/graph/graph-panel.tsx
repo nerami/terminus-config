@@ -62,9 +62,13 @@ export function GraphPanel() {
           <TooltipIconButton tooltip="Refresh" onClick={reload} disabled={loading}>
             <RefreshCw className={loading ? 'animate-spin' : undefined} />
           </TooltipIconButton>
-          <TooltipIconButton tooltip="Close topology" onClick={closeTopology}>
-            <XIcon />
-          </TooltipIconButton>
+          {/* With the chat hidden, "Close topology" would strand the user on an
+              empty layout — leave the panel via "Open chat" instead. */}
+          {!chatHidden && (
+            <TooltipIconButton tooltip="Close topology" onClick={closeTopology}>
+              <XIcon />
+            </TooltipIconButton>
+          )}
         </div>
       </div>
 

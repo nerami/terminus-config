@@ -1,8 +1,8 @@
-import { type ReactNode } from 'react';
+import { RegionErrorBoundary } from './error-fallback';
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { RegionErrorBoundary } from '@/components/error-fallback';
+import { Region } from '@/storybook/decorators';
 
 // A child that throws on render, to demonstrate the boundary actually catching a
 // crash (not just the presentational fallback — see ErrorFallback stories).
@@ -18,13 +18,7 @@ function HealthyContent() {
   );
 }
 
-// Frame each story in a bordered box standing in for the pane the boundary wraps.
-function Region({ children }: { children: ReactNode }) {
-  return <div className="bg-background h-[360px] w-[480px] overflow-hidden rounded-md">{children}</div>;
-}
-
 const meta = {
-  title: 'Error Boundaries/RegionErrorBoundary',
   component: RegionErrorBoundary,
   parameters: { layout: 'centered' },
   decorators: [

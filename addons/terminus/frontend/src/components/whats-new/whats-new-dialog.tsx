@@ -6,13 +6,7 @@ import { atomWithStorage } from 'jotai/utils';
 import { TerminusLogoSVG } from '@/components/brand/terminus-logo/terminus-logo';
 import { MarkdownText } from '@/components/thread/markdown-text';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useChangelog } from '@/hooks/use-changelog';
 import { useHaStatus } from '@/hooks/use-ha-status';
 
@@ -69,9 +63,7 @@ export function WhatsNewDialog() {
           <div className="flex flex-col items-center gap-1 pt-2 pb-1">
             <div className="flex items-baseline gap-1.5">
               <TerminusLogoSVG variant="phosphor" className="text-primary h-6" />
-              <span className="text-muted-foreground font-mono text-[10px] leading-none">
-                v{changelog.version}
-              </span>
+              <span className="text-muted-foreground font-mono text-[10px] leading-none">v{changelog.version}</span>
             </div>
             <span className="text-muted-foreground text-sm">What's new</span>
           </div>

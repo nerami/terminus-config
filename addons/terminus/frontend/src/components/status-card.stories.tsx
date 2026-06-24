@@ -1,14 +1,16 @@
 import { RefreshCw } from 'lucide-react';
 
+import { StatusCard } from './status-card';
+
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { StatusCard } from '@/components/status-card';
 import { Button } from '@/components/ui/button';
 
-const meta: Meta = {
-  title: 'Screens/LoadingScreen',
+// No `component:` — these stories compose StatusCard via `render` (its required
+// `children` would otherwise force `args` on every story). Auto-titled by path.
+const meta = {
   parameters: { layout: 'fullscreen' },
-};
+} satisfies Meta;
 
 export default meta;
 type Story = StoryObj;

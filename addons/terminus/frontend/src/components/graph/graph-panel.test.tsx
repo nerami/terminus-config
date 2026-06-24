@@ -68,4 +68,29 @@ describe('GraphPanel', () => {
 
     expect(screen.getByRole('button', { name: /open chat/i })).toBeInTheDocument();
   });
+
+  it('hides "Close topology" in full screen (chat closed) so the panel is left via "Open chat"', () => {
+    renderPanel('?layout=topology');
+
+    expect(screen.queryByRole('button', { name: /close topology/i })).not.toBeInTheDocument();
+  });
+
+  it('hides "Close topology" on mobile (no split, chat hidden)', () => {
+    mobile = true;
+    renderPanel('?layout=split');
+
+    expect(screen.queryByRole('button', { name: /close topology/i })).not.toBeInTheDocument();
+  });
+
+  it('shows "Close topology" in split view on desktop and returns to chat when clicked', async () => {
+    const { onUrlUpdate } = renderPanel('?layout=split');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /close topology/i }));
+      await vi.runAllTimersAsync();
+    });
+
+    expect(onUrlUpdate).toHaveBeenCalled();
+    expect(onUrlUpdate.mock.calls.at(-1)![0].queryString).toContain('layout=chat');
+  });
 });

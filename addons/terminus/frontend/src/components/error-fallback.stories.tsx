@@ -1,18 +1,10 @@
-import { type ReactNode } from 'react';
+import { ErrorFallback } from './error-fallback';
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { ErrorFallback } from '@/components/error-fallback';
-
-// The fallback fills its parent (h-full w-full), so frame every story in a
-// bordered box that stands in for the pane each scenario really wraps — the
-// topology canvas, the message list, the artifact view.
-function Region({ children }: { children: ReactNode }) {
-  return <div className="bg-background h-[360px] w-[480px] overflow-hidden rounded-md">{children}</div>;
-}
+import { Region } from '@/storybook/decorators';
 
 const meta = {
-  title: 'Error Boundaries/ErrorFallback',
   component: ErrorFallback,
   parameters: { layout: 'centered' },
   decorators: [
