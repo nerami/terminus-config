@@ -5,7 +5,7 @@ import { BotMessageSquare, LoaderCircle, RefreshCw, XIcon } from 'lucide-react';
 
 import { CanvasSpinner } from './canvas-overlays';
 import { EntityDetailModal } from './entity-detail-modal';
-import { GroupByControls } from './group-by-controls';
+import { TopologyFilters } from './topology-filters';
 
 import { RegionErrorBoundary } from '@/components/error-fallback';
 import { TooltipIconButton } from '@/components/thread/tooltip-icon-button';
@@ -103,7 +103,7 @@ export function GraphPanel() {
                 </Suspense>
               </RegionErrorBoundary>
             )}
-            <GroupByControls />
+            <TopologyFilters />
             <EntityDetailModal />
           </>
         )}

@@ -14,6 +14,8 @@ export interface NavOption {
  * switchers). `select` returns the view to navigate to for a chosen option.
  */
 export interface NavLevel {
+  /** Where the clear (×) button navigates, or `null` when this level has nothing to clear. */
+  clearTo: GraphView | null;
   id: string;
   options: NavOption[];
   select: (value: string) => GraphView;
@@ -51,6 +53,8 @@ export function navLevels(topology: Topology, view: GraphView): NavLevel[] {
       value: grouping,
       options: GROUPING_OPTIONS,
       select: (g) => rootViewFor(g as GraphGrouping),
+      // Clearing the grouping resets to the default (Area); nothing to clear when already there.
+      clearTo: grouping === 'area' ? null : rootViewFor('area'),
     },
   ];
 
@@ -61,6 +65,7 @@ export function navLevels(topology: Topology, view: GraphView): NavLevel[] {
       value: areaId,
       options: areaOptions(topology),
       select: (id) => ({ kind: 'area', areaId: id }),
+      clearTo: rootViewFor('area'),
     });
 
     if (view.kind === 'scene') {
@@ -70,6 +75,7 @@ export function navLevels(topology: Topology, view: GraphView): NavLevel[] {
         value: view.sceneId,
         options: scenesHere.map((s) => ({ value: s.entity_id, label: s.name })),
         select: (sceneId) => ({ kind: 'scene', areaId, sceneId, via: 'area' }),
+        clearTo: { kind: 'area', areaId },
       });
     } else if (view.kind === 'automation') {
       const autosHere = topology.automations.filter((a) => (a.area_id ?? UNASSIGNED_AREA_ID) === areaId);
@@ -83,6 +89,7 @@ export function navLevels(topology: Topology, view: GraphView): NavLevel[] {
           automationId,
           via: 'area',
         }),
+        clearTo: { kind: 'area', areaId },
       });
     }
   } else if (grouping === 'scenes' && view.kind === 'scene') {
@@ -94,6 +101,7 @@ export function navLevels(topology: Topology, view: GraphView): NavLevel[] {
         label: s.name,
       })),
       select: (sceneId) => ({ kind: 'scene', areaId: '', sceneId, via: 'scenes' }),
+      clearTo: rootViewFor('scenes'),
     });
   } else if (grouping === 'automations' && view.kind === 'automation') {
     levels.push({
@@ -109,6 +117,7 @@ export function navLevels(topology: Topology, view: GraphView): NavLevel[] {
         automationId,
         via: 'automations',
       }),
+      clearTo: rootViewFor('automations'),
     });
   }
 

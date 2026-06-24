@@ -5,7 +5,8 @@ import { withNuqsTestingAdapter, type OnUrlUpdateFunction } from 'nuqs/adapters/
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { selectedNodeAtom } from './atoms';
+import { nodeFilterAtom, selectedNodeAtom } from './atoms';
+import { EMPTY_FILTER } from './node-filter';
 import { useGraphView, viewFromParams, viewToParams } from './use-graph-view';
 
 beforeEach(() => vi.useFakeTimers());
@@ -103,5 +104,19 @@ describe('useGraphView', () => {
     });
     expect(onUrlUpdate.mock.calls.at(-1)![0].queryString).toContain('scene=s9');
     expect(store.get(selectedNodeAtom)).toBeNull();
+  });
+
+  it('navigating resets nodeFilterAtom to EMPTY_FILTER', async () => {
+    const store = createStore();
+    store.set(nodeFilterAtom, { search: 'x', status: 'ok', domains: ['light'] });
+    const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+    const { result } = renderHook(() => useGraphView(), {
+      wrapper: makeWrapper(store, '?area=a1', onUrlUpdate),
+    });
+    await act(async () => {
+      result.current[1]({ kind: 'scenes' });
+      await vi.runAllTimersAsync();
+    });
+    expect(store.get(nodeFilterAtom)).toEqual(EMPTY_FILTER);
   });
 });

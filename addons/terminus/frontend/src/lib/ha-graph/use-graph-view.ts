@@ -3,7 +3,8 @@ import { useCallback, useMemo } from 'react';
 import { useSetAtom } from 'jotai';
 import { parseAsString, useQueryStates } from 'nuqs';
 
-import { type GraphView, groupingOf, selectedNodeAtom } from './atoms';
+import { type GraphView, groupingOf, nodeFilterAtom, selectedNodeAtom } from './atoms';
+import { EMPTY_FILTER } from './node-filter';
 
 /**
  * Derive a `GraphView` from the topology query params. `group` selects the
@@ -62,6 +63,7 @@ export function useGraphView(): [GraphView, (view: GraphView) => void] {
     automation: parseAsString,
   });
   const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const setFilter = useSetAtom(nodeFilterAtom);
 
   const view = useMemo(
     () => viewFromParams(params.group, params.area, params.scene, params.automation),
@@ -72,8 +74,9 @@ export function useGraphView(): [GraphView, (view: GraphView) => void] {
     (next: GraphView) => {
       void setParams(viewToParams(next));
       setSelectedNode(null);
+      setFilter(EMPTY_FILTER);
     },
-    [setParams, setSelectedNode],
+    [setParams, setSelectedNode, setFilter],
   );
 
   return [view, setView];

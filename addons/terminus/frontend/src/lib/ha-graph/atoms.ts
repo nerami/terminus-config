@@ -1,6 +1,7 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
+import { EMPTY_FILTER, type NodeFilter } from './node-filter';
 import { UNASSIGNED_AREA_ID, type Topology } from './types';
 
 /** Whether the thread history sidebar is open. */
@@ -62,6 +63,12 @@ export function rootViewFor(grouping: GraphGrouping): GraphView {
 
 /** Currently selected node id (drives highlight/dim). Null = nothing selected. */
 export const selectedNodeAtom = atom<string | null>(null);
+
+/** Transient per-node filter (search/status/domain). Resets on navigation. */
+export const nodeFilterAtom = atom<NodeFilter>(EMPTY_FILTER);
+
+/** Domains present in the current view, published by the canvas for the domain multi-select. */
+export const availableDomainsAtom = atom<string[]>([]);
 
 /** Entity id whose detail modal is open, or null. */
 export const entityModalAtom = atom<string | null>(null);

@@ -77,6 +77,25 @@ describe('navLevels', () => {
     expect(navLevels(topology, levels[0].select('scenes'))).toHaveLength(1);
   });
 
+  it('grouping level has no clear target at the default Area root', () => {
+    const levels = navLevels(topology, { kind: 'areas' });
+    expect(levels[0].clearTo).toBeNull();
+  });
+
+  it('clears a sibling switcher back up one level', () => {
+    // grouping=area, deep in a scene → [grouping(no clear), area→areas, scene→area]
+    const levels = navLevels(topology, { kind: 'scene', areaId: 'bedroom', sceneId: 'scene.night', via: 'area' });
+    expect(levels[0].clearTo).toBeNull();
+    expect(levels[1].clearTo).toEqual({ kind: 'areas' });
+    expect(levels[2].clearTo).toEqual({ kind: 'area', areaId: 'bedroom' });
+  });
+
+  it('clears a non-default grouping back to the Area root', () => {
+    const levels = navLevels(topology, { kind: 'scene', areaId: '', sceneId: 'scene.movie', via: 'scenes' });
+    expect(levels[0].clearTo).toEqual({ kind: 'areas' }); // grouping=scenes → reset to Area
+    expect(levels[1].clearTo).toEqual({ kind: 'scenes' }); // scene switcher → scenes root
+  });
+
   it('offers all scenes when grouping by Scenes', () => {
     const levels = navLevels(topology, {
       kind: 'scene',
