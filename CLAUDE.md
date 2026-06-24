@@ -22,7 +22,7 @@ Source-of-truth for HA Green at home. Edit here → commit `git@github.com:neram
   - `HASS_SERVER=https://terminus.tanuki-mirzam.ts.net`
   - `HASS_TOKEN=<long-lived>` — mirrors `secrets.yaml: ha_long_lived_token`. New tokens → `https://terminus.tanuki-mirzam.ts.net/profile/security`.
 - `hass-cli` installed locally, auto-reads env. Prefer over raw curl. Common: `hass-cli state list|get`, `service call <domain>.<service>`, `template '{{ ... }}'`.
-- HA Core: **2026.5.4** (`ssh root@... 'cat /config/.HA_VERSION'`).
+- HA Core: **2026.x** — exact version: `ssh root@... 'cat /config/.HA_VERSION'`.
 - Deploy: `ha-deploy` on device (see [Deploy](#deploy)).
 - **Two CLIs — do not confuse**: `hass-cli` = local laptop, REST via `HASS_TOKEN`. `ha` = on-device, Supervisor token, for add-ons/backups/OS, SSH only.
 - **`ha` CLI — use current subcommands** (HA OS 2026.x): canonical is `ha apps` (plural). Aliases `app/addon/addons` still work but noisy. Subcommands: `install|start|stop|restart|rebuild|uninstall|update|info|logs <slug>`. No `list`/`reload` on `ha apps`.
@@ -74,13 +74,13 @@ Refresh: `hass-cli integration list`.
 
 Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addon`/`addons` are aliases.
 
-| Slug | Name | Version |
-|---|---|---|
-| a0d7b954_vscode | Studio Code Server | 6.0.1 |
-| a0d7b954_tailscale | Tailscale | 0.28.1 |
-| a0d7b954_ssh | Advanced SSH & Web Terminal | 24.0.1 |
-| local_terminus | Terminus | 0.13.0 |
-| local_terminus_rag | Terminus RAG | 0.1.0 |
+| Slug | Name |
+|---|---|
+| a0d7b954_vscode | Studio Code Server |
+| a0d7b954_tailscale | Tailscale |
+| a0d7b954_ssh | Advanced SSH & Web Terminal |
+| local_terminus | Terminus |
+| local_terminus_rag | Terminus RAG |
 
 ### Terminus Internals
 
