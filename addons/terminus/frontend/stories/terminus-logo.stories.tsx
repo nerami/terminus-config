@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { LETTER_GROUPS, WIDTH, CELL_H } from '@/components/icons/terminus/glyphs';
-import { TerminusLogoSVG } from '@/components/icons/terminus/terminus-logo';
-import { WaveVariant } from '@/components/icons/terminus/variants/wave';
+import { LETTER_GROUPS, WIDTH, CELL_H } from '@/components/brand/terminus-logo/glyphs';
+import { TerminusLogoSVG } from '@/components/brand/terminus-logo/terminus-logo';
+import { WaveVariant } from '@/components/brand/terminus-logo/variants/wave';
 
 const meta: Meta<typeof TerminusLogoSVG> = {
   title: 'Icons/TerminusLogo',

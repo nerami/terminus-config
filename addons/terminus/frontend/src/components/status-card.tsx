@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { TerminusLogoSVG, type TerminusVariant } from '@/components/icons/terminus/terminus-logo';
+import { TerminusLogoSVG, type TerminusVariant } from '@/components/brand/terminus-logo/terminus-logo';
 import { cn } from '@/lib/utils';
 
 // Centered card shell for full-screen status states (warming up, error).

@@ -3,7 +3,7 @@ import { Network, SquarePen } from 'lucide-react';
 import { SettingsMenu } from './settings-menu';
 import { SidebarSessionList } from './sidebar-session-list';
 
-import { TerminusLogoSVG } from '@/components/icons/terminus/terminus-logo';
+import { TerminusLogoSVG } from '@/components/brand/terminus-logo/terminus-logo';
 import { useArtifactOpen } from '@/components/thread/artifact';
 import { HaStatusIndicator } from '@/components/thread/ha-status-indicator';
 import {

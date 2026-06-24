@@ -15,7 +15,7 @@ import { useQueryState } from 'nuqs';
 import { GraphReadyGate } from './graph-ready-gate';
 import { useThreads } from './thread';
 
-import { TerminusLogoSVG } from '@/components/icons/terminus/terminus-logo';
+import { TerminusLogoSVG } from '@/components/brand/terminus-logo/terminus-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
