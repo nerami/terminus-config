@@ -36,7 +36,12 @@ import { useResizableSplit } from './use-resizable-split';
 import { chatTitleFromMessages, getContentString } from './utils';
 
 import { RegionErrorBoundary } from '@/components/error-fallback';
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ResizableGroup, ResizablePanel, ResizableSeparator } from '@/components/ui/resizable';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useFileUpload } from '@/hooks/use-file-upload';
@@ -329,21 +334,21 @@ export function Thread() {
                   </TooltipIconButton>
                 )}
                 {threadId && (
-                  <Menu>
-                    <MenuTrigger aria-label="Chat options" render={<Button variant="ghost" size="icon" />}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger aria-label="Chat options" render={<Button variant="ghost" size="icon" />}>
                       <MoreVertical />
-                    </MenuTrigger>
-                    <MenuContent>
-                      <MenuItem onClick={() => setRenameOpen(true)}>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setRenameOpen(true)}>
                         <Pencil />
                         Rename
-                      </MenuItem>
-                      <MenuItem variant="destructive" onClick={handleArchiveCurrent}>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem variant="destructive" onClick={handleArchiveCurrent}>
                         <Archive />
                         Archive
-                      </MenuItem>
-                    </MenuContent>
-                  </Menu>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
