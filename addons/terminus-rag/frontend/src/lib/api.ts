@@ -14,6 +14,8 @@ export type ToolDef = {
 
 export type CallResult = { result?: unknown; error?: string };
 
+export type Health = { status?: string; indexed?: number; model?: string };
+
 export async function getTools(): Promise<ToolDef[]> {
   const res = await fetch('./playground/tools');
   if (!res.ok) throw new Error(`getTools failed: ${res.status}`);

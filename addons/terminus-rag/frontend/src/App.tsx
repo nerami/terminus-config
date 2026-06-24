@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { callTool, getTools, type ToolDef } from '@/lib/api';
+import { callTool, getTools, type Health, type ToolDef } from '@/lib/api';
+import { AppSidebar } from '@/components/sidebar/app-sidebar';
 import { ResultView, type ResultState } from '@/components/ResultView';
 import { SchemaForm } from '@/components/SchemaForm';
-import { ToolList } from '@/components/ToolList';
-
-type Health = { status?: string; indexed?: number; model?: string };
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 export default function App() {
   const [tools, setTools] = useState<ToolDef[]>([]);
@@ -41,31 +40,40 @@ export default function App() {
   }
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-4 p-6">
-      <header className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">Terminus RAG Playground</h1>
-        {health && (
-          <span className="text-xs text-gray-500">
-            {health.status} · {health.indexed} indexed · {health.model}
-          </span>
-        )}
-      </header>
-
-      {loadError ? (
-        <div role="alert" className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-          Failed to load tools: {loadError}
+    <SidebarProvider>
+      <AppSidebar tools={tools} selected={selected} onSelect={setSelected} health={health} />
+      <SidebarInset>
+        <header className="flex h-14 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+          <h1 className="text-sm font-semibold">Terminus RAG Playground</h1>
+        </header>
+        <div className="p-6">
+          {loadError ? (
+            <div role="alert" className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-3 text-sm">
+              Failed to load tools: {loadError}
+            </div>
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Left: the selected tool — name, description, inputs. */}
+              <section className="flex flex-col gap-4">
+                {current && (
+                  <>
+                    <div className="flex flex-col gap-1">
+                      <h2 className="font-mono text-base font-semibold">{current.name}</h2>
+                      <p className="text-muted-foreground text-sm">{current.description}</p>
+                    </div>
+                    <SchemaForm key={current.name} schema={current.inputSchema} onSubmit={run} />
+                  </>
+                )}
+              </section>
+              {/* Right: the result block. */}
+              <section>
+                <ResultView state={result} />
+              </section>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-[16rem_1fr] gap-6">
-          <aside>
-            <ToolList tools={tools} selected={selected} onSelect={setSelected} />
-          </aside>
-          <section className="flex flex-col gap-4">
-            {current && <SchemaForm key={current.name} schema={current.inputSchema} onSubmit={run} />}
-            <ResultView state={result} />
-          </section>
-        </div>
-      )}
-    </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

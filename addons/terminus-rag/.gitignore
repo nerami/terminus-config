@@ -1,0 +1,16 @@
+# Local dev env (secrets: HASS_TOKEN, RAG_API_TOKEN)
+.env
+
+# Local dev data dir (writable stand-in for the Supervisor /data mount)
+.dev-data/
+
+# Python (backend)
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Logs
+*.log

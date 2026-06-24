@@ -36,7 +36,7 @@ export function SchemaForm({ schema, onSubmit }: Props) {
           {prop.enum ? (
             <select
               aria-label={key}
-              className="rounded border px-2 py-1"
+              className="border-input bg-transparent rounded-md border px-2 py-1 text-sm"
               value={values[key] ?? ''}
               onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
             >

@@ -33,7 +33,7 @@ export function ResultView({ state }: { state: ResultState }) {
         <CardContent>
           <div
             role="alert"
-            className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+            className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-3 text-sm"
           >
             {state.value.error}
           </div>
@@ -45,7 +45,7 @@ export function ResultView({ state }: { state: ResultState }) {
   return (
     <Card size="sm">
       <CardContent>
-        <pre className="overflow-auto rounded bg-gray-900 p-3 text-xs text-gray-100">
+        <pre className="bg-muted text-foreground overflow-auto rounded p-3 text-xs">
           {JSON.stringify(state.value.result, null, 2)}
         </pre>
       </CardContent>

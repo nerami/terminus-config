@@ -24,6 +24,11 @@ else
 fi
 [ -n "${HASS_TOKEN:-}" ] || warn "HASS_TOKEN is empty — the index cannot warm."
 
+# Backend bind port. Defaults to the add-on contract (:9000); override via
+# DEV_BACKEND_PORT in .env when something else holds 9000 (e.g. a local
+# langfuse-clickhouse stack). The Vite proxy reads the same var.
+BACKEND_PORT="${DEV_BACKEND_PORT:-9000}"
+
 command -v uv   >/dev/null || fail "uv not found (https://docs.astral.sh/uv/)."
 command -v pnpm >/dev/null || fail "pnpm not found (npm install -g pnpm@10.33.0)."
 
@@ -43,8 +48,8 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-log "Backend (uvicorn --reload) → http://127.0.0.1:9000"
-( cd "$BACKEND" && exec uv run uvicorn app.main:app --host 127.0.0.1 --port 9000 --reload ) &
+log "Backend (uvicorn --reload) → http://127.0.0.1:$BACKEND_PORT"
+( cd "$BACKEND" && exec uv run uvicorn app.main:app --host 127.0.0.1 --port "$BACKEND_PORT" --reload ) &
 pids+=($!)
 
 log "Vite (HMR) → http://localhost:63743   <-- open this"

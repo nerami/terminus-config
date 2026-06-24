@@ -6,6 +6,7 @@ exposes ``app`` for ``uvicorn app.main:app``.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from .config import Settings, load_settings
@@ -16,7 +17,12 @@ from .refresher import Refresher
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_PERSIST = Path("/data/index")
+# The Supervisor mounts a writable per-add-on volume at /data on-device. For
+# laptop dev that path is the read-only macOS root, so allow an override via
+# RAG_DATA_DIR (set in .env) pointing at a writable local dir.
+_DATA_DIR = Path(os.environ.get("RAG_DATA_DIR", "/data"))
+_DEFAULT_PERSIST = _DATA_DIR / "index"
+_MODELS_DIR = _DATA_DIR / "models"
 
 
 def configure_logging(level: str) -> None:
@@ -36,7 +42,7 @@ def build_state(
     settings = settings or load_settings()
     persist_dir = persist_dir or _DEFAULT_PERSIST
     if embedder is None:
-        embedder = FastEmbedEmbedder(model_name=settings.embed_model, cache_dir="/data/models")
+        embedder = FastEmbedEmbedder(model_name=settings.embed_model, cache_dir=str(_MODELS_DIR))
     if connect is None:
         from websockets.asyncio.client import connect as ws_connect
         connect = ws_connect

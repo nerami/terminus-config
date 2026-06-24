@@ -37,12 +37,27 @@ s6: `run.sh` is a plain entrypoint; options are read directly from
 
 ## Dev ports
 
-Laptop dev (6374x convention; backend stays on its real port :9000):
+Laptop dev (6374x convention; backend defaults to its real port :9000):
 
 | Port | Service |
 |---|---|
 | `63743` | Vite dev server (playground SPA) — `frontend/vite.config.ts` |
-| `63744` | Storybook — `frontend/package.json` |
 
 `dev.sh` runs the backend (`:9000`) + Vite (`:63743`) together; open
 `http://localhost:63743`.
+
+## Local dev env overrides
+
+`dev.sh` sources `.env` (gitignored; copy from `.env.example`). Beyond the HA
+connection (`HASS_URL`/`HASS_TOKEN`) and add-on options (`RAG_API_TOKEN`), two
+**dev-only** overrides exist. Both **default to the on-device contract**, so the
+built add-on is unaffected — they only activate when set in `.env`:
+
+| Var | Default | Why override |
+|---|---|---|
+| `DEV_BACKEND_PORT` | `9000` | Free the bind port when something else holds `:9000` locally — notably a **langfuse-clickhouse** stack (ClickHouse's native protocol is `:9000`). `dev.sh` binds uvicorn to it and the Vite proxy targets follow it (`frontend/vite.config.ts` reads `process.env.DEV_BACKEND_PORT`). |
+| `RAG_DATA_DIR` | `/data` | The Supervisor mounts a writable per-add-on volume at `/data` on-device, but on a laptop `/data` is the **read-only root** — fastembed can't create `/data/models` and the index can't persist. Point this at a writable local dir (`.dev-data/`, gitignored). Read in `backend/app/main.py` → `$RAG_DATA_DIR/{models,index}`. |
+
+`9000` is also the production MCP port the sibling Terminus add-on reaches at
+`http://local-terminus-rag:9000/mcp`, so dev stays on `9000` by default and only
+diverges when forced.

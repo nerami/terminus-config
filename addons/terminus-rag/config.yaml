@@ -1,7 +1,7 @@
 name: Terminus RAG
 # Canonical add-on version — the ONLY version bumped on release. backend/pyproject.toml
 # is intentionally pinned to "0.0.0" to preserve the Docker pip dependency-layer cache.
-version: "0.2.0"
+version: "0.3.0"
 slug: terminus_rag
 description: HA knowledge MCP server — semantic search + enumeration + history over the registry.
 arch:
