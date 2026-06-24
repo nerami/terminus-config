@@ -23,23 +23,17 @@ const DOT: Record<HaConnectionStatus, string> = {
  */
 export function HaStatusIndicator() {
   const status = useHaStatus();
-  const label = LABELS[status.status] + (status.ha_version ? ` · v${status.ha_version}` : '');
+  const label = LABELS[status.status];
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <span
-              role="status"
-              aria-label={`Home Assistant: ${label}`}
-              className="flex size-6 items-center justify-center"
-            />
-          }
+          render={<span role="status" aria-label={label} className="flex size-6 items-center justify-center" />}
         >
           <span className={cn('size-2 rounded-full', DOT[status.status])} aria-hidden />
         </TooltipTrigger>
-        <TooltipContent side="bottom">Home Assistant: {label}</TooltipContent>
+        <TooltipContent side="bottom">{label}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

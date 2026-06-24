@@ -24,11 +24,11 @@ function status(overrides: Partial<HaStatus>): HaStatus {
 afterEach(() => mockStatus.mockReset());
 
 describe('HaStatusIndicator', () => {
-  it('shows a green dot and HA version when connected', () => {
+  it('shows a green dot when connected, labelled by status only', () => {
     mockStatus.mockReturnValue(status({ status: 'connected', ha_version: '2026.5.4' }));
     render(<HaStatusIndicator />);
     const indicator = screen.getByRole('status');
-    expect(indicator).toHaveAttribute('aria-label', 'Home Assistant: Connected · v2026.5.4');
+    expect(indicator).toHaveAttribute('aria-label', 'Connected');
     expect(indicator.querySelector('span')?.className).toContain('bg-emerald-500');
   });
 
@@ -36,7 +36,7 @@ describe('HaStatusIndicator', () => {
     mockStatus.mockReturnValue(status({ status: 'connecting' }));
     render(<HaStatusIndicator />);
     const indicator = screen.getByRole('status');
-    expect(indicator).toHaveAttribute('aria-label', 'Home Assistant: Connecting…');
+    expect(indicator).toHaveAttribute('aria-label', 'Connecting…');
     expect(indicator.querySelector('span')?.className).toContain('bg-amber-400');
   });
 
@@ -44,7 +44,7 @@ describe('HaStatusIndicator', () => {
     mockStatus.mockReturnValue(status({ status: 'disconnected' }));
     render(<HaStatusIndicator />);
     const indicator = screen.getByRole('status');
-    expect(indicator).toHaveAttribute('aria-label', 'Home Assistant: Disconnected');
+    expect(indicator).toHaveAttribute('aria-label', 'Disconnected');
     expect(indicator.querySelector('span')?.className).toContain('bg-red-500');
   });
 });

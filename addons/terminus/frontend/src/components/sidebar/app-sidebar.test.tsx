@@ -1,7 +1,9 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { getDefaultStore } from 'jotai';
 import { withNuqsTestingAdapter, type OnUrlUpdateFunction } from 'nuqs/adapters/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { whatsNewOpenAtom } from '@/components/whats-new/whats-new-dialog';
 import type { HaStatus } from '@/hooks/use-ha-status';
 
 const newThread = vi.fn();
@@ -31,6 +33,11 @@ vi.mock('@/hooks/use-ha-status', () => ({
     error: null,
   }),
 }));
+// The footer SettingsMenu reads the changelog (react-query); mock it so the
+// sidebar renders without a QueryClient.
+vi.mock('@/hooks/use-changelog', () => ({
+  useChangelog: () => ({ data: { version: '0.22.0', markdown: '- A shiny new thing.' } }),
+}));
 
 import { SidebarProvider } from '@/components/ui/sidebar';
 
@@ -50,6 +57,7 @@ function renderSidebar(searchParams = '') {
 beforeEach(() => {
   newThread.mockReset();
   haStatus.terminusVersion = '0.22.0';
+  getDefaultStore().set(whatsNewOpenAtom, false);
   vi.useFakeTimers();
 });
 
@@ -63,19 +71,32 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('button', { name: /new session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /topology/i })).toBeInTheDocument();
     expect(screen.getByText(/recent sessions/i)).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveAttribute('aria-label', expect.stringContaining('Home Assistant'));
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    // The HA status dot now lives inside the Settings dropdown (see settings-menu).
+    expect(screen.getByRole('button', { name: /settings/i })).toBeInTheDocument();
   });
+
+  // The header badge (terminus_version) is distinct from the footer's HA-Core
+  // version, so scope these assertions to the header region.
+  function header() {
+    return document.querySelector<HTMLElement>('[data-slot="sidebar-header"]')!;
+  }
 
   it('shows the Terminus add-on version badge', () => {
     renderSidebar();
-    expect(screen.getByText('v0.22.0')).toBeInTheDocument();
+    expect(within(header()).getByText('v0.22.0')).toBeInTheDocument();
   });
 
   it('hides the version badge when the add-on version is unknown', () => {
     haStatus.terminusVersion = null;
     renderSidebar();
-    expect(screen.queryByText(/^v/)).not.toBeInTheDocument();
+    expect(within(header()).queryByText(/^v/)).not.toBeInTheDocument();
+  });
+
+  it("opens the What's new dialog from the content button", () => {
+    renderSidebar();
+    expect(getDefaultStore().get(whatsNewOpenAtom)).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: /what's new/i }));
+    expect(getDefaultStore().get(whatsNewOpenAtom)).toBe(true);
   });
 
   it('starts a new session when New session is clicked', () => {

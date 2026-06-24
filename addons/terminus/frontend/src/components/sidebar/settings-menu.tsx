@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { Minus, Plus, Settings } from 'lucide-react';
+import { ChevronsUpDown, Cog, Minus, Plus } from 'lucide-react';
 
 import { HaStatusIndicator } from '@/components/thread/ha-status-indicator';
 import { Badge } from '@/components/ui/badge';
@@ -15,19 +15,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
+import { useHaStatus } from '@/hooks/use-ha-status';
 import { useViewTools } from '@/hooks/use-view-tools';
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, clampFontSize, fontSizeAtom, topology3dAtom } from '@/lib/settings';
 
 /**
- * The sidebar footer's Settings menu: a full-width {@link SidebarMenuButton}
- * that opens a dropdown of preferences (tool-call visibility, base font size,
- * 3D topology). The Home Assistant status dot rides on the trailing edge of the
- * trigger. All preferences persist to localStorage.
+ * The sidebar footer's Settings menu: a cog + label {@link SidebarMenuButton}
+ * opening a dropdown that leads with the Home Assistant connection block (label,
+ * version, status dot), then preferences (tool-call visibility, base font size,
+ * 3D topology), all persisted to localStorage.
  */
 export function SettingsMenu() {
   const [viewTools, setViewTools] = useViewTools();
   const [fontSize, setFontSize] = useAtom(fontSizeAtom);
   const [topology3d, setTopology3d] = useAtom(topology3dAtom);
+  const { ha_version: haVersion } = useHaStatus();
   const size = clampFontSize(fontSize);
 
   return (
@@ -37,18 +39,27 @@ export function SettingsMenu() {
           <DropdownMenuTrigger
             render={
               <SidebarMenuButton
+                size="lg"
                 aria-label="Settings"
                 className="data-[popup-open]:bg-sidebar-accent data-[popup-open]:text-sidebar-accent-foreground"
               >
-                <Settings />
-                <span>Settings</span>
-                <span className="ml-auto flex items-center">
-                  <HaStatusIndicator />
-                </span>
+                <Cog />
+                <span className="flex-1 truncate text-left font-medium">Settings</span>
+                <ChevronsUpDown className="size-4 opacity-60" />
               </SidebarMenuButton>
             }
           />
           <DropdownMenuContent side="right" align="end" sideOffset={4} className="w-60">
+            <div className="flex items-center gap-2 px-1.5 py-1 text-sm">
+              <div className="grid flex-1 leading-tight">
+                <span className="truncate font-medium">Home Assistant</span>
+                {haVersion && <span className="text-muted-foreground truncate text-xs">v{haVersion}</span>}
+              </div>
+              <HaStatusIndicator />
+            </div>
+
+            <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
               <DropdownMenuLabel>Chatbot</DropdownMenuLabel>
               <DropdownMenuCheckboxItem checked={viewTools} closeOnClick={false} onCheckedChange={setViewTools}>

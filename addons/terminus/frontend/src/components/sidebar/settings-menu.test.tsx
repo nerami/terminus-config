@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { HaStatus } from '@/hooks/use-ha-status';
 
-// The Settings trigger now hosts the HA status dot, so SettingsMenu pulls in
-// useHaStatus (react-query). Mock it to keep the test free of a QueryClient.
+// SettingsMenu reads the HA status (react-query). Mock it to keep the test free
+// of a QueryClient.
 vi.mock('@/hooks/use-ha-status', () => ({
   useHaStatus: (): HaStatus => ({
     status: 'connected',
@@ -44,9 +44,17 @@ afterEach(() => window.localStorage.clear());
 describe('SettingsMenu', () => {
   it('groups settings under Chatbot and Appearance headings', () => {
     renderMenu();
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
     expect(screen.getByText('Chatbot')).toBeInTheDocument();
     expect(screen.getByText('Appearance')).toBeInTheDocument();
+  });
+
+  it('shows the Home Assistant connection block (label, version, status dot) in the dropdown', () => {
+    renderMenu();
+    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
+    expect(screen.getByText('Home Assistant')).toBeInTheDocument();
+    expect(screen.getByText('v2026.6.0')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Connected');
   });
 
   it('toggles tool-call visibility', () => {
@@ -56,7 +64,7 @@ describe('SettingsMenu', () => {
 
     expect(screen.getByTestId('probe')).toHaveTextContent('true');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
     fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /show tool calls/i }));
 
     expect(screen.getByTestId('probe')).toHaveTextContent('false');
@@ -67,7 +75,7 @@ describe('SettingsMenu', () => {
     store.set(fontSizeAtom, 16);
     renderMenu(store);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
     fireEvent.click(screen.getByRole('button', { name: /increase font size/i }));
     expect(store.get(fontSizeAtom)).toBe(17);
 
@@ -80,7 +88,7 @@ describe('SettingsMenu', () => {
     store.set(fontSizeAtom, 20);
     renderMenu(store);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
     expect(screen.getByRole('button', { name: /increase font size/i })).toBeDisabled();
   });
 });

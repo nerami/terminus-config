@@ -1,4 +1,5 @@
-import { Network, SquarePen } from 'lucide-react';
+import { useSetAtom } from 'jotai';
+import { Network, Sparkles, SquarePen } from 'lucide-react';
 
 import { SettingsMenu } from './settings-menu';
 import { SidebarSessionList } from './sidebar-session-list';
@@ -17,14 +18,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { whatsNewOpenAtom } from '@/components/whats-new/whats-new-dialog';
+import { useChangelog } from '@/hooks/use-changelog';
 import { useHaStatus } from '@/hooks/use-ha-status';
 import { useNewThread } from '@/hooks/use-new-thread';
 import { usePanelLayout } from '@/lib/ha-graph/use-panel-layout';
 
 /**
  * The application sidebar: Terminus logo, primary actions (new session, the
- * topology toggle), the recent-sessions list, and a footer with the Home
- * Assistant status dot and the Settings menu. On mobile it renders as a drawer.
+ * topology toggle), the recent-sessions list plus a "What's new" button, and a
+ * footer holding the Settings menu. On mobile it renders as a drawer.
  */
 export function AppSidebar() {
   const newThread = useNewThread();
@@ -32,6 +35,8 @@ export function AppSidebar() {
   const [, closeArtifact] = useArtifactOpen();
   const { isMobile, setOpenMobile } = useSidebar();
   const { terminus_version: terminusVersion } = useHaStatus();
+  const { data: changelog } = useChangelog();
+  const openWhatsNew = useSetAtom(whatsNewOpenAtom);
 
   const closeOnMobile = () => {
     if (isMobile) setOpenMobile(false);
@@ -95,6 +100,19 @@ export function AppSidebar() {
           <SidebarGroupLabel>Recent sessions</SidebarGroupLabel>
           <SidebarSessionList onSelect={closeOnMobile} />
         </SidebarGroup>
+
+        {changelog && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="sm" onClick={() => openWhatsNew(true)}>
+                  <Sparkles />
+                  <span>What's new</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
