@@ -4,6 +4,12 @@ All notable changes to the Terminus RAG add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release).
 
+## 0.1.1
+
+- Every add-on option now has a proper name and description in the
+  Configuration UI (previously they showed raw keys) via a new
+  `translations/en.yaml`.
+
 ## 0.1.0
 
 - Initial release. Standalone HA knowledge MCP server: in-memory numpy cosine

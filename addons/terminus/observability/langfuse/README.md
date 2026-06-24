@@ -65,10 +65,6 @@ langfuse_public_key: pk-lf-...
 langfuse_secret_key: sk-lf-...
 ```
 
-> The option was renamed `langfuse_host` → `langfuse_base_url` (matches the
-> Langfuse v4 SDK). The old `langfuse_host` key is still accepted as a
-> deprecated alias, so existing configs keep working — but prefer the new name.
-
 `langfuse_base_url` must resolve to a private-LAN / loopback IP — the add-on's
 `should_trace` gate is fail-closed and **refuses public hosts** (a non-RFC1918
 IP or any hostname) so prompts + HA state never leave the network. That refusal

@@ -46,3 +46,31 @@ configuration:
       Optional bearer token sent to terminus-rag when its api_token option is
       set. Leave blank when terminus-rag has no token configured. Changing this
       requires an add-on restart.
+  log_level:
+    name: Log level
+    description: >-
+      Verbosity of the add-on log. Use debug to troubleshoot, info for normal
+      operation. Changing this requires an add-on restart.
+  langfuse_tracing:
+    name: Langfuse tracing
+    description: >-
+      When enabled, the agent sends LLM traces (prompts, tool calls, and
+      responses) to a self-hosted Langfuse instance for debugging. Off by
+      default. Tracing activates only when fully configured and pointed at a
+      private-LAN address. Changing this requires an add-on restart.
+  langfuse_public_key:
+    name: Langfuse public key
+    description: >-
+      Project public key (pk-lf-…) from your Langfuse instance. Required when
+      tracing is enabled.
+  langfuse_secret_key:
+    name: Langfuse secret key
+    description: >-
+      Project secret key (sk-lf-…) from your Langfuse instance. Required when
+      tracing is enabled.
+  langfuse_base_url:
+    name: Langfuse base URL
+    description: >-
+      Base URL of your self-hosted Langfuse, for example
+      http://192.168.100.176:63742. Must be a private-LAN or loopback IP — public
+      hosts are refused so prompts and home state never leave your network.

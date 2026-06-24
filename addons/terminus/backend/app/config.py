@@ -169,14 +169,9 @@ def load_settings(
     langfuse_secret_key = str(
         options.get("langfuse_secret_key") or env.get("LANGFUSE_SECRET_KEY", "")
     )
-    # `langfuse_base_url` is canonical (matches the Langfuse v4 SDK); the
-    # `langfuse_host` option / LANGFUSE_HOST env are deprecated aliases kept so
-    # existing on-device config keeps working.
+    # `langfuse_base_url` matches the Langfuse v4 SDK (constructor `base_url=`).
     langfuse_base_url = str(
-        options.get("langfuse_base_url")
-        or options.get("langfuse_host")
-        or env.get("LANGFUSE_BASE_URL")
-        or env.get("LANGFUSE_HOST", "")
+        options.get("langfuse_base_url") or env.get("LANGFUSE_BASE_URL", "")
     )
 
     supervisor_token = env.get("SUPERVISOR_TOKEN")

@@ -317,27 +317,6 @@ def test_langfuse_from_options():
     assert s.langfuse_base_url == "http://192.168.100.176:3000"
 
 
-def test_langfuse_base_url_back_compat_legacy_host_option():
-    # Deprecated `langfuse_host` option still resolves (existing on-device config).
-    s = load_settings(
-        env={},
-        options={"langfuse_host": "http://192.168.100.176:3000"},
-    )
-    assert s.langfuse_base_url == "http://192.168.100.176:3000"
-
-
-def test_langfuse_base_url_prefers_new_option_over_legacy():
-    # When both are set, the canonical `langfuse_base_url` wins.
-    s = load_settings(
-        env={},
-        options={
-            "langfuse_base_url": "http://10.0.0.1:3000",
-            "langfuse_host": "http://192.168.1.9:3000",
-        },
-    )
-    assert s.langfuse_base_url == "http://10.0.0.1:3000"
-
-
 def test_langfuse_tracing_from_env_truthy_and_falsy():
     for truthy in ("true", "True", "1", "yes"):
         assert load_settings(env={"LANGFUSE_TRACING": truthy}, options={}).langfuse_tracing is True
@@ -356,12 +335,6 @@ def test_langfuse_keys_from_env():
     )
     assert s.langfuse_public_key == "pk-env"
     assert s.langfuse_secret_key == "sk-env"
-    assert s.langfuse_base_url == "http://10.0.0.5:3000"
-
-
-def test_langfuse_base_url_back_compat_legacy_host_env():
-    # Deprecated LANGFUSE_HOST env var still resolves.
-    s = load_settings(env={"LANGFUSE_HOST": "http://10.0.0.5:3000"}, options={})
     assert s.langfuse_base_url == "http://10.0.0.5:3000"
 
 

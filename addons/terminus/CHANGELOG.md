@@ -4,6 +4,14 @@ All notable changes to the Terminus add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release). Changelog tracking starts at 0.5.5.
 
+## 0.24.1
+
+- Every add-on option now has a proper name and description in the
+  Configuration UI (previously the Langfuse options and log level showed raw
+  keys).
+- Removed the deprecated `langfuse_host` option alias added in 0.24.0 — use
+  `langfuse_base_url`. (The 0.24.0 release already migrated existing configs.)
+
 ## 0.24.0
 
 - **The Langfuse tracing option was renamed `langfuse_host` → `langfuse_base_url`**
