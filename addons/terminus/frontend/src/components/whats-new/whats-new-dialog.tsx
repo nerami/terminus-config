@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
-import { useAtom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
 import { TerminusLogoSVG } from '@/components/brand/terminus-logo/terminus-logo';
@@ -26,6 +26,10 @@ export const lastSeenVersionAtom = atomWithStorage<string | null>(LAST_SEEN_KEY,
   getOnInit: true,
 });
 
+// Whether the dialog is open. Shared so the Settings menu can re-open it on
+// demand (the auto-on-upgrade effect below also drives it).
+export const whatsNewOpenAtom = atom(false);
+
 /**
  * A dismissable "what's new" dialog. Pops once per upgrade: when the running
  * add-on version differs from the last one we showed and the backend has a
@@ -36,7 +40,7 @@ export function WhatsNewDialog() {
   const { terminus_version: version } = useHaStatus();
   const { data: changelog } = useChangelog();
   const [lastSeen, setLastSeen] = useAtom(lastSeenVersionAtom);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useAtom(whatsNewOpenAtom);
 
   useEffect(() => {
     if (!version) return;
@@ -48,7 +52,7 @@ export function WhatsNewDialog() {
     if (version !== lastSeen && changelog?.version === version) {
       setOpen(true);
     }
-  }, [version, lastSeen, changelog, setLastSeen]);
+  }, [version, lastSeen, changelog, setLastSeen, setOpen]);
 
   const dismiss = () => {
     setOpen(false);

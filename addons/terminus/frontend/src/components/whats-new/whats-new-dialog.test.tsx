@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Provider as JotaiProvider, createStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,7 +24,7 @@ vi.mock('@/hooks/use-changelog', () => ({
   useChangelog: () => ({ data: state.changelog }),
 }));
 
-import { lastSeenVersionAtom, WhatsNewDialog } from './whats-new-dialog';
+import { lastSeenVersionAtom, whatsNewOpenAtom, WhatsNewDialog } from './whats-new-dialog';
 
 // Inject the persisted "last seen" value through a jotai store rather than
 // localStorage: `getOnInit` reads storage at module-import time, so seeding
@@ -88,5 +88,17 @@ describe('WhatsNewDialog', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(store.get(lastSeenVersionAtom)).toBe('0.22.0');
+  });
+
+  it('can be opened on demand via whatsNewOpenAtom (no upgrade needed)', () => {
+    // Already seen the current version → no auto-open.
+    const { store } = renderDialog('0.22.0');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // The Settings "What's new" item flips this atom.
+    act(() => store.set(whatsNewOpenAtom, true));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('A shiny new thing.')).toBeInTheDocument();
   });
 });
