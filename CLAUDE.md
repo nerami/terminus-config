@@ -1,6 +1,6 @@
 # HA Config Repo
 
-Source-of-truth for HA Green at home. Edit here → commit `git@github.com:nerami/home-assistant.git` → deploy on device.
+Source-of-truth for HA Green at home. Edit here → commit `git@github.com:nerami/terminus-org.git` → deploy on device.
 
 ## Location
 
