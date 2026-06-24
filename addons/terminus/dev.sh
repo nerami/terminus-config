@@ -26,6 +26,12 @@ fi
 [ -n "${ANTHROPIC_API_KEY:-}" ] || warn "ANTHROPIC_API_KEY is empty — chat will fail."
 export LANGGRAPH_URL="http://127.0.0.1:2025"
 
+# Mirror the Supervisor's BUILD_VERSION so the sidebar version badge shows in dev
+# too. In the real add-on the version is baked into TERMINUS_VERSION from
+# config.yaml's `version`; here we read the same source. An explicit .env value
+# still wins; otherwise derive it from config.yaml (the single source of truth).
+export TERMINUS_VERSION="${TERMINUS_VERSION:-$(awk -F'"' '/^version:/{print $2; exit}' "$ADDON_DIR/config.yaml")}"
+
 # --- tooling checks --------------------------------------------------------
 command -v uv   >/dev/null || fail "uv not found (see https://docs.astral.sh/uv/getting-started/installation/)."
 command -v pnpm >/dev/null || fail "pnpm not found (npm install -g pnpm@10.33.0)."
