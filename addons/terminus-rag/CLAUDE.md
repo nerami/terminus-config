@@ -34,3 +34,15 @@ Standalone HA knowledge MCP server (`backend/`, Python). One Docker image
 `python:3.12-slim` (glibc) — fastembed/onnxruntime need glibc wheels. No bashio, no
 s6: `run.sh` is a plain entrypoint; options are read directly from
 `/data/options.json` in `config.py`.
+
+## Dev ports
+
+Laptop dev (6374x convention; backend stays on its real port :9000):
+
+| Port | Service |
+|---|---|
+| `63743` | Vite dev server (playground SPA) — `frontend/vite.config.ts` |
+| `63744` | Storybook — `frontend/package.json` |
+
+`dev.sh` runs the backend (`:9000`) + Vite (`:63743`) together; open
+`http://localhost:63743`.

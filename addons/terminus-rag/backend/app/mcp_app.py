@@ -11,12 +11,15 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import os
 import secrets
 from dataclasses import dataclass
 
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.routing import Mount
+from starlette.staticfiles import StaticFiles
 
 from .config import Settings
 from .history import (
@@ -118,9 +121,16 @@ def build_tools(state: AppState) -> dict:
 
 
 class BearerAuthMiddleware:
-    """Pure ASGI middleware. When ``settings.api_token`` is non-empty, requires
-    ``Authorization: Bearer <token>`` on /mcp paths (constant-time compare). /health
-    stays open. No token in logs."""
+    """Pure ASGI middleware with three path branches.
+
+    - ``/health`` — always open (liveness probe).
+    - ``/mcp*`` — bearer-gated when ``settings.api_token`` is set: requires
+      ``Authorization: Bearer <token>`` (constant-time compare). No token in logs.
+    - Everything else (SPA + ``/playground/*``) — exempt from the bearer token but,
+      when ``api_token`` is set, served only when the ``X-Ingress-Path`` header is
+      present (HA ingress sets it). Requests without it receive 404 to hide the
+      surface from non-ingress callers.
+    """
 
     def __init__(self, app, settings: Settings) -> None:
         self.app = app
@@ -129,18 +139,37 @@ class BearerAuthMiddleware:
     async def __call__(self, scope, receive, send):
         if scope.get("type") != "http":
             return await self.app(scope, receive, send)
-        token = self.settings.api_token
+
         path = scope.get("path", "")
-        if not token or path.rstrip("/") == "/health":
+        normalized = path.rstrip("/") or "/"
+
+        # /health is always open (liveness probe).
+        if normalized == "/health":
             return await self.app(scope, receive, send)
 
+        token = self.settings.api_token
+
+        # MCP endpoint: bearer-gated when a token is configured.
+        if path.startswith("/mcp"):
+            if not token:
+                return await self.app(scope, receive, send)
+            headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
+            auth = headers.get("authorization", "")
+            presented = auth[7:] if auth.startswith("Bearer ") else ""
+            if presented and secrets.compare_digest(presented, token):
+                return await self.app(scope, receive, send)
+            resp = JSONResponse({"error": "unauthorized"}, status_code=401)
+            return await resp(scope, receive, send)
+
+        # Everything else (SPA + /playground/*): exempt from the bearer token,
+        # but when a token is configured serve only ingress-proxied requests
+        # (HA sets X-Ingress-Path). 404 hides the surface from non-ingress callers.
+        if not token:
+            return await self.app(scope, receive, send)
         headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
-        auth = headers.get("authorization", "")
-        presented = auth[7:] if auth.startswith("Bearer ") else ""
-        if presented and secrets.compare_digest(presented, token):
+        if "x-ingress-path" in headers:
             return await self.app(scope, receive, send)
-
-        resp = JSONResponse({"error": "unauthorized"}, status_code=401)
+        resp = JSONResponse({"error": "not found"}, status_code=404)
         await resp(scope, receive, send)
 
 
@@ -220,6 +249,17 @@ def build_app(state: AppState) -> Starlette:
                 with contextlib.suppress(asyncio.CancelledError):
                     await task
 
-    app = Starlette(routes=inner.routes, lifespan=lifespan)
+    from .playground import build_playground_routes
+
+    routes = list(inner.routes) + build_playground_routes(state, mcp)
+
+    # Serve the built SPA only when present (absent in backend-only tests and in
+    # `dev.sh`, where Vite serves the frontend). StaticFiles errors at startup if
+    # the directory is missing, so guard the mount.
+    dist_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+    if os.path.isdir(dist_dir):
+        routes.append(Mount("/", app=StaticFiles(directory=dist_dir, html=True)))
+
+    app = Starlette(routes=routes, lifespan=lifespan)
     app.add_middleware(BearerAuthMiddleware, settings=state.settings)
     return app

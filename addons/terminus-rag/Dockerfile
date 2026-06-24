@@ -2,6 +2,17 @@
 # only, so the Alpine/musl HA base images cannot install them. No bashio, no s6.
 # No "# syntax=" header and no RUN --mount cache: the Supervisor's classic builder
 # errors on them.
+
+# ---- frontend builder ----
+FROM node:22-alpine AS frontend
+RUN npm install -g pnpm@10.33.0
+WORKDIR /build
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY frontend/ ./
+RUN pnpm build
+
+# ---- runtime ----
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -20,6 +31,9 @@ RUN mkdir -p /app/backend/app \
 # already cached above. This layer busts on any source edit but is cheap.
 COPY backend/ /app/backend/
 RUN pip install --no-cache-dir --no-deps --force-reinstall "/app/backend"
+
+# The built SPA, served by the backend's conditional StaticFiles mount at /.
+COPY --from=frontend /build/dist /app/frontend/dist
 
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh

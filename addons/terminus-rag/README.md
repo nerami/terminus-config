@@ -36,3 +36,17 @@ ha apps rebuild local_terminus_rag    # if source-only change
 `python:3.12-slim` (glibc), not the Alpine HA base — `fastembed`/`onnxruntime`
 ship glibc wheels only. There is therefore no bashio/s6; `run.sh` is a plain
 entrypoint and options are read directly from `/data/options.json`.
+
+## Playground UI
+
+The add-on serves a tool-console Web UI through Home Assistant ingress (open it
+from the add-on's "Open Web UI" / sidebar entry). It lists all MCP tools, renders
+a form from each tool's input schema, runs it in-process, and shows the JSON
+result, with an index-status header (`/health`).
+
+Access control:
+- The UI and its `/playground/*` endpoints are reachable only via HA ingress
+  (requests carry the `X-Ingress-Path` header). Direct non-ingress calls get a
+  `404` when `api_token` is set.
+- The `/mcp` endpoint is unchanged: bearer-token gated when `api_token` is set.
+- With no `api_token` configured (local dev), everything is open.

@@ -4,6 +4,14 @@ All notable changes to the Terminus RAG add-on are recorded here. The version
 headings match `config.yaml` `version` (the single canonical version bumped on
 release).
 
+## 0.2.0
+
+- **New: an in-app tool-console playground.** The add-on now exposes a Web UI
+  (HA sidebar / ingress) to run every MCP tool — fill a form generated from each
+  tool's schema and inspect the JSON result, plus an index-status header. The UI
+  is reachable only through HA ingress (guarded by the `X-Ingress-Path` header);
+  the `/mcp` endpoint stays bearer-token gated.
+
 ## 0.1.1
 
 - Every add-on option now has a proper name and description in the

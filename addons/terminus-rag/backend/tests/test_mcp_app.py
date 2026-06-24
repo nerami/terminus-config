@@ -1,7 +1,6 @@
 import json
 
 import httpx
-import pytest
 
 from app.config import Settings
 from app.embedder import FakeEmbedder
@@ -104,56 +103,49 @@ async def test_bearer_middleware_open_when_no_token():
         await send({"type": "http.response.body", "body": b""})
 
     mw = BearerAuthMiddleware(inner, _state(api_token="").settings)
-    status = await _asgi_status(mw, {})
-    assert status == 200
+    # No token: everything is open, including /mcp and playground paths.
+    assert await _asgi_status(mw, {}, path="/mcp") == 200
+    assert await _asgi_status(mw, {}, path="/playground/tools") == 200
+    assert await _asgi_status(mw, {}, path="/") == 200
     assert inner_called["v"] is True
 
 
-async def test_bearer_middleware_401_without_token():
+async def test_bearer_middleware_mcp_gated_when_token_set():
     async def inner(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b""})
 
     mw = BearerAuthMiddleware(inner, _state(api_token="secret").settings)
-    assert await _asgi_status(mw, {}) == 401
-    assert await _asgi_status(mw, {"Authorization": "Bearer wrong"}) == 401
-    assert await _asgi_status(mw, {"Authorization": "Bearer secret"}) == 200
+    assert await _asgi_status(mw, {}, path="/mcp") == 401
+    assert await _asgi_status(mw, {"Authorization": "Bearer wrong"}, path="/mcp") == 401
+    assert await _asgi_status(mw, {"Authorization": "Bearer secret"}, path="/mcp") == 200
 
 
-async def test_bearer_middleware_health_open_with_token_set():
+async def test_bearer_middleware_health_always_open():
     async def inner(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b""})
 
     mw = BearerAuthMiddleware(inner, _state(api_token="secret").settings)
     assert await _asgi_status(mw, {}, path="/health") == 200
-
-
-async def test_bearer_middleware_health_exact_match_only():
-    """Verify that only exact /health (with optional trailing slash) bypasses auth.
-
-    Paths like /healthz or /health/.. should NOT bypass the token gate when
-    api_token is set. This prevents a loose startswith("") bypass.
-    """
-    async def inner(scope, receive, send):
-        await send({"type": "http.response.start", "status": 200, "headers": []})
-        await send({"type": "http.response.body", "body": b""})
-
-    mw = BearerAuthMiddleware(inner, _state(api_token="secret").settings)
-
-    # Exact /health with no token should pass (open endpoint).
-    assert await _asgi_status(mw, {}, path="/health") == 200
-    # Exact /health/ (with trailing slash) should also pass.
     assert await _asgi_status(mw, {}, path="/health/") == 200
 
-    # Paths starting with /health but not exact should require token.
-    assert await _asgi_status(mw, {}, path="/healthz") == 401
-    assert await _asgi_status(mw, {}, path="/health/sub") == 401
-    assert await _asgi_status(mw, {}, path="/health/../mcp") == 401
 
-    # With correct token, /healthz should still be gated (not open).
-    assert await _asgi_status(mw, {"Authorization": "Bearer secret"}, path="/healthz") == 200
-    assert await _asgi_status(mw, {"Authorization": "Bearer secret"}, path="/health/sub") == 200
+async def test_bearer_middleware_playground_ingress_guarded_when_token_set():
+    async def inner(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b""})
+
+    mw = BearerAuthMiddleware(inner, _state(api_token="secret").settings)
+    # Non-/mcp, non-/health paths require the HA ingress header; no bearer needed.
+    assert await _asgi_status(mw, {}, path="/playground/tools") == 404
+    assert await _asgi_status(mw, {}, path="/") == 404
+    assert await _asgi_status(
+        mw, {"X-Ingress-Path": "/api/hassio_ingress/abc"}, path="/playground/tools"
+    ) == 200
+    assert await _asgi_status(
+        mw, {"X-Ingress-Path": "/api/hassio_ingress/abc"}, path="/"
+    ) == 200
 
 
 # ---------------------------------------------------------------------------
