@@ -1,6 +1,6 @@
 # HA Config Repo
 
-Source-of-truth for HA Green at home. Edit here → commit `git@github.com:nerami/terminus-org.git` → deploy on device.
+Source-of-truth for HA Green at home. Edit here → commit `git@github.com:nerami/terminus-config.git` → deploy on device.
 
 ## Location
 
@@ -25,13 +25,7 @@ Source-of-truth for HA Green at home. Edit here → commit `git@github.com:neram
 - HA Core: **2026.x** — exact version: `ssh root@... 'cat /config/.HA_VERSION'`.
 - Deploy: `ha-deploy` on device (see [Deploy](#deploy)).
 - **Two CLIs — do not confuse**: `hass-cli` = local laptop, REST via `HASS_TOKEN`. `ha` = on-device, Supervisor token, for add-ons/backups/OS, SSH only.
-- **`ha` CLI — use current subcommands** (HA OS 2026.x): canonical is `ha apps` (plural). Aliases `app/addon/addons` still work but noisy. Subcommands: `install|start|stop|restart|rebuild|uninstall|update|info|logs <slug>`. No `list`/`reload` on `ha apps`.
-- **Local add-on deploy sequence** (after syncing source to `/addons/`):
-  1. `ha supervisor reload` — re-scans add-on dirs
-  2. `ha store reload` — re-reads `config.yaml` versions (**required** or version bump is invisible)
-  3. `ha apps update local_<slug>` — when `config.yaml` version bumped (fails if you use `rebuild` instead)
-  4. `ha apps rebuild local_<slug>` — only when version is unchanged (Dockerfile/src only)
-  - `rebuild` fails with _"Local and store versions differ, use Update"_ if version was bumped without `ha store reload` first.
+- **`ha` CLI — use current subcommands** (HA OS 2026.x): canonical is `ha apps` (plural). Aliases `app/addon/addons` still work but noisy. Subcommands: `install|start|stop|restart|update|info|logs <slug>`. No `list`/`reload` on `ha apps`.
 
 ### Remote ops decision tree
 
@@ -79,25 +73,10 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_vscode | Studio Code Server |
 | a0d7b954_tailscale | Tailscale |
 | a0d7b954_ssh | Advanced SSH & Web Terminal |
-| local_terminus | Terminus |
-| local_terminus_rag | Terminus RAG |
 
-### Terminus Internals
-
-`addons/terminus/` (slug `local_terminus`, name "Terminus"): Python/FastAPI backend + Vite/React frontend, Dockerized.
-
-- **Architecture**: two processes behind ingress port `8099` — FastAPI (uvicorn) is the public face; LangGraph dev server runs on loopback `:2025` and is proxied via `/api/*`. Frontend SPA served from `/` (static build in `frontend/dist`).
-- **HA auth**: `SUPERVISOR_TOKEN` injected automatically (`homeassistant_api: true`) → Core websocket `ws://supervisor/core/websocket`. `ha_url`/`ha_token` options are dev-only fallback.
-- **API key**: set via add-on options UI (`anthropic_api_key`), not `.env`. Model configurable (`model`, default `claude-sonnet-4-6`).
-- After source changes: sync via `bin/deploy-addons-ssh.sh`, then on device run `ha apps update local_terminus` if `config.yaml` version was bumped, else `ha apps rebuild local_terminus`.
-- **Gotchas**: base image tag must be `3.12-alpine3.18` (never bare `:3.12`); `langgraph.json` paths must be absolute (`/app/backend/...`). See `addons/terminus/README.md` for full details.
-- **MCP knowledge tools**: Agent mounts `terminus-rag`'s MCP knowledge tools at `http://local-terminus-rag:9000/mcp` (graceful degradation when absent), configured via `rag_url`/`rag_token` add-on options.
-
-Local add-ons live in `addons/<dir>/` in this repo. Sync to `/addons/`
-on device via `bin/deploy-addons.sh` (called by `bin/deploy.sh` when
-the pull diff touches `addons/`; or directly via `bin/deploy-addons-ssh.sh`
-for addon-only pushes). Source changes need `ha app rebuild local_<slug>`
-on device after sync.
+These are third-party infra add-ons (device access + editing), managed
+through the Supervisor UI / `ha apps`. This repo holds **HA configuration
+only** — no local add-on sources.
 
 ## Repo Layout
 
@@ -109,7 +88,6 @@ scenes.yaml                # UI write target — same
 secrets.yaml.example       # schema only; real secrets.yaml lives on device
 packages/                  # source-of-truth for hand-written work
 blueprints/                # automation/script blueprints
-addons/                    # local Supervisor add-ons (synced to /addons/)
 bin/                       # deploy + reload + watcher scripts (see bin/ inventory below)
 # themes/, custom_components/, dashboards/ — absent, create when needed
 ```
@@ -193,15 +171,13 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 |---|---|---|
 | `deploy.sh` | device | backup → pull → check → reload/restart (interactive) |
 | `deploy-ssh.sh` | laptop | SSH -t wrapper for deploy.sh |
-| `deploy-addons.sh` | device | rsync addons/ → /addons/, supervisor reload + store reload |
-| `deploy-addons-ssh.sh` | laptop | snapshot → pull → addon sync (no full HA restart) |
 | `quick-reload.sh` | device | pull → check → reload_all; auto-rollback on check fail |
 | `quick-reload-ssh.sh` | laptop | SSH wrapper for quick-reload.sh (no TTY needed) |
 | `watcher.sh` | device | polls packages/ YAML, validates + reload_all on change; daemon |
 | `watcher-ssh.sh` | laptop | SSH wrapper to manage watcher.sh (start/stop/status/logs) |
 | `sync-watch.sh` | laptop | fswatch → debounced rsync main/ → device; pairs with watcher.sh |
 | `dev-watch.sh` | laptop | start device watcher + sync-watch.sh together (hot-reload pair) |
-| `status.sh` | device | show HA core info, addon states, last deploy SHA, watcher status |
+| `status.sh` | device | show HA core info, last deploy SHA, watcher status |
 | `status-ssh.sh` | laptop | SSH wrapper for status.sh |
 
 ## Do Not Touch
@@ -220,8 +196,8 @@ All in `.gitignore`.
 
 ## Branches & Commits
 
-- **Branch names**: `<type>/<kebab-slug>`, where `<type>` is the Conventional Commit type the work lands as — `feat/`, `fix/`, `chore/`, `docs/`. Examples: `feat/terminus-rag-frontend-modernization`, `fix/ui-tweaks`. The worktree directory name must match the branch name exactly.
-- **Commits**: Conventional Commits — `type(scope): summary`. Types: `feat`, `fix`, `chore`, `docs`. Scope = area or add-on (`feat(terminus-rag):`, `chore(terminus):`, `docs(claude-md):`, `feat(master_bedroom):`). One feature per commit; keep them small.
+- **Branch names**: `<type>/<kebab-slug>`, where `<type>` is the Conventional Commit type the work lands as — `feat/`, `fix/`, `chore/`, `docs/`. Examples: `feat/master-bedroom-scenes`, `fix/night-walk-timing`. The worktree directory name must match the branch name exactly.
+- **Commits**: Conventional Commits — `type(scope): summary`. Types: `feat`, `fix`, `chore`, `docs`. Scope = area or feature (`feat(master_bedroom):`, `fix(light_sensing):`, `docs(claude-md):`, `chore(bin):`). One feature per commit; keep them small.
 - **Merge to `main`**: always squash — one commit per feature, linear history.
 - Worktree/bare-repo mechanics (where dirs live, how to create them) are local to this clone — see the repo-root `CLAUDE.md`, not this file.
 

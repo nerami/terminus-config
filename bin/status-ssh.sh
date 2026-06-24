@@ -1,5 +1,5 @@
 #!/bin/bash
-# Laptop wrapper: show HA core / addon / watcher status via SSH.
+# Laptop wrapper: show HA core / watcher status via SSH.
 #
 #   bin/status-ssh.sh
 #
