@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 # CHANGELOG.md sits at the add-on root: /app/CHANGELOG.md in the image (the
 # Dockerfile copies it there) and addons/terminus/CHANGELOG.md in dev — both are
-# parents[2] relative to this file. Surfaced per-version by the /changelog route.
+# parents[2] relative to this file. Surfaced per-version by the /ha/changelog route.
 CHANGELOG_PATH = Path(__file__).resolve().parents[2] / "CHANGELOG.md"
 LANGGRAPH_URL = os.environ.get("LANGGRAPH_URL", "http://127.0.0.1:2025")
 
@@ -205,7 +205,7 @@ def create_app(
         # can read it from the same poll the status dot already uses.
         return JSONResponse({**status, "terminus_version": terminus_version})
 
-    @app.get("/changelog")
+    @app.get("/ha/changelog")
     async def changelog():
         # The "what's new" dialog asks for the running version's section. Return
         # null (not an error) whenever there's nothing to show: no known version,

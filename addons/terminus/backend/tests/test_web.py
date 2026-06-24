@@ -100,7 +100,7 @@ def test_changelog_returns_running_version_entry(tmp_path):
         changelog_path=_changelog_file(tmp_path),
     )
     with TestClient(app) as tc:
-        body = tc.get("/changelog").json()
+        body = tc.get("/ha/changelog").json()
         assert body == {"version": "0.22.0", "markdown": "- A shiny new thing."}
 
 
@@ -112,7 +112,7 @@ def test_changelog_null_when_version_has_no_entry(tmp_path):
         changelog_path=_changelog_file(tmp_path),
     )
     with TestClient(app) as tc:
-        assert tc.get("/changelog").json() is None
+        assert tc.get("/ha/changelog").json() is None
 
 
 def test_changelog_null_when_version_unknown(tmp_path):
@@ -123,7 +123,7 @@ def test_changelog_null_when_version_unknown(tmp_path):
         changelog_path=_changelog_file(tmp_path),
     )
     with TestClient(app) as tc:
-        assert tc.get("/changelog").json() is None
+        assert tc.get("/ha/changelog").json() is None
 
 
 def test_changelog_null_when_file_missing(tmp_path):
@@ -134,7 +134,7 @@ def test_changelog_null_when_file_missing(tmp_path):
         changelog_path=tmp_path / "does-not-exist.md",
     )
     with TestClient(app) as tc:
-        assert tc.get("/changelog").json() is None
+        assert tc.get("/ha/changelog").json() is None
 
 
 class _FakeWS:

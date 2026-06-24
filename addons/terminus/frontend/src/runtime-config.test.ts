@@ -32,7 +32,7 @@ describe('resolveEndpoints', () => {
     });
     expect(ep.apiUrl).toBe('http://homeassistant.local:8123/api/hassio_ingress/abc123token/api');
     expect(ep.haStatusUrl).toBe('http://homeassistant.local:8123/api/hassio_ingress/abc123token/ha/status');
-    expect(ep.changelogUrl).toBe('http://homeassistant.local:8123/api/hassio_ingress/abc123token/changelog');
+    expect(ep.changelogUrl).toBe('http://homeassistant.local:8123/api/hassio_ingress/abc123token/ha/changelog');
     expect(ep.assistantId).toBe('agent');
   });
 

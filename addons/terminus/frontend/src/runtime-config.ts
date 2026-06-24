@@ -52,7 +52,7 @@ export function resolveEndpoints(loc: { origin: string; pathname: string }): End
       return url.toString();
     },
     haEntityUrl: (entityId: string) => new URL(`ha/entity/${encodeURIComponent(entityId)}`, base).toString(),
-    changelogUrl: new URL('changelog', base).toString(),
+    changelogUrl: new URL('ha/changelog', base).toString(),
     assistantId: ASSISTANT_ID,
   };
 }
