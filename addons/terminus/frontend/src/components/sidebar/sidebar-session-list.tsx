@@ -6,8 +6,20 @@ import { toast } from 'sonner';
 
 import { RenameThreadDialog } from '@/components/thread/rename-thread-dialog';
 import { getContentString } from '@/components/thread/utils';
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu';
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  useSidebar,
+} from '@/components/ui/sidebar';
 import { useThreadId } from '@/hooks/use-thread-id';
 import { storedThreadTitle } from '@/lib/thread-title';
 import { useThreads } from '@/providers/thread';
@@ -36,6 +48,7 @@ export function SidebarSessionList({ onSelect }: { onSelect?: () => void }) {
   const { archiveThread, getThreads, setThreads, setThreadsLoading, threads, threadsLoading } = useThreads();
   const [currentThreadId, setThreadId] = useThreadId();
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
+  const { isMobile } = useSidebar();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -85,36 +98,29 @@ export function SidebarSessionList({ onSelect }: { onSelect?: () => void }) {
           >
             <span>{threadLabel(t)}</span>
           </SidebarMenuButton>
-          <Menu>
-            <MenuTrigger
-              aria-label="Conversation options"
-              className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-1 right-1 flex size-6 cursor-pointer items-center justify-center rounded-md opacity-0 transition-opacity group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[popup-open]:opacity-100"
-              onClick={(e) => e.stopPropagation()}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <SidebarMenuAction showOnHover aria-label="Conversation options">
+                  <MoreHorizontal />
+                </SidebarMenuAction>
+              }
+            />
+            <DropdownMenuContent
+              side={isMobile ? 'bottom' : 'right'}
+              align={isMobile ? 'end' : 'start'}
+              className="w-48"
             >
-              <MoreHorizontal className="size-4" />
-            </MenuTrigger>
-            <MenuContent>
-              <MenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRenameTarget({ id: t.thread_id, title: threadLabel(t) });
-                }}
-              >
+              <DropdownMenuItem onClick={() => setRenameTarget({ id: t.thread_id, title: threadLabel(t) })}>
                 <Pencil />
                 Rename
-              </MenuItem>
-              <MenuItem
-                variant="destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleArchive(t.thread_id);
-                }}
-              >
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => handleArchive(t.thread_id)}>
                 <Archive />
                 Archive
-              </MenuItem>
-            </MenuContent>
-          </Menu>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarMenuItem>
       ))}
       <RenameThreadDialog
