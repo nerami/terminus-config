@@ -14,6 +14,8 @@ export type Endpoints = {
   haAutomationUrl: (numericId: string, entityId?: string) => string;
   /** Builds the URL for a single entity's current state + attributes. */
   haEntityUrl: (entityId: string) => string;
+  /** The running add-on version's changelog section (for the "what's new" dialog). */
+  changelogUrl: string;
   /** LangGraph graph id (from langgraph.json). */
   assistantId: string;
 };
@@ -50,6 +52,7 @@ export function resolveEndpoints(loc: { origin: string; pathname: string }): End
       return url.toString();
     },
     haEntityUrl: (entityId: string) => new URL(`ha/entity/${encodeURIComponent(entityId)}`, base).toString(),
+    changelogUrl: new URL('changelog', base).toString(),
     assistantId: ASSISTANT_ID,
   };
 }

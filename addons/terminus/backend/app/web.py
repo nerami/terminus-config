@@ -28,11 +28,16 @@ from starlette.background import BackgroundTask
 from .config import Settings, load_settings
 from .ha_client import HAClient
 from .logging_setup import configure_logging
+from . import changelog as changelog_parser
 from . import ha_registry
 
 logger = logging.getLogger(__name__)
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+# CHANGELOG.md sits at the add-on root: /app/CHANGELOG.md in the image (the
+# Dockerfile copies it there) and addons/terminus/CHANGELOG.md in dev — both are
+# parents[2] relative to this file. Surfaced per-version by the /changelog route.
+CHANGELOG_PATH = Path(__file__).resolve().parents[2] / "CHANGELOG.md"
 LANGGRAPH_URL = os.environ.get("LANGGRAPH_URL", "http://127.0.0.1:2025")
 
 # The add-on's own version, surfaced to the frontend (sidebar badge) via
@@ -157,6 +162,7 @@ def create_app(
     ha_rest_transport: Optional[httpx.BaseTransport] = None,
     title_chain=None,
     terminus_version: Optional[str] = TERMINUS_VERSION,
+    changelog_path: Path = CHANGELOG_PATH,
 ) -> FastAPI:
     configure_logging()
     settings = settings or load_settings()
@@ -198,6 +204,23 @@ def create_app(
         # Merge the add-on version in (non-destructively) so the sidebar badge
         # can read it from the same poll the status dot already uses.
         return JSONResponse({**status, "terminus_version": terminus_version})
+
+    @app.get("/changelog")
+    async def changelog():
+        # The "what's new" dialog asks for the running version's section. Return
+        # null (not an error) whenever there's nothing to show: no known version,
+        # missing file, or no matching ## heading — the frontend treats all three
+        # the same (don't pop the dialog).
+        if not terminus_version:
+            return JSONResponse(None)
+        try:
+            text = changelog_path.read_text(encoding="utf-8")
+        except OSError:
+            return JSONResponse(None)
+        body = changelog_parser.extract_entry(text, terminus_version)
+        if body is None:
+            return JSONResponse(None)
+        return JSONResponse({"version": terminus_version, "markdown": body})
 
     @app.get("/ha/topology")
     async def ha_topology():

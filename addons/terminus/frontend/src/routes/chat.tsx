@@ -8,6 +8,7 @@ import { ArtifactProvider } from '@/components/thread/artifact';
 import { Thread } from '@/components/thread/thread';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { WhatsNewDialog } from '@/components/whats-new/whats-new-dialog';
 import { StreamProvider } from '@/providers/stream';
 import { ThreadProvider } from '@/providers/thread';
 
@@ -19,6 +20,7 @@ export function ChatPage(): React.ReactNode {
       <HtmlFontSize />
       <Toaster />
       <HaStatusGate>
+        <WhatsNewDialog />
         <ThreadProvider>
           <StreamProvider>
             <ArtifactProvider>

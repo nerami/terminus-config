@@ -83,6 +83,60 @@ def test_ha_status_includes_terminus_version_when_not_configured():
         assert body["terminus_version"] == "0.22.0"
 
 
+_CHANGELOG = "# Changelog\n\n## 0.22.0\n\n- A shiny new thing.\n\n## 0.21.0\n\n- Older.\n"
+
+
+def _changelog_file(tmp_path):
+    p = tmp_path / "CHANGELOG.md"
+    p.write_text(_CHANGELOG, encoding="utf-8")
+    return p
+
+
+def test_changelog_returns_running_version_entry(tmp_path):
+    app = create_app(
+        settings=_settings(""),
+        client=None,
+        terminus_version="0.22.0",
+        changelog_path=_changelog_file(tmp_path),
+    )
+    with TestClient(app) as tc:
+        body = tc.get("/changelog").json()
+        assert body == {"version": "0.22.0", "markdown": "- A shiny new thing."}
+
+
+def test_changelog_null_when_version_has_no_entry(tmp_path):
+    app = create_app(
+        settings=_settings(""),
+        client=None,
+        terminus_version="9.9.9",
+        changelog_path=_changelog_file(tmp_path),
+    )
+    with TestClient(app) as tc:
+        assert tc.get("/changelog").json() is None
+
+
+def test_changelog_null_when_version_unknown(tmp_path):
+    app = create_app(
+        settings=_settings(""),
+        client=None,
+        terminus_version=None,
+        changelog_path=_changelog_file(tmp_path),
+    )
+    with TestClient(app) as tc:
+        assert tc.get("/changelog").json() is None
+
+
+def test_changelog_null_when_file_missing(tmp_path):
+    app = create_app(
+        settings=_settings(""),
+        client=None,
+        terminus_version="0.22.0",
+        changelog_path=tmp_path / "does-not-exist.md",
+    )
+    with TestClient(app) as tc:
+        assert tc.get("/changelog").json() is None
+
+
 class _FakeWS:
     def __init__(self, incoming):
         self._incoming = [json.dumps(m) for m in incoming]

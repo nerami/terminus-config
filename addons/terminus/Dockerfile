@@ -33,6 +33,10 @@ COPY --from=frontend /build/dist /app/frontend/dist
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
+# The add-on changelog, served per-version by the backend (/changelog) to power
+# the "what's new" dialog. Lands at /app/CHANGELOG.md (parents[2] of web.py).
+COPY CHANGELOG.md /app/CHANGELOG.md
+
 # The Supervisor passes the add-on's config.yaml version as the BUILD_VERSION
 # build-arg. Bake it into the runtime env so the backend can surface it (sidebar
 # version badge via /ha/status). Declared last so a release-only version bump
