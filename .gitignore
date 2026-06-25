@@ -20,6 +20,9 @@ deps/
 tts/
 .ps4-games*.json
 
+# HACS — self-updating integration, downloaded by Get HACS add-on
+custom_components/hacs/
+
 # Backups / blueprints user data
 backups/
 image/
