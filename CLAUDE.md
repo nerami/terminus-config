@@ -208,6 +208,7 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 | `dev-watch.sh` | laptop | start device watcher + sync-watch.sh together (hot-reload pair) |
 | `status.sh` | device | show HA core info, last deploy SHA, watcher status |
 | `status-ssh.sh` | laptop | SSH wrapper for status.sh |
+| `backup-storage.sh` | laptop | warn + confirm, then pull a READ-ONLY local mirror of device `.storage/` → `.storage/` (dev reference; gitignored, secrets/PII, never commit/deploy) |
 
 ## Do Not Touch
 
@@ -218,6 +219,14 @@ Never ad-hoc `git pull` / `ha core restart` on device — always go through `dep
 - `.ps4-games.*.json` — PlayStation Network runtime artifact, device-specific.
 
 All in `.gitignore`.
+
+**Local `.storage/` dev mirror.** [`bin/backup-storage.sh`](bin/backup-storage.sh)
+can pull a **read-only** copy of the device's `.storage/` into a local `.storage/`
+for debugging. Same rules apply — gitignored, holds secrets/PII, **never commit
+or deploy it**. Caveat: the local docker `check_config` mounts the repo as
+`/config`, so a populated `.storage/` is read by HA during validation (it will
+see the device's registries/config entries) — delete the mirror before
+validating if that's not what you want.
 
 ## MCP
 
