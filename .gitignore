@@ -20,8 +20,10 @@ deps/
 tts/
 .ps4-games*.json
 
-# HACS — self-updating integration, downloaded by Get HACS add-on
+# Community custom integrations (HACS or manual) — on-device, self-updating,
+# not tracked here. Add a line per integration; hand-written components stay tracked.
 custom_components/hacs/
+custom_components/divoom_pixoo/
 
 # Backups / blueprints user data
 backups/
