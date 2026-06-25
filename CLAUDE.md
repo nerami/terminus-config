@@ -73,10 +73,28 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_vscode | Studio Code Server |
 | a0d7b954_tailscale | Tailscale |
 | a0d7b954_ssh | Advanced SSH & Web Terminal |
+| cb646a50_get | Get HACS |
 
-These are third-party infra add-ons (device access + editing), managed
-through the Supervisor UI / `ha apps`. This repo holds **HA configuration
-only** — no local add-on sources.
+The first three are third-party infra add-ons (device access + editing),
+managed through the Supervisor UI / `ha apps`. This repo holds **HA
+configuration only** — no local add-on sources.
+
+### HACS
+
+The **Home Assistant Community Store** integration is installed via the
+HACS add-on repository (a third-party app repository, *not* a YAML config).
+
+- **Add-on repository** `cb646a50` — `https://github.com/hacs/addons`. Add/
+  remove with `ha store add|delete <url>`.
+- **Get HACS** (`cb646a50_get`) — one-shot bootstrapper. Starting it
+  downloads the HACS integration into `/config/custom_components/hacs/`,
+  then it stops itself. Safe to leave installed (or uninstall — its job is
+  done). Re-run only to re-download HACS.
+- **HACS integration** — lives in `custom_components/hacs/` on device,
+  **gitignored** (self-updating; never committed). After a Core restart,
+  finish setup in the UI: *Settings → Devices & Services → Add Integration
+  → HACS* → authorize the GitHub device-flow login. That UI step can't be
+  scripted from here.
 
 ## Repo Layout
 
@@ -89,7 +107,8 @@ secrets.yaml.example       # schema only; real secrets.yaml lives on device
 packages/                  # source-of-truth for hand-written work
 blueprints/                # automation/script blueprints
 bin/                       # deploy + reload + watcher scripts (see bin/ inventory below)
-# themes/, custom_components/, dashboards/ — absent, create when needed
+# custom_components/hacs/ — HACS integration, gitignored (self-updating)
+# themes/, dashboards/ — absent, create when needed
 ```
 
 **All hand-written automation / script / scene / template / sensor work → `packages/<area>.yaml`.** One file per room/feature. One package can declare any mix of top-level domains (`automation:`, `scene:`, `script:`, `template:`, `sensor:`) — single reviewable diff per feature.
