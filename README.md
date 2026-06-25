@@ -16,7 +16,8 @@ to add community **custom integrations** and **Lovelace/frontend cards** that ar
 built into HA Core.
 
 - Installed via the HACS **add-on repository** `https://github.com/hacs/addons`
-  (third-party app repo), bootstrapped by the **Get HACS** add-on (`cb646a50_get`).
+  (third-party app repo), bootstrapped by the **Get HACS** add-on (since
+  uninstalled — the repo stays registered for re-download/repair).
 - The integration lives in `custom_components/hacs/` **on the device** and is
   **gitignored** — HACS self-updates, so it stays out of version control. Anything
   you install through HACS (`custom_components/`, `www/community/`) likewise lives
