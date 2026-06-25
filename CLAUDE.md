@@ -63,6 +63,13 @@ Refresh: `hass-cli integration list`.
 | mobile_app | Nanis' iPhone |
 | local_calendar | Reminders |
 | telegram_bot | Terminus |
+| hacs | HACS |
+
+**HACS is installed** (see [HACS](#hacs) below). It's the channel for
+community **custom integrations** and **Lovelace/frontend cards** — when a
+needed component isn't a built-in HA integration, check HACS before
+hand-rolling. Installs land in `custom_components/` (gitignored) or
+`www/community/`, managed through the UI, not this repo.
 
 ## Installed Add-ons
 
@@ -91,10 +98,13 @@ HACS add-on repository (a third-party app repository, *not* a YAML config).
   then it stops itself. Safe to leave installed (or uninstall — its job is
   done). Re-run only to re-download HACS.
 - **HACS integration** — lives in `custom_components/hacs/` on device,
-  **gitignored** (self-updating; never committed). After a Core restart,
-  finish setup in the UI: *Settings → Devices & Services → Add Integration
-  → HACS* → authorize the GitHub device-flow login. That UI step can't be
-  scripted from here.
+  **gitignored** (self-updating; never committed). Config entry
+  `state=loaded`; setup is complete (GitHub device-flow login was done in
+  the UI). Health surfaces as `update.hacs_update` (`off` = up to date).
+- **Using it** — browse/install via the **HACS** sidebar panel (UI only;
+  the device's `.storage` + `custom_components/`/`www/community/` hold the
+  result, not this repo). HACS self-updates appear under
+  *Settings → Updates*.
 
 ## Repo Layout
 
