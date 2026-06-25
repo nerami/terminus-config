@@ -80,11 +80,10 @@ Refresh: `ha apps info <slug>` (SSH, Supervisor). Canonical: `ha apps` — `addo
 | a0d7b954_vscode | Studio Code Server |
 | a0d7b954_tailscale | Tailscale |
 | a0d7b954_ssh | Advanced SSH & Web Terminal |
-| cb646a50_get | Get HACS |
 
-The first three are third-party infra add-ons (device access + editing),
-managed through the Supervisor UI / `ha apps`. This repo holds **HA
-configuration only** — no local add-on sources.
+These are third-party infra add-ons (device access + editing), managed
+through the Supervisor UI / `ha apps`. This repo holds **HA configuration
+only** — no local add-on sources.
 
 ### HACS
 
@@ -93,10 +92,11 @@ HACS add-on repository (a third-party app repository, *not* a YAML config).
 
 - **Add-on repository** `cb646a50` — `https://github.com/hacs/addons`. Add/
   remove with `ha store add|delete <url>`.
-- **Get HACS** (`cb646a50_get`) — one-shot bootstrapper. Starting it
-  downloads the HACS integration into `/config/custom_components/hacs/`,
-  then it stops itself. Safe to leave installed (or uninstall — its job is
-  done). Re-run only to re-download HACS.
+- **Get HACS** (`cb646a50_get`) — one-shot bootstrapper, **uninstalled
+  after use**. Starting it downloaded the HACS integration into
+  `/config/custom_components/hacs/`, then it stopped itself. The add-on
+  repository (`cb646a50`, above) stays registered, so re-install + start
+  Get HACS only if you ever need to re-download/repair HACS.
 - **HACS integration** — lives in `custom_components/hacs/` on device,
   **gitignored** (self-updating; never committed). Config entry
   `state=loaded`; setup is complete (GitHub device-flow login was done in
