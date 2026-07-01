@@ -4,7 +4,7 @@ template:
         unique_id: is_dark
         icon: mdi:weather-night
         state: >-
-          {% set lux = states('sensor.light_sensor_samsung_illuminance') %}
+          {% set lux = states('sensor.lr_light_sensor_illuminance') %}
           {% if lux in ['unknown', 'unavailable'] %}
             {{ is_state('sun.sun', 'below_horizon') }}
           {% else %}
@@ -17,7 +17,7 @@ template:
         unique_id: is_bright
         icon: mdi:weather-sunny
         state: >-
-          {% set lux = states('sensor.light_sensor_samsung_illuminance') %}
+          {% set lux = states('sensor.lr_light_sensor_illuminance') %}
           {% if lux in ['unknown', 'unavailable'] %}
             {{ is_state('sun.sun', 'above_horizon') }}
           {% else %}

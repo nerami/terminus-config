@@ -26,7 +26,7 @@ automation:
       - condition: not
         conditions:
           - condition: state
-            entity_id: media_player.playstation_4_2
+            entity_id: media_player.mb_playstation_4
             state: 'playing'
     actions:
       - delay: '00:00:03'
@@ -57,11 +57,11 @@ automation:
       also gated by time<22:00 so night-walk keeps control after 22:00.
     triggers:
       - trigger: state
-        entity_id: media_player.playstation_4_2
+        entity_id: media_player.mb_playstation_4
         to: 'playing'
         id: tv_on
       - trigger: state
-        entity_id: media_player.playstation_4_2
+        entity_id: media_player.mb_playstation_4
         to:
           - 'off'
           - idle

@@ -6,6 +6,7 @@ Edit here → commit → deploy on device.
 - **Device:** HA Green, `terminus.tanuki-mirzam.ts.net` (Tailscale MagicDNS), HA Core **2026.x**.
 - **Hand-written config** lives in `packages/<area>.yaml`. Root `automations.yaml` / `scripts.yaml` / `scenes.yaml` are UI write targets only.
 - **Deploy:** `bin/deploy-ssh.sh` from the laptop (SSH in → backup → pull → check → restart).
+- **Areas reference:** [`docs/areas.md`](docs/areas.md) — devices/entities per area, regenerate with `bin/update-areas-doc.py`. A snapshot, not source of truth — see caveat in `CLAUDE.md`.
 
 > Full conventions, repo layout, deploy flow, and remote-ops notes are in **[`CLAUDE.md`](CLAUDE.md)**.
 
