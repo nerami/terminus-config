@@ -49,12 +49,12 @@ automation:
     alias: 'Yard: Illuminance Control'
     description: >-
       Turn the yard string lights socket on when it's dark and off when
-      bright. Yard has no illuminance sensor of its own, so this shares
-      LR's — same behavior as before this automation was split per room.
+      bright, gated by binary_sensor.yard_is_dark (pure sun-elevation
+      state — Yard has no illuminance sensor).
     use_blueprint:
       path: terminus/illuminance_switch_control.yaml
       input:
-        dark_sensor: binary_sensor.lr_is_dark
+        dark_sensor: binary_sensor.yard_is_dark
         target_switch: switch.yard_string_lights_socket
 
 scene:

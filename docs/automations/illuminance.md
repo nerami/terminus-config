@@ -29,7 +29,7 @@ flowchart TD
 | LR | `lr_is_dark` | `lr_lamp_socket` | `06:00:00`–`22:00:00` (default) | `group.family_trackers` = `home` (default) |
 | MB | `mb_is_dark` | `mb_lamp_socket` | default | default |
 | Abi | `abi_is_dark` | `abi_desk_lamp_socket` | default | default |
-| Yard | `lr_is_dark` (shared — see caveats) | `yard_string_lights_socket` | default | default |
+| Yard | `yard_is_dark` (pure sun elevation — see caveats) | `yard_string_lights_socket` | default | default |
 
 The `switch.sockets` group entity (`platform: group` over all four
 switches) still exists for the manual `scene.sockets_off` convenience
@@ -38,11 +38,15 @@ each instance targets its own member switch.
 
 ### Caveats
 
-- **Yard still shares LR's sensor.** Yard has no illuminance sensor of its
-  own, so its instance reuses `binary_sensor.lr_is_dark` — same behavior as
-  before this automation was split per room. If LR's light level diverges
-  from the yard's (e.g. LR is indoors, Yard is outdoors — likely to diverge
-  often), Yard's socket follows LR's reading, not its own.
+- **`binary_sensor.yard_is_dark` is pure sun elevation, not a lux
+  reading.** Defined in
+  [`light_sensing.yaml`](../../packages/light_sensing.yaml) as
+  `{{ is_state('sun.sun', 'below_horizon') }}` — no hysteresis band, no
+  macro, because sun elevation doesn't flicker the way lux does; it crosses
+  the horizon exactly twice a day. This means it flips at exact
+  sunset/sunrise (elevation = 0°), not at civil twilight — cloud cover or
+  actual visual darkness has no effect on it, unlike the lux-based
+  `is_dark` sensors elsewhere in this repo.
 - **No action outside 06:00–22:00** for any instance. After 22:00 sockets
   won't auto-turn-on even if dark — by design,
   [`schedule.yaml`](../../packages/schedule.yaml)'s 10pm shutoff and
@@ -56,6 +60,8 @@ each instance targets its own member switch.
 
 ### Recommendations
 
-- Add a dedicated Yard illuminance sensor to remove the LR-borrowing above
-  — swapping it in is a one-line change to the `dark_sensor` input on the
-  Yard instance in `packages/illuminance.yaml`, no blueprint edits needed.
+- If Yard's socket ever needs to react to actual visual darkness rather
+  than exact sun elevation (e.g. turning on a bit later, once civil
+  twilight ends, instead of right at sunset), switch `yard_is_dark`'s
+  template to `{{ state_attr('sun.sun', 'elevation') < -6 }}` — a one-line
+  change in `light_sensing.yaml`, no automation edits needed.

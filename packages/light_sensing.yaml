@@ -27,3 +27,8 @@ template:
         state: >-
           {% import 'is_dark.jinja' as is_dark %}
           {{ is_dark.lux_is_dark('sensor.mb_light_sensor_illuminance', 'binary_sensor.abi_is_dark') }}
+
+      - name: 'Yard: Is Dark'
+        unique_id: yard_is_dark
+        icon: mdi:weather-night
+        state: "{{ is_state('sun.sun', 'below_horizon') }}"
