@@ -57,7 +57,7 @@ triggers:
     to: 'on'
     for:
       seconds: !input hold
-    id: low_light
+    id: dim_light
   - trigger: state
     entity_id: !input dark_sensor
     to: 'off'
@@ -77,7 +77,7 @@ actions:
   - choose:
       - conditions:
           - condition: trigger
-            id: low_light
+            id: dim_light
         sequence:
           - action: switch.turn_on
             target:

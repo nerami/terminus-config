@@ -1,7 +1,7 @@
 blueprint:
-  name: 'Auto Scene: Dim / Day Light by darkness sensor'
+  name: 'Auto Scene: Dim / Bright Light by darkness sensor'
   description: >-
-    Applies a "dim" scene or a "day light" scene depending on a darkness
+    Applies a "dim" scene or a "bright light" scene depending on a darkness
     binary_sensor, triggered when any of a set of lights turns on or the
     darkness sensor changes state. Optionally skips while any of a set of
     TV media players is playing, so a TV-driven scene automation keeps
@@ -27,8 +27,8 @@ blueprint:
       selector:
         entity:
           domain: scene
-    day_light_scene:
-      name: Day Light scene
+    bright_light_scene:
+      name: Bright Light scene
       selector:
         entity:
           domain: scene
@@ -94,4 +94,4 @@ actions:
         sequence:
           - action: scene.turn_on
             target:
-              entity_id: !input day_light_scene
+              entity_id: !input bright_light_scene

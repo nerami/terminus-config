@@ -24,7 +24,7 @@ flowchart TD
     C -- yes --> D["delay: input 'delay' (default 3s)"]
     D --> S{"input 'dark_sensor' state"}
     S -- on --> DIM["scene.turn_on: input 'dim_scene'"]
-    S -- off --> DAY["scene.turn_on: input 'day_light_scene'"]
+    S -- off --> DAY["scene.turn_on: input 'bright_light_scene'"]
 ```
 
 | Room | `lights` | `dark_sensor` | `tv_players` |
@@ -51,9 +51,7 @@ flowchart TD
     C -- no --> X["stop"]
     C -- yes --> W{"which trigger?"}
     W -- tv_on --> RED["scene.turn_on: input 'redish_scene'"]
-    W -- tv_off --> C2{"time < input 'night_cutoff' (default 22:00)?"}
-    C2 -- yes --> DIM["scene.turn_on: input 'dim_scene'"]
-    C2 -- no --> X2["stop — later automation (e.g. Night Walk) takes over"]
+    W -- tv_off --> DIM["scene.turn_on: input 'dim_scene'"]
 ```
 
 | Room | `tv_players` | `redish_scene` | `dim_scene` |
@@ -61,10 +59,13 @@ flowchart TD
 | LR | `lr_tv`, `lr_tv_hub_cast` | `lr_redish` | `lr_dim` |
 | MB | `mb_tv` | `mb_redish` | `mb_dim` |
 
-Both rooms use the blueprint's `night_cutoff` (`22:00:00`) and `debounce`
-(`30`s) defaults — neither package overrides them. The `not_from`/`not_to`
-`unavailable`/`unknown` guards on both triggers are fixed by the blueprint
-body, not an input, so every instance gets them automatically.
+No time cutoff on the dim branch — turning the TV off always applies
+`dim_scene`, any time of night, between sunset and sunrise.
+
+Both rooms use the blueprint's `debounce` (`30`s) default — neither package
+overrides it. The `not_from`/`not_to` `unavailable`/`unknown` guards on both
+triggers are fixed by the blueprint body, not an input, so every instance
+gets them automatically.
 
 ## Shared `is_dark` macro
 
@@ -112,38 +113,23 @@ and "has no TV" rooms under one blueprint without a separate code path.
 Found by cross-referencing trigger entities, action targets, and the live
 label registry (`light`/`socket`/`lamp`) across all 21 automations above.
 
-1. **`schedule.yaml`'s 22:00 shutoff can kill an active TV scene.** "Turn off
-   the lights at 10pm" force-turns-off every `light`-labeled entity —
-   including `lr_living`, `lr_dining`, `mb_led_one`/`mb_led_two` — with no
-   TV-playing guard. [`LR: TV Scene`](living_room.md#lr-tv-scene) /
-   [`MB: TV Scene`](master_bedroom.md#mb-tv-scene) apply Redish while the TV
-   plays, gated only to "between sunset and sunrise" — which includes
-   22:00. If the TV is playing at exactly 22:00:00, the fixed schedule
-   automation forces those same lights off regardless of playback state.
-   [`LR: Auto Scene`](living_room.md#lr-auto-scene) /
-   [`MB: Auto Scene`](master_bedroom.md#mb-auto-scene) both added a
-   "not TV playing" guard for exactly this reason — the 22:00 schedule
-   never got the same treatment.
-2. **Same gap in the "leave" presence automation.**
+1. **Same gap in the "leave" presence automation.**
    ["Turn off lights when everyone leaves"](presence.md) also force-turns-off
-   `light`-labeled entities with no TV-playing guard. Lower probability
-   (needs the TV playing while every tracked phone is away) but the same
-   category of gap as #1.
-3. **Scene targets are shared by two automations each, coordinated only by
+   `light`-labeled entities with no TV-playing guard.
+2. **Scene targets are shared by two automations each, coordinated only by
    conditions — not a lock.** `scene.lr_dim`/`scene.mb_dim` (and the
-   day_light/redish variants) are each written by both that room's
+   bright_light/redish variants) are each written by both that room's
    `Auto Scene` and `TV Scene` automation. They avoid colliding today only
-   because of conditions (`not TV playing`, the sun window, the
-   `time < 22:00` dim branch) — there's no actual mutual exclusion. Loosening
-   any one of those guards in a future edit could reintroduce a race where
-   both scenes fire back-to-back. `Auto Scene`'s half of that guard now
-   lives once in the shared
+   because of conditions (`not TV playing`, the sun window) — there's no
+   actual mutual exclusion. Loosening any one of those guards in a future
+   edit could reintroduce a race where both scenes fire back-to-back.
+   `Auto Scene`'s half of that guard now lives once in the shared
    [Auto Scene blueprint](README.md#auto-scene-blueprint) (the `tv_players`
    input) rather than duplicated per room — a fix there fixes it everywhere,
    but a bug there also breaks it everywhere; `TV Scene`'s half is still
    separate hand-written logic per room, so the two are not symmetrically
    guarded even now.
-4. **Illuminance Control and Night Walk own the same lamp/socket switches
+3. **Illuminance Control and Night Walk own the same lamp/socket switches
    on disjoint clocks, leaving a blind gap.** Each
    [Illuminance Switch Control](illuminance.md#illuminance-switch-control-blueprint)
    instance drives its own switch (`lr_lamp_socket`, `mb_lamp_socket`,
@@ -153,7 +139,7 @@ label registry (`light`/`socket`/`lamp`) across all 21 automations above.
    abi/mb socket switches changing). **05:00–06:00 has no owner** for any
    of these switches — if it's dark and someone's up early, nothing
    responds to darkness or presence until 06:00.
-5. **Cosmetic, not functional: Night Walk changes the `switch.sockets`
+4. **Cosmetic, not functional: Night Walk changes the `switch.sockets`
    group's aggregate state as a side effect.** Turning on
    `abi_desk_lamp_socket` / `mb_lamp_socket` at 2am also flips the
    `switch.sockets` group entity's state (a `platform: group` aggregate

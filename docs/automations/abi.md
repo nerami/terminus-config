@@ -26,7 +26,7 @@ flowchart TD
     C -- yes --> D["delay 3s"]
     D --> S{"binary_sensor.abi_is_dark"}
     S -- on --> DIM["scene.turn_on scene.abi_dim"]
-    S -- off --> DAY["scene.turn_on scene.abi_day_light"]
+    S -- off --> DAY["scene.turn_on scene.abi_bright_light"]
 ```
 
 ### Caveats
@@ -37,7 +37,7 @@ flowchart TD
   Abi's actual light level isn't measured.
 - **`light.abi_pixoo_light` is intentionally excluded** from both this
   automation and the Abi scenes — it only supports `brightness` (no
-  `color_temp`/`hs_color`), so it can't represent Day Light / Dim / Redish /
+  `color_temp`/`hs_color`), so it can't represent Bright Light / Dim / Redish /
   Bluish the way the two LED lights can.
 - **No TV Scene equivalent** — Abi has no `media_player`.
 - Same 3s-delay / undebounced-`is_dark` notes as

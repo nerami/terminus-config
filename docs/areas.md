@@ -164,7 +164,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `scene.lr_bluish` | LR: Bluish |
-| `scene.lr_day_light` | LR: Day Light |
+| `scene.lr_bright_light` | LR: Bright Light |
 | `scene.lr_dim` | LR: Dim |
 | `scene.lr_redish` | LR: Redish |
 
@@ -232,7 +232,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `scene.mb_bluish` | MB: Bluish |
-| `scene.mb_day_light` | MB: Day Light |
+| `scene.mb_bright_light` | MB: Bright Light |
 | `scene.mb_dim` | MB: Dim |
 | `scene.mb_redish` | MB: Redish |
 

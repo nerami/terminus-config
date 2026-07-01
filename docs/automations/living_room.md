@@ -4,7 +4,7 @@ Source: [`packages/living_room.yaml`](../../packages/living_room.yaml)
 
 ## LR: Auto Scene
 
-Applies Day Light or Dim when an LR light turns on, or when ambient light
+Applies Bright Light or Dim when an LR light turns on, or when ambient light
 crosses the `is_dark` hysteresis band — but only while the TV isn't playing,
 so `LR: TV Scene` keeps control during playback.
 
@@ -22,7 +22,7 @@ flowchart TD
     C -- yes --> D["delay 3s"]
     D --> S{"binary_sensor.lr_is_dark"}
     S -- on --> DIM["scene.turn_on scene.lr_dim"]
-    S -- off --> DAY["scene.turn_on scene.lr_day_light"]
+    S -- off --> DAY["scene.turn_on scene.lr_bright_light"]
 ```
 
 ### Caveats
@@ -43,8 +43,7 @@ flowchart TD
 ## LR: TV Scene
 
 Applies Redish when the TV turns on, or Dim when it turns off for 30s —
-only between sunset and sunrise, and only if it's before 22:00 (after that,
-Night Walk owns the lamp).
+only between sunset and sunrise, no other time restriction.
 
 Instance of the [TV Scene blueprint](README.md#tv-scene-blueprint) —
 `packages/living_room.yaml` only supplies inputs, not the automation logic.
@@ -59,9 +58,7 @@ flowchart TD
     C -- no --> X["stop"]
     C -- yes --> W{"which trigger?"}
     W -- tv_on --> RED["scene.turn_on scene.lr_redish"]
-    W -- tv_off --> C2{"time < 22:00?"}
-    C2 -- yes --> DIM["scene.turn_on scene.lr_dim"]
-    C2 -- no --> X2["stop — Night Walk / 22:00 schedule take over"]
+    W -- tv_off --> DIM["scene.turn_on scene.lr_dim"]
 ```
 
 ### Caveats

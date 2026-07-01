@@ -4,7 +4,7 @@ Source: [`packages/kitchen.yaml`](../../packages/kitchen.yaml)
 
 ## Kitchen: Auto Scene
 
-Applies Day Light or Dim when a Kitchen light turns on, or when ambient
+Applies Bright Light or Dim when a Kitchen light turns on, or when ambient
 light crosses the `is_dark` hysteresis band. Kitchen has no illuminance
 sensor of its own, so `binary_sensor.kitchen_is_dark` (defined in
 [`light_sensing.yaml`](../../packages/light_sensing.yaml)) computes its own
@@ -27,7 +27,7 @@ flowchart TD
     C -- yes --> D["delay 3s"]
     D --> S{"binary_sensor.kitchen_is_dark"}
     S -- on --> DIM["scene.turn_on scene.kitchen_dim"]
-    S -- off --> DAY["scene.turn_on scene.kitchen_day_light"]
+    S -- off --> DAY["scene.turn_on scene.kitchen_bright_light"]
 ```
 
 ### Caveats

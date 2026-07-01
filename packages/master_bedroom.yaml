@@ -2,7 +2,7 @@ automation:
   - id: '1771080380126'
     alias: 'MB: Auto Scene'
     description: >-
-      Apply Day Light or Dim when a bedroom light turns on or when
+      Apply Bright Light or Dim when a bedroom light turns on or when
       ambient light crosses the is_dark hysteresis band, unless the
       TV is playing.
     use_blueprint:
@@ -13,7 +13,7 @@ automation:
           - light.mb_led_two
         dark_sensor: binary_sensor.mb_is_dark
         dim_scene: scene.mb_dim
-        day_light_scene: scene.mb_day_light
+        bright_light_scene: scene.mb_bright_light
         tv_players:
           - media_player.mb_tv
 
@@ -59,7 +59,7 @@ scene:
         hs_color: [10, 100]
 
   - id: '1771078321508'
-    name: 'MB: Day Light'
+    name: 'MB: Bright Light'
     icon: mdi:shield-sun
     entities:
       light.mb_led_one:

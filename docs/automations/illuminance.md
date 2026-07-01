@@ -13,14 +13,14 @@ darkness sensor:
 
 ```mermaid
 flowchart TD
-    T1["trigger: input 'dark_sensor' → on, for input 'hold' (default 10s) (low_light)"]
+    T1["trigger: input 'dark_sensor' → on, for input 'hold' (default 10s) (dim_light)"]
     T2["trigger: input 'dark_sensor' → off, for input 'hold' (bright_light)"]
     T1 --> C
     T2 --> C
     C{"input 'time_after' ≤ now < input 'time_before'\nAND input 'presence_entity' = input 'presence_state'"}
     C -- no --> X["stop"]
     C -- yes --> W{"which trigger fired?"}
-    W -- low_light --> ON["switch.turn_on: input 'target_switch'"]
+    W -- dim_light --> ON["switch.turn_on: input 'target_switch'"]
     W -- bright_light --> OFF["switch.turn_off: input 'target_switch'"]
 ```
 

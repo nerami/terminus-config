@@ -1,13 +1,10 @@
 automation:
   - id: '1771035434876'
-    alias: Turn off the lights at 10pm
+    alias: Turn off the lamps at 10pm
     triggers:
       - trigger: time
         at: '22:00:00'
     actions:
-      - action: light.turn_off
-        target:
-          label_id: light
       - action: switch.turn_off
         target:
           label_id: socket

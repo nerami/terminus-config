@@ -3,10 +3,8 @@ blueprint:
   description: >-
     Applies a "redish" scene when any of a set of TV media players turns
     on, or a "dim" scene when they all settle to off for a debounce
-    window. Only active between sunset and sunrise; the dim branch is also
-    gated by a night cutoff time so a later automation (e.g. a night-walk
-    routine) can take over. Abstracts the "*: TV Scene" pattern used
-    across LR and MB.
+    window. Only active between sunset and sunrise. Abstracts the "*: TV
+    Scene" pattern used across LR and MB.
   domain: automation
   input:
     tv_players:
@@ -28,14 +26,6 @@ blueprint:
       selector:
         entity:
           domain: scene
-    night_cutoff:
-      name: Night cutoff time
-      description: >-
-        After this time, the dim branch is skipped so a night-walk
-        automation keeps control of the lamp instead.
-      default: '22:00:00'
-      selector:
-        time: {}
     debounce:
       name: Off debounce
       description: >-
@@ -85,8 +75,6 @@ actions:
       - conditions:
           - condition: trigger
             id: tv_off
-          - condition: time
-            before: !input night_cutoff
         sequence:
           - action: scene.turn_on
             target:

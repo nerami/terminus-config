@@ -23,7 +23,7 @@ flowchart TD
     C -- yes --> D["delay 3s"]
     D --> S{"binary_sensor.mb_is_dark"}
     S -- on --> DIM["scene.turn_on scene.mb_dim"]
-    S -- off --> DAY["scene.turn_on scene.mb_day_light"]
+    S -- off --> DAY["scene.turn_on scene.mb_bright_light"]
 ```
 
 ### Caveats
@@ -52,9 +52,7 @@ flowchart TD
     C -- no --> X["stop"]
     C -- yes --> W{"which trigger?"}
     W -- tv_on --> RED["scene.turn_on scene.mb_redish"]
-    W -- tv_off --> C2{"time < 22:00?"}
-    C2 -- yes --> DIM["scene.turn_on scene.mb_dim"]
-    C2 -- no --> X2["stop — Night Walk / 22:00 schedule take over"]
+    W -- tv_off --> DIM["scene.turn_on scene.mb_dim"]
 ```
 
 ### Caveats
