@@ -1,6 +1,6 @@
 # Home Assistant Areas — Devices & Entities
 
-_Generated: 2026-07-01 14:01:50 UTC_
+_Generated: 2026-07-01 20:24:28 UTC_
 
 Auto-generated reference of every area's devices and entities, grouped by
 domain. Source of truth is the device/entity/area registries on the device
@@ -11,16 +11,16 @@ system/integration infra, but worth a periodic skim for real gaps.
 
 Regenerate via `bin/update-areas-doc.py`.
 
-**6 areas, 49 devices, 221 entities** (+ 0 unassigned devices, 0 unassigned entities).
+**6 areas, 49 devices, 239 entities** (+ 0 unassigned devices, 0 unassigned entities).
 
 | Area | ID | Devices | Entities |
 |---|---|---|---|
-| Abi | `abi` | 4 | 19 |
-| Kitchen | `kitchen` | 4 | 18 |
-| LR | `lr` | 7 | 22 |
-| MB | `mb` | 7 | 35 |
-| Trmns | `trmns` | 26 | 126 |
-| Yard | `yard` | 1 | 1 |
+| Abi | `abi` | 4 | 26 |
+| Kitchen | `kitchen` | 4 | 24 |
+| LR | `lr` | 7 | 24 |
+| MB | `mb` | 7 | 37 |
+| Trmns | `trmns` | 26 | 125 |
+| Yard | `yard` | 1 | 3 |
 | _Unassigned_ | — | 0 | 0 |
 
 ## Abi (`abi`)
@@ -34,7 +34,23 @@ Regenerate via `bin/update-areas-doc.py`.
 | Led Two | `8f4d6afd00895cd3bef21ff2d2a6a675` |
 | Pixoo | `6f1ee1b08d4c7d905fc2ef2c69bb5cac` |
 
-### Entities (19)
+### Entities (26)
+
+#### Automations (2)
+
+| Entity ID | Name |
+|---|---|
+| `automation.abi_auto_scene` | Abi: Auto Scene |
+| `automation.abi_illuminance_control` | Abi: Illuminance Control |
+
+#### Scenes (4)
+
+| Entity ID | Name |
+|---|---|
+| `scene.abi_bluish` | Abi: Bluish |
+| `scene.abi_bright_light` | Abi: Bright Light |
+| `scene.abi_dim` | Abi: Dim |
+| `scene.abi_redish` | Abi: Redish |
 
 #### Lights (3)
 
@@ -54,7 +70,13 @@ Regenerate via `bin/update-areas-doc.py`.
 
 | Entity ID | Name |
 |---|---|
-| `sensor.abi_pixoo_current_page` | Current Page |
+| `sensor.abi_pixoo_current_page` | Pixoo Current Page |
+
+#### Binary Sensors (1)
+
+| Entity ID | Name |
+|---|---|
+| `binary_sensor.abi_is_dark` | Abi: Is Dark |
 
 #### Buttons (2)
 
@@ -96,7 +118,22 @@ Regenerate via `bin/update-areas-doc.py`.
 | Led Two | `2a0dfd3e1e10fa72be1d711b824a5815` |
 | Lobby | `b7a6b645ccd74f1fd7e07e5f2aae8b81` |
 
-### Entities (18)
+### Entities (24)
+
+#### Automations (1)
+
+| Entity ID | Name |
+|---|---|
+| `automation.kitchen_auto_scene` | Kitchen: Auto Scene |
+
+#### Scenes (4)
+
+| Entity ID | Name |
+|---|---|
+| `scene.kitchen_bluish` | Kitchen: Bluish |
+| `scene.kitchen_bright_light` | Kitchen: Bright Light |
+| `scene.kitchen_dim` | Kitchen: Dim |
+| `scene.kitchen_redish` | Kitchen: Redish |
 
 #### Lights (4)
 
@@ -106,6 +143,12 @@ Regenerate via `bin/update-areas-doc.py`.
 | `light.kitchen_led_one` | Led One |
 | `light.kitchen_led_two` | Led Two |
 | `light.kitchen_lobby` | Lobby |
+
+#### Binary Sensors (1)
+
+| Entity ID | Name |
+|---|---|
+| `binary_sensor.kitchen_is_dark` | Kitchen: Is Dark |
 
 #### Buttons (2)
 
@@ -150,13 +193,14 @@ Regenerate via `bin/update-areas-doc.py`.
 | TV | `27133817da8e53760a3900ea945e9492` |
 | TV Hub | `08da9d9d9d378760474044c8efdd2ef0` |
 
-### Entities (22)
+### Entities (24)
 
-#### Automations (2)
+#### Automations (3)
 
 | Entity ID | Name |
 |---|---|
 | `automation.lr_auto_daylight` | LR: Auto Scene |
+| `automation.lr_illuminance_control` | LR: Illuminance Control |
 | `automation.lr_playing_tv` | LR: TV Scene |
 
 #### Scenes (4)
@@ -186,7 +230,7 @@ Regenerate via `bin/update-areas-doc.py`.
 
 | Entity ID | Name |
 |---|---|
-| `media_player.lr_playstation_5` | media_player.lr_playstation_5 |
+| `media_player.lr_playstation_5` | PlayStation 5 |
 | `media_player.lr_tv` | TV |
 | `media_player.lr_tv_hub_cast` | TV Hub: Cast |
 
@@ -204,6 +248,12 @@ Regenerate via `bin/update-areas-doc.py`.
 | `sensor.lr_tv_tv_channel` | TV TV channel |
 | `sensor.lr_tv_tv_channel_name` | TV TV channel name |
 
+#### Binary Sensors (1)
+
+| Entity ID | Name |
+|---|---|
+| `binary_sensor.lr_is_dark` | LR: Is Dark |
+
 ## MB (`mb`)
 
 ### Devices (7)
@@ -218,13 +268,14 @@ Regenerate via `bin/update-areas-doc.py`.
 | TV | `bbd7bcd9d836f0319ca1bbc64688a298` |
 | TV Hub | `9cf1f556324127bed50f5837534d4c2f` |
 
-### Entities (35)
+### Entities (37)
 
-#### Automations (2)
+#### Automations (3)
 
 | Entity ID | Name |
 |---|---|
-| `automation.auto_daylight` | MB: Auto Daylight |
+| `automation.auto_daylight` | MB: Auto Scene |
+| `automation.mb_illuminance_control` | MB: Illuminance Control |
 | `automation.mb_tv_playing` | MB: Playing TV |
 
 #### Scenes (4)
@@ -254,7 +305,7 @@ Regenerate via `bin/update-areas-doc.py`.
 
 | Entity ID | Name |
 |---|---|
-| `media_player.mb_playstation_4` | media_player.mb_playstation_4 |
+| `media_player.mb_playstation_4` | PlayStation 4 |
 | `media_player.mb_tv` | TV |
 
 #### Sensors (9)
@@ -270,6 +321,12 @@ Regenerate via `bin/update-areas-doc.py`.
 | `sensor.mb_tv_power_energy` | TV Power energy |
 | `sensor.mb_tv_tv_channel` | TV TV channel |
 | `sensor.mb_tv_tv_channel_name` | TV TV channel name |
+
+#### Binary Sensors (1)
+
+| Entity ID | Name |
+|---|---|
+| `binary_sensor.mb_is_dark` | MB: Is Dark |
 
 #### Buttons (2)
 
@@ -333,7 +390,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | iPhone | `02c50317096ed50ebe364c2e8bc3b1d2` |
 | nerami_h | `e89e78db09e6ecc2c7784a5d09ea8c0b` |
 
-### Entities (126)
+### Entities (125)
 
 #### Automations (12)
 
@@ -349,7 +406,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | `automation.telegram_remind_empty_input_usage` | Telegram: /remind empty input → usage |
 | `automation.telegram_remind_natural_language_claude` | Telegram: /remind natural language → Claude |
 | `automation.turn_off_lights_when_leave` | Turn off lights when I leave home |
-| `automation.turn_off_the_lights_at_10pm` | Turn off the lights at 10pm |
+| `automation.turn_off_the_lights_at_10pm` | Turn off the lamps at 10pm |
 | `automation.turn_on_the_lights_when_i_get_home` | Turn on the lights when I get home late |
 
 #### Scenes (2)
@@ -431,28 +488,27 @@ Regenerate via `bin/update-areas-doc.py`.
 | `sensor.sun_next_rising` | Sun Next rising |
 | `sensor.sun_next_setting` | Sun Next setting |
 | `sensor.system_monitor_cpu_pressure_some_10s_average` | System Monitor CPU pressure some 10s average |
-| `sensor.trmns_nerami_h_bronze_trophies` | Bronze trophies |
-| `sensor.trmns_nerami_h_gold_trophies` | Gold trophies |
-| `sensor.trmns_nerami_h_last_online` | Last online |
-| `sensor.trmns_nerami_h_next_level` | Next level |
-| `sensor.trmns_nerami_h_now_playing` | Now playing |
-| `sensor.trmns_nerami_h_online_id` | Online ID |
-| `sensor.trmns_nerami_h_online_status` | Online status |
-| `sensor.trmns_nerami_h_platinum_trophies` | Platinum trophies |
-| `sensor.trmns_nerami_h_silver_trophies` | Silver trophies |
-| `sensor.trmns_nerami_h_trophy_level` | Trophy level |
+| `sensor.trmns_nerami_h_bronze_trophies` | nerami_h Bronze trophies |
+| `sensor.trmns_nerami_h_gold_trophies` | nerami_h Gold trophies |
+| `sensor.trmns_nerami_h_last_online` | nerami_h Last online |
+| `sensor.trmns_nerami_h_next_level` | nerami_h Next level |
+| `sensor.trmns_nerami_h_now_playing` | nerami_h Now playing |
+| `sensor.trmns_nerami_h_online_id` | nerami_h Online ID |
+| `sensor.trmns_nerami_h_online_status` | nerami_h Online status |
+| `sensor.trmns_nerami_h_platinum_trophies` | nerami_h Platinum trophies |
+| `sensor.trmns_nerami_h_silver_trophies` | nerami_h Silver trophies |
+| `sensor.trmns_nerami_h_trophy_level` | nerami_h Trophy level |
 
-#### Binary Sensors (7)
+#### Binary Sensors (6)
 
 | Entity ID | Name |
 |---|---|
 | `binary_sensor.iphone_presence` | iPhone Presence |
 | `binary_sensor.is_bright` | Is Bright |
-| `binary_sensor.is_dark` | Is Dark |
 | `binary_sensor.nanis_iphone_focus` | Nanis’ iPhone Focus |
 | `binary_sensor.normans_iphone_focus` | Norman’s iPhone ++ Focus |
 | `binary_sensor.remote_ui` | Remote UI |
-| `binary_sensor.trmns_nerami_h_subscribed_to_playstation_plus` | Subscribed to PlayStation Plus |
+| `binary_sensor.trmns_nerami_h_subscribed_to_playstation_plus` | nerami_h Subscribed to PlayStation Plus |
 
 #### Device Trackers (3)
 
@@ -494,9 +550,9 @@ Regenerate via `bin/update-areas-doc.py`.
 
 | Entity ID | Name |
 |---|---|
-| `image.trmns_nerami_h_avatar` | Avatar |
-| `image.trmns_nerami_h_now_playing` | Now playing |
-| `image.trmns_nerami_h_share_profile` | Share profile |
+| `image.trmns_nerami_h_avatar` | nerami_h Avatar |
+| `image.trmns_nerami_h_now_playing` | nerami_h Now playing |
+| `image.trmns_nerami_h_share_profile` | nerami_h Share profile |
 
 #### Other (18)
 
@@ -529,13 +585,25 @@ Regenerate via `bin/update-areas-doc.py`.
 |---|---|
 | String Lights | `d503d1386f7a1c558e7fe79687b35824` |
 
-### Entities (1)
+### Entities (3)
+
+#### Automations (1)
+
+| Entity ID | Name |
+|---|---|
+| `automation.yard_illuminance_control` | Yard: Illuminance Control |
 
 #### Switches (1)
 
 | Entity ID | Name |
 |---|---|
 | `switch.yard_string_lights_socket` | Socket |
+
+#### Binary Sensors (1)
+
+| Entity ID | Name |
+|---|---|
+| `binary_sensor.yard_is_dark` | Yard: Is Dark |
 
 ## Unassigned (no area)
 
