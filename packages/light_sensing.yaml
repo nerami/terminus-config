@@ -1,7 +1,7 @@
 template:
   - binary_sensor:
-      - name: 'Is Dark'
-        unique_id: is_dark
+      - name: 'LR: Is Dark'
+        unique_id: lr_is_dark
         icon: mdi:weather-night
         state: >-
           {% set lux = states('sensor.lr_light_sensor_illuminance') %}
@@ -9,7 +9,20 @@ template:
             {{ is_state('sun.sun', 'below_horizon') }}
           {% else %}
             {% set lux = lux | float %}
-            {% set was_on = is_state('binary_sensor.is_dark', 'on') %}
+            {% set was_on = is_state('binary_sensor.lr_is_dark', 'on') %}
+            {{ lux < 30 if was_on else lux < 20 }}
+          {% endif %}
+
+      - name: 'MB: Is Dark'
+        unique_id: mb_is_dark
+        icon: mdi:weather-night
+        state: >-
+          {% set lux = states('sensor.mb_light_sensor_illuminance') %}
+          {% if lux in ['unknown', 'unavailable'] %}
+            {{ is_state('sun.sun', 'below_horizon') }}
+          {% else %}
+            {% set lux = lux | float %}
+            {% set was_on = is_state('binary_sensor.mb_is_dark', 'on') %}
             {{ lux < 30 if was_on else lux < 20 }}
           {% endif %}
 

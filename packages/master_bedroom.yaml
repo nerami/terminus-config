@@ -4,7 +4,7 @@ automation:
     description: >-
       Apply Day Light or Dim when a bedroom light turns on or when
       ambient light crosses the is_dark hysteresis band, unless the
-      PlayStation is playing.
+      TV is playing.
     triggers:
       - trigger: state
         entity_id:
@@ -13,7 +13,7 @@ automation:
         from: 'off'
         to: 'on'
       - trigger: state
-        entity_id: binary_sensor.is_dark
+        entity_id: binary_sensor.mb_is_dark
     conditions:
       - condition: or
         conditions:
@@ -26,14 +26,14 @@ automation:
       - condition: not
         conditions:
           - condition: state
-            entity_id: media_player.mb_playstation_4
+            entity_id: media_player.mb_tv
             state: 'playing'
     actions:
       - delay: '00:00:03'
       - choose:
           - conditions:
               - condition: state
-                entity_id: binary_sensor.is_dark
+                entity_id: binary_sensor.mb_is_dark
                 state: 'on'
             sequence:
               - action: scene.turn_on
@@ -41,7 +41,7 @@ automation:
                   entity_id: scene.mb_dim
           - conditions:
               - condition: state
-                entity_id: binary_sensor.is_dark
+                entity_id: binary_sensor.mb_is_dark
                 state: 'off'
             sequence:
               - action: scene.turn_on
@@ -52,23 +52,21 @@ automation:
   - id: '1771085036395'
     alias: 'MB: TV Scene'
     description: >-
-      Apply Redish when the PlayStation starts playing, or Dim when it
-      goes idle/paused/off. Only between sunset and sunrise. Dim branch
-      also gated by time<22:00 so night-walk keeps control after 22:00.
+      Apply Redish when the TV powers on, or Dim when it powers off for
+      30s. Only between sunset and sunrise. Dim branch is also gated by
+      time<22:00 so night-walk keeps control after 22:00.
     triggers:
       - trigger: state
-        entity_id: media_player.mb_playstation_4
-        to: 'playing'
+        entity_id: media_player.mb_tv
+        from: 'off'
+        not_to:
+          - 'unavailable'
+          - 'unknown'
         id: tv_on
       - trigger: state
-        entity_id: media_player.mb_playstation_4
-        to:
-          - 'off'
-          - idle
-          - unknown
-          - unavailable
-          - paused
-          - standby
+        entity_id: media_player.mb_tv
+        to: 'off'
+        for: '00:00:30'
         id: tv_off
     conditions:
       - condition: sun

@@ -3,17 +3,17 @@ automation:
     alias: 'Sockets: Illuminance Control'
     description: >-
       Turn Terminus sockets on when the room is dark and off when bright,
-      gated by binary_sensor.is_dark (20/30 lux hysteresis band + sun
+      gated by binary_sensor.lr_is_dark (20/30 lux hysteresis band + sun
       fallback when the lux sensor is offline). A 10-second hold debounces
       brief state flickers.
     triggers:
       - trigger: state
-        entity_id: binary_sensor.is_dark
+        entity_id: binary_sensor.lr_is_dark
         to: 'on'
         for: '00:00:10'
         id: low_light
       - trigger: state
-        entity_id: binary_sensor.is_dark
+        entity_id: binary_sensor.lr_is_dark
         to: 'off'
         for: '00:00:10'
         id: bright_light

@@ -13,7 +13,7 @@ automation:
         from: 'off'
         to: 'on'
       - trigger: state
-        entity_id: binary_sensor.is_dark
+        entity_id: binary_sensor.lr_is_dark
     conditions:
       - condition: or
         conditions:
@@ -32,7 +32,7 @@ automation:
       - choose:
           - conditions:
               - condition: state
-                entity_id: binary_sensor.is_dark
+                entity_id: binary_sensor.lr_is_dark
                 state: 'on'
             sequence:
               - action: scene.turn_on
@@ -40,7 +40,7 @@ automation:
                   entity_id: scene.lr_dim
           - conditions:
               - condition: state
-                entity_id: binary_sensor.is_dark
+                entity_id: binary_sensor.lr_is_dark
                 state: 'off'
             sequence:
               - action: scene.turn_on

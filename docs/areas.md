@@ -1,6 +1,6 @@
 # Home Assistant Areas — Devices & Entities
 
-_Generated: 2026-07-01 13:44:41 UTC_
+_Generated: 2026-07-01 14:01:50 UTC_
 
 Auto-generated reference of every area's devices and entities, grouped by
 domain. Source of truth is the device/entity/area registries on the device
@@ -11,11 +11,11 @@ system/integration infra, but worth a periodic skim for real gaps.
 
 Regenerate via `bin/update-areas-doc.py`.
 
-**6 areas, 49 devices, 207 entities** (+ 0 unassigned devices, 0 unassigned entities).
+**6 areas, 49 devices, 221 entities** (+ 0 unassigned devices, 0 unassigned entities).
 
 | Area | ID | Devices | Entities |
 |---|---|---|---|
-| Abi | `abi` | 4 | 5 |
+| Abi | `abi` | 4 | 19 |
 | Kitchen | `kitchen` | 4 | 18 |
 | LR | `lr` | 7 | 22 |
 | MB | `mb` | 7 | 35 |
@@ -29,19 +29,19 @@ Regenerate via `bin/update-areas-doc.py`.
 
 | Name | Device ID |
 |---|---|
-| Abi: Led Two | `175e78412977a42bd100b13bb467d865` |
 | Desk Lamp | `c9241b2a79b5872396edc88d8a8160e0` |
-| Led One | `696e93b3e09db667c53874bfc324cc4a` |
+| Led One | `7543703bd78258ae264b5559973c4b1c` |
+| Led Two | `8f4d6afd00895cd3bef21ff2d2a6a675` |
 | Pixoo | `6f1ee1b08d4c7d905fc2ef2c69bb5cac` |
 
-### Entities (5)
+### Entities (19)
 
 #### Lights (3)
 
 | Entity ID | Name |
 |---|---|
 | `light.abi_led_one` | Led One |
-| `light.abi_led_two` | Abi: Led Two |
+| `light.abi_led_two` | Led Two |
 | `light.abi_pixoo_light` | Pixoo Light |
 
 #### Switches (1)
@@ -55,6 +55,35 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `sensor.abi_pixoo_current_page` | Current Page |
+
+#### Buttons (2)
+
+| Entity ID | Name |
+|---|---|
+| `button.abi_led_one_identify` | Led One Identify |
+| `button.abi_led_two_identify` | Led Two Identify |
+
+#### Numbers (10)
+
+| Entity ID | Name |
+|---|---|
+| `number.abi_led_one_off_transition_time` | Led One Off transition time |
+| `number.abi_led_one_on_level` | Led One On level |
+| `number.abi_led_one_on_off_transition_time` | Led One On/Off transition time |
+| `number.abi_led_one_on_transition_time` | Led One On transition time |
+| `number.abi_led_one_power_on_level` | Led One Power-on level |
+| `number.abi_led_two_off_transition_time` | Led Two Off transition time |
+| `number.abi_led_two_on_level` | Led Two On level |
+| `number.abi_led_two_on_off_transition_time` | Led Two On/Off transition time |
+| `number.abi_led_two_on_transition_time` | Led Two On transition time |
+| `number.abi_led_two_power_on_level` | Led Two Power-on level |
+
+#### Selects (2)
+
+| Entity ID | Name |
+|---|---|
+| `select.abi_led_one_power_on_behavior` | Led One Power-on behavior |
+| `select.abi_led_two_power_on_behavior` | Led Two Power-on behavior |
 
 ## Kitchen (`kitchen`)
 

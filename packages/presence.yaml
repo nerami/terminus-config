@@ -31,7 +31,7 @@ automation:
         event: enter
     conditions:
       - condition: state
-        entity_id: binary_sensor.is_dark
+        entity_id: binary_sensor.lr_is_dark
         state: 'on'
     actions:
       - action: switch.turn_on
