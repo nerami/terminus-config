@@ -1,3 +1,13 @@
+switch:
+  - platform: group
+    name: Sockets
+    unique_id: sockets
+    entities:
+      - switch.mb_lamp_socket
+      - switch.lr_lamp_socket
+      - switch.abi_desk_lamp_socket
+      - switch.yard_string_lights_socket
+
 automation:
   - id: sockets_illuminance_control
     alias: 'Sockets: Illuminance Control'
