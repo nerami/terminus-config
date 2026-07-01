@@ -10,6 +10,17 @@ notify:
   - name: events
     platform: notify_events
 
+counter:
+  ha_error_count:
+    name: HA Error Count
+    initial: 0
+    restore: true
+
+input_text:
+  ha_error_last:
+    name: HA Error Last
+    max: 255
+
 automation:
   - id: notify_calendar_reminder
     alias: 'Notify: calendar reminder fires'
@@ -213,3 +224,80 @@ automation:
               /remind dentist Friday 9am for 90 min
               /remind pickup Nanis today 5:30pm
               /remind block 2 hours Thursday afternoon
+
+  - id: notify_ha_error_record
+    alias: 'Notify: log automation/script/scene error'
+    description: >-
+      Records every ERROR-level log from automation, script, or scene
+      execution into counter.ha_error_count / input_text.ha_error_last.
+      Paired with notify_ha_error_send, which throttles the actual Telegram
+      alert to one per 2-minute window.
+    triggers:
+      - trigger: event
+        event_type: system_log_event
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set d = trigger.event.data %}
+          {% set msg = (d.message | join(' ') if d.message is iterable and d.message is not string else d.message) | default('', true) %}
+          {{ d.level == 'ERROR' and (
+               d.name.startswith('homeassistant.components.automation')
+               or d.name.startswith('homeassistant.components.script')
+               or d.name.startswith('homeassistant.components.scene')
+               or d.name.startswith('homeassistant.helpers.script')
+             )
+             and 'telegram' not in msg | lower
+             and 'telegram' not in d.name | lower }}
+    actions:
+      - action: counter.increment
+        target:
+          entity_id: counter.ha_error_count
+      - variables:
+          d: "{{ trigger.event.data }}"
+          msg: "{{ d.message | join(' ') if d.message is iterable and d.message is not string else d.message }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.ha_error_last
+        data:
+          value: "{{ (d.name ~ ': ' ~ msg) | truncate(250, True, '', 0) }}"
+    mode: queued
+    max: 20
+
+  - id: notify_ha_error_send
+    alias: 'Notify: automation/script/scene error (throttled send)'
+    description: >-
+      Fires on the same errors as notify_ha_error_record. mode: single means
+      retriggers during the 2-min delay are ignored by the automation engine
+      instead of restarting it — so this sends one Telegram summary per
+      throttle window, ~2 min after the first error in a burst, no matter
+      how many more errors land in between.
+    triggers:
+      - trigger: event
+        event_type: system_log_event
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set d = trigger.event.data %}
+          {% set msg = (d.message | join(' ') if d.message is iterable and d.message is not string else d.message) | default('', true) %}
+          {{ d.level == 'ERROR' and (
+               d.name.startswith('homeassistant.components.automation')
+               or d.name.startswith('homeassistant.components.script')
+               or d.name.startswith('homeassistant.components.scene')
+               or d.name.startswith('homeassistant.helpers.script')
+             )
+             and 'telegram' not in msg | lower
+             and 'telegram' not in d.name | lower }}
+    actions:
+      - delay: '00:02:00'
+      - action: telegram_bot.send_message
+        data:
+          chat_id: !secret telegram_chat_id
+          message: >-
+            ⚠️ {{ states('counter.ha_error_count') }} automation/script/scene
+            error(s) in the last 2 min. Most recent:
+            {{ states('input_text.ha_error_last') }}
+      - action: counter.reset
+        target:
+          entity_id: counter.ha_error_count
+    mode: single
+    max_exceeded: silent
