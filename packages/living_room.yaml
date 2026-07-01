@@ -39,6 +39,9 @@ automation:
           - media_player.lr_tv
           - media_player.lr_tv_hub_cast
         to: 'off'
+        not_from:
+          - 'unavailable'
+          - 'unknown'
         for: '00:00:30'
         id: tv_off
     conditions:

@@ -49,7 +49,7 @@ Night Walk owns the lamp).
 ```mermaid
 flowchart TD
     T1["trigger: lr_tv / lr_tv_hub_cast off→(anything but unavailable/unknown) [tv_on]"]
-    T2["trigger: lr_tv / lr_tv_hub_cast →off for 30s [tv_off]"]
+    T2["trigger: lr_tv / lr_tv_hub_cast (not from unavailable/unknown)→off for 30s [tv_off]"]
     T1 --> C
     T2 --> C
     C{"sun: after sunset, before sunrise?"}
@@ -66,13 +66,10 @@ flowchart TD
 - **Daytime TV on/off never changes the scene** — by design (LR: Auto Scene
   handles daytime light instead), but worth remembering when testing during
   the day: nothing will visibly happen.
-- **No `not_to` guard on `tv_off`**, unlike `tv_on`'s guard against
-  `unavailable`/`unknown`. If the TV entity briefly reports `unavailable`
-  before settling to `off`, only the `for: 30s` window protects against a
-  spurious trigger — there's no explicit exclusion like `tv_on` has.
-
-### Recommendations
-
-- Add a `not_to: [unavailable, unknown]` guard to the `tv_off` trigger,
-  mirroring `tv_on`'s guard, to fully rule out a spurious fire from a
-  transient `unavailable` state.
+- **`tv_off` guards against `unavailable`/`unknown` via `not_from`**, mirroring
+  `tv_on`'s `not_to` guard. Since `tv_off` pins `to: 'off'` already, the risk
+  wasn't the target state — it was the *origin* state: a settle path like
+  `on → unavailable → off` would still land on `off` and pass the `to:
+  'off'` filter. `not_from: [unavailable, unknown]` closes that by requiring
+  the state to have come from a real (non-junk) state before the `for: 30s`
+  debounce is even considered.
