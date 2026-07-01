@@ -64,3 +64,10 @@ scene:
     entities:
       switch.sockets:
         state: 'off'
+
+  - id: '1772400011000'
+    name: 'Sockets: On'
+    icon: mdi:lamps
+    entities:
+      switch.sockets:
+        state: 'on'
