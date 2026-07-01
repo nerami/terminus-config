@@ -24,49 +24,14 @@ automation:
       Apply Redish when the TV powers on, or Dim when it powers off for
       30s. Only between sunset and sunrise. Dim branch is also gated by
       time<22:00 so night-walk keeps control after 22:00.
-    triggers:
-      - trigger: state
-        entity_id:
+    use_blueprint:
+      path: terminus/tv_scene.yaml
+      input:
+        tv_players:
           - media_player.lr_tv
           - media_player.lr_tv_hub_cast
-        from: 'off'
-        not_to:
-          - 'unavailable'
-          - 'unknown'
-        id: tv_on
-      - trigger: state
-        entity_id:
-          - media_player.lr_tv
-          - media_player.lr_tv_hub_cast
-        to: 'off'
-        not_from:
-          - 'unavailable'
-          - 'unknown'
-        for: '00:00:30'
-        id: tv_off
-    conditions:
-      - condition: sun
-        before: sunrise
-        after: sunset
-    actions:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tv_on
-            sequence:
-              - action: scene.turn_on
-                target:
-                  entity_id: scene.lr_redish
-          - conditions:
-              - condition: trigger
-                id: tv_off
-              - condition: time
-                before: '22:00:00'
-            sequence:
-              - action: scene.turn_on
-                target:
-                  entity_id: scene.lr_dim
-    mode: single
+        redish_scene: scene.lr_redish
+        dim_scene: scene.lr_dim
 
 scene:
   - id: '1771077904382'

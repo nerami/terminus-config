@@ -46,6 +46,9 @@ Applies Redish when the TV turns on, or Dim when it turns off for 30s —
 only between sunset and sunrise, and only if it's before 22:00 (after that,
 Night Walk owns the lamp).
 
+Instance of the [TV Scene blueprint](README.md#tv-scene-blueprint) —
+`packages/living_room.yaml` only supplies inputs, not the automation logic.
+
 ```mermaid
 flowchart TD
     T1["trigger: lr_tv / lr_tv_hub_cast off→(anything but unavailable/unknown) [tv_on]"]
@@ -66,10 +69,3 @@ flowchart TD
 - **Daytime TV on/off never changes the scene** — by design (LR: Auto Scene
   handles daytime light instead), but worth remembering when testing during
   the day: nothing will visibly happen.
-- **`tv_off` guards against `unavailable`/`unknown` via `not_from`**, mirroring
-  `tv_on`'s `not_to` guard. Since `tv_off` pins `to: 'off'` already, the risk
-  wasn't the target state — it was the *origin* state: a settle path like
-  `on → unavailable → off` would still land on `off` and pass the `to:
-  'off'` filter. `not_from: [unavailable, unknown]` closes that by requiring
-  the state to have come from a real (non-junk) state before the `for: 30s`
-  debounce is even considered.

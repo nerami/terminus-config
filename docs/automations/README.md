@@ -34,6 +34,38 @@ flowchart TD
 | Kitchen | `kitchen_lobby/counter/led_one/led_two` | `kitchen_is_dark` (shares `lr`'s lux input) | — (none) |
 | Abi | `abi_led_one`, `abi_led_two` | `abi_is_dark` (shares `mb`'s lux input) | — (none) |
 
+## TV Scene blueprint
+
+LR and MB's `*: TV Scene` automations are both instances of
+[`blueprints/automation/terminus/tv_scene.yaml`](../../blueprints/automation/terminus/tv_scene.yaml)
+rather than separate hand-written automations. Each package just supplies
+inputs:
+
+```mermaid
+flowchart TD
+    T1["trigger: any input 'tv_players' entity off→(anything but unavailable/unknown) [tv_on]"]
+    T2["trigger: any input 'tv_players' entity (not from unavailable/unknown)→off for input 'debounce' (default 30s) [tv_off]"]
+    T1 --> C
+    T2 --> C
+    C{"sun: after sunset, before sunrise?"}
+    C -- no --> X["stop"]
+    C -- yes --> W{"which trigger?"}
+    W -- tv_on --> RED["scene.turn_on: input 'redish_scene'"]
+    W -- tv_off --> C2{"time < input 'night_cutoff' (default 22:00)?"}
+    C2 -- yes --> DIM["scene.turn_on: input 'dim_scene'"]
+    C2 -- no --> X2["stop — later automation (e.g. Night Walk) takes over"]
+```
+
+| Room | `tv_players` | `redish_scene` | `dim_scene` |
+|---|---|---|---|
+| LR | `lr_tv`, `lr_tv_hub_cast` | `lr_redish` | `lr_dim` |
+| MB | `mb_tv` | `mb_redish` | `mb_dim` |
+
+Both rooms use the blueprint's `night_cutoff` (`22:00:00`) and `debounce`
+(`30`s) defaults — neither package overrides them. The `not_from`/`not_to`
+`unavailable`/`unknown` guards on both triggers are fixed by the blueprint
+body, not an input, so every instance gets them automatically.
+
 ## Shared `is_dark` macro
 
 All four `is_dark` sensors — `lr_is_dark`, `mb_is_dark`, `kitchen_is_dark`,

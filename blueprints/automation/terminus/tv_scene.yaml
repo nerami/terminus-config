@@ -1,0 +1,93 @@
+blueprint:
+  name: 'TV Scene: Redish on / Dim off, sunset-to-sunrise'
+  description: >-
+    Applies a "redish" scene when any of a set of TV media players turns
+    on, or a "dim" scene when they all settle to off for a debounce
+    window. Only active between sunset and sunrise; the dim branch is also
+    gated by a night cutoff time so a later automation (e.g. a night-walk
+    routine) can take over. Abstracts the "*: TV Scene" pattern used
+    across LR and MB.
+  domain: automation
+  input:
+    tv_players:
+      name: TV media players
+      description: >-
+        When any of these turns on, the redish scene applies. When all of
+        them settle to off, the dim scene applies.
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
+    redish_scene:
+      name: Redish scene
+      selector:
+        entity:
+          domain: scene
+    dim_scene:
+      name: Dim scene
+      selector:
+        entity:
+          domain: scene
+    night_cutoff:
+      name: Night cutoff time
+      description: >-
+        After this time, the dim branch is skipped so a night-walk
+        automation keeps control of the lamp instead.
+      default: '22:00:00'
+      selector:
+        time: {}
+    debounce:
+      name: Off debounce
+      description: >-
+        How long the TV must stay off before the dim scene applies, so a
+        brief pause/channel-change blip doesn't dim the room.
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+
+mode: single
+
+triggers:
+  - trigger: state
+    entity_id: !input tv_players
+    from: 'off'
+    not_to:
+      - 'unavailable'
+      - 'unknown'
+    id: tv_on
+  - trigger: state
+    entity_id: !input tv_players
+    to: 'off'
+    not_from:
+      - 'unavailable'
+      - 'unknown'
+    for:
+      seconds: !input debounce
+    id: tv_off
+
+conditions:
+  - condition: sun
+    before: sunrise
+    after: sunset
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: tv_on
+        sequence:
+          - action: scene.turn_on
+            target:
+              entity_id: !input redish_scene
+      - conditions:
+          - condition: trigger
+            id: tv_off
+          - condition: time
+            before: !input night_cutoff
+        sequence:
+          - action: scene.turn_on
+            target:
+              entity_id: !input dim_scene
