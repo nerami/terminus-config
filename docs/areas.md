@@ -1,6 +1,6 @@
 # Home Assistant Areas — Devices & Entities
 
-_Generated: 2026-07-01 20:24:28 UTC_
+_Generated: 2026-07-01 20:27:20 UTC_
 
 Auto-generated reference of every area's devices and entities, grouped by
 domain. Source of truth is the device/entity/area registries on the device
@@ -17,9 +17,9 @@ Regenerate via `bin/update-areas-doc.py`.
 |---|---|---|---|
 | Abi | `abi` | 4 | 26 |
 | Kitchen | `kitchen` | 4 | 24 |
-| LR | `lr` | 7 | 24 |
-| MB | `mb` | 7 | 37 |
-| Trmns | `trmns` | 26 | 125 |
+| Living Room | `lr` | 7 | 24 |
+| Master Bedroom | `mb` | 7 | 37 |
+| Terminus | `trmns` | 26 | 125 |
 | Yard | `yard` | 1 | 3 |
 | _Unassigned_ | — | 0 | 0 |
 
@@ -179,7 +179,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | `select.kitchen_counter_power_on_behavior` | Counter Power-on behavior |
 | `select.kitchen_lobby_power_on_behavior` | Lobby Power-on behavior |
 
-## LR (`lr`)
+## Living Room (`lr`)
 
 ### Devices (7)
 
@@ -254,7 +254,7 @@ Regenerate via `bin/update-areas-doc.py`.
 |---|---|
 | `binary_sensor.lr_is_dark` | LR: Is Dark |
 
-## MB (`mb`)
+## Master Bedroom (`mb`)
 
 ### Devices (7)
 
@@ -357,7 +357,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | `select.mb_led_one_power_on_behavior` | Led One Power-on behavior |
 | `select.mb_led_two_power_on_behavior` | Led Two Power-on behavior |
 
-## Trmns (`trmns`)
+## Terminus (`trmns`)
 
 ### Devices (26)
 
