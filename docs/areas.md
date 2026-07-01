@@ -1,6 +1,6 @@
 # Home Assistant Areas — Devices & Entities
 
-_Generated: 2026-07-01 20:27:20 UTC_
+_Generated: 2026-07-01 20:57:41 UTC_
 
 Auto-generated reference of every area's devices and entities, grouped by
 domain. Source of truth is the device/entity/area registries on the device
@@ -11,7 +11,7 @@ system/integration infra, but worth a periodic skim for real gaps.
 
 Regenerate via `bin/update-areas-doc.py`.
 
-**6 areas, 49 devices, 239 entities** (+ 0 unassigned devices, 0 unassigned entities).
+**6 areas, 49 devices, 237 entities** (+ 0 unassigned devices, 1 unassigned entities).
 
 | Area | ID | Devices | Entities |
 |---|---|---|---|
@@ -19,9 +19,9 @@ Regenerate via `bin/update-areas-doc.py`.
 | Kitchen | `kitchen` | 4 | 24 |
 | Living Room | `lr` | 7 | 24 |
 | Master Bedroom | `mb` | 7 | 37 |
-| Terminus | `trmns` | 26 | 125 |
+| Terminus | `trmns` | 26 | 123 |
 | Yard | `yard` | 1 | 3 |
-| _Unassigned_ | — | 0 | 0 |
+| _Unassigned_ | — | 0 | 1 |
 
 ## Abi (`abi`)
 
@@ -48,7 +48,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `scene.abi_bluish` | Abi: Bluish |
-| `scene.abi_bright_light` | Abi: Bright Light |
+| `scene.abi_bright` | Abi: Bright Light |
 | `scene.abi_dim` | Abi: Dim |
 | `scene.abi_redish` | Abi: Redish |
 
@@ -131,7 +131,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `scene.kitchen_bluish` | Kitchen: Bluish |
-| `scene.kitchen_bright_light` | Kitchen: Bright Light |
+| `scene.kitchen_bright` | Kitchen: Bright Light |
 | `scene.kitchen_dim` | Kitchen: Dim |
 | `scene.kitchen_redish` | Kitchen: Redish |
 
@@ -208,7 +208,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `scene.lr_bluish` | LR: Bluish |
-| `scene.lr_bright_light` | LR: Bright Light |
+| `scene.lr_bright` | LR: Bright Light |
 | `scene.lr_dim` | LR: Dim |
 | `scene.lr_redish` | LR: Redish |
 
@@ -283,7 +283,7 @@ Regenerate via `bin/update-areas-doc.py`.
 | Entity ID | Name |
 |---|---|
 | `scene.mb_bluish` | MB: Bluish |
-| `scene.mb_bright_light` | MB: Bright Light |
+| `scene.mb_bright` | MB: Bright Light |
 | `scene.mb_dim` | MB: Dim |
 | `scene.mb_redish` | MB: Redish |
 
@@ -390,9 +390,9 @@ Regenerate via `bin/update-areas-doc.py`.
 | iPhone | `02c50317096ed50ebe364c2e8bc3b1d2` |
 | nerami_h | `e89e78db09e6ecc2c7784a5d09ea8c0b` |
 
-### Entities (125)
+### Entities (123)
 
-#### Automations (12)
+#### Automations (11)
 
 | Entity ID | Name |
 |---|---|
@@ -402,19 +402,17 @@ Regenerate via `bin/update-areas-doc.py`.
 | `automation.notify_calendar_event_deleted` | Notify: calendar event deleted |
 | `automation.notify_calendar_event_updated` | Notify: calendar event updated |
 | `automation.notify_calendar_reminder_fires` | Notify: calendar reminder fires |
-| `automation.sockets_illuminance_control` | Sockets: Illuminance Control |
 | `automation.telegram_remind_empty_input_usage` | Telegram: /remind empty input → usage |
 | `automation.telegram_remind_natural_language_claude` | Telegram: /remind natural language → Claude |
 | `automation.turn_off_lights_when_leave` | Turn off lights when I leave home |
 | `automation.turn_off_the_lights_at_10pm` | Turn off the lamps at 10pm |
 | `automation.turn_on_the_lights_when_i_get_home` | Turn on the lights when I get home late |
 
-#### Scenes (2)
+#### Scenes (1)
 
 | Entity ID | Name |
 |---|---|
 | `scene.sockets_off` | Sockets: Off |
-| `scene.sockets_on` | Sockets: On |
 
 #### Switches (1)
 
@@ -611,5 +609,11 @@ Regenerate via `bin/update-areas-doc.py`.
 
 _No devices._
 
-### Entities (0)
+### Entities (1)
+
+#### Scenes (1)
+
+| Entity ID | Name |
+|---|---|
+| `scene.sockets_on` | Sockets: On |
 

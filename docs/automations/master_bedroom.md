@@ -23,7 +23,7 @@ flowchart TD
     C -- yes --> D["delay 3s"]
     D --> S{"binary_sensor.mb_is_dark"}
     S -- on --> DIM["scene.turn_on scene.mb_dim"]
-    S -- off --> DAY["scene.turn_on scene.mb_bright_light"]
+    S -- off --> DAY["scene.turn_on scene.mb_bright"]
 ```
 
 ### Caveats

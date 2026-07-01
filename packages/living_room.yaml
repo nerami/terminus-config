@@ -2,7 +2,7 @@ automation:
   - id: '1771080638853'
     alias: 'LR: Auto Scene'
     description: >-
-      Apply Bright Light or Dim when a living-room light turns on or when
+      Apply Bright or Dim when a living-room light turns on or when
       ambient light crosses the is_dark hysteresis band, unless the TV
       is playing.
     use_blueprint:
@@ -13,7 +13,7 @@ automation:
           - light.lr_dining
         dark_sensor: binary_sensor.lr_is_dark
         dim_scene: scene.lr_dim
-        bright_light_scene: scene.lr_bright_light
+        bright_scene: scene.lr_bright
         tv_players:
           - media_player.lr_tv
           - media_player.lr_tv_hub_cast
@@ -61,7 +61,7 @@ scene:
         hs_color: [217, 100]
 
   - id: '1771078366080'
-    name: 'LR: Bright Light'
+    name: 'LR: Bright'
     icon: mdi:shield-sun
     entities:
       light.lr_living:

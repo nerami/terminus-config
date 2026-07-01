@@ -1,0 +1,32 @@
+script:
+  mood_redish:
+    alias: "Mood: All Redish"
+    icon: mdi:lightbulb-on
+    sequence:
+      - service: scene.turn_on
+        target:
+          label_id: mood_redish
+
+  mood_bluish:
+    alias: "Mood: All Bluish"
+    icon: mdi:lightbulb-on
+    sequence:
+      - service: scene.turn_on
+        target:
+          label_id: mood_bluish
+
+  mood_bright:
+    alias: "Mood: All Bright"
+    icon: mdi:lightbulb-on
+    sequence:
+      - service: scene.turn_on
+        target:
+          label_id: mood_bright
+
+  mood_dim:
+    alias: "Mood: All Dim"
+    icon: mdi:lightbulb-on-outline
+    sequence:
+      - service: scene.turn_on
+        target:
+          label_id: mood_dim

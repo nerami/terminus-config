@@ -24,7 +24,7 @@ flowchart TD
     C -- yes --> D["delay: input 'delay' (default 3s)"]
     D --> S{"input 'dark_sensor' state"}
     S -- on --> DIM["scene.turn_on: input 'dim_scene'"]
-    S -- off --> DAY["scene.turn_on: input 'bright_light_scene'"]
+    S -- off --> DAY["scene.turn_on: input 'bright_scene'"]
 ```
 
 | Room | `lights` | `dark_sensor` | `tv_players` |
@@ -118,7 +118,7 @@ label registry (`light`/`socket`/`lamp`) across all 21 automations above.
    `light`-labeled entities with no TV-playing guard.
 2. **Scene targets are shared by two automations each, coordinated only by
    conditions — not a lock.** `scene.lr_dim`/`scene.mb_dim` (and the
-   bright_light/redish variants) are each written by both that room's
+   bright/redish variants) are each written by both that room's
    `Auto Scene` and `TV Scene` automation. They avoid colliding today only
    because of conditions (`not TV playing`, the sun window) — there's no
    actual mutual exclusion. Loosening any one of those guards in a future

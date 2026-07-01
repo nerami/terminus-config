@@ -141,6 +141,7 @@ docs/                      # generated reference docs (see Areas Reference below
 | `notifications.yaml` | Telegram + persistent_notification (calendar reminder) |
 | `presence.yaml` | `group.family_trackers` + presence autos |
 | `schedule.yaml` | Fixed-time schedules |
+| `scenes.yaml` | Cross-area mood scripts (label-targeted `scene.turn_on`) |
 
 ## Conventions
 
