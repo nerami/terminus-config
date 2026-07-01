@@ -53,13 +53,6 @@ automation:
     mode: single
 
 scene:
-  - id: '1771384085759'
-    name: 'Low Lights: Off'
-    icon: mdi:lightbulb-night-outline
-    entities:
-      switch.sockets:
-        state: 'on'
-
   - id: '1771384324468'
     name: 'Sockets: Off'
     icon: mdi:lamps-outline

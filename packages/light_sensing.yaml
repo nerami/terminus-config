@@ -27,16 +27,3 @@ template:
         state: >-
           {% import 'is_dark.jinja' as is_dark %}
           {{ is_dark.lux_is_dark('sensor.mb_light_sensor_illuminance', 'binary_sensor.abi_is_dark') }}
-
-      - name: 'Is Bright'
-        unique_id: is_bright
-        icon: mdi:weather-sunny
-        state: >-
-          {% set lux = states('sensor.lr_light_sensor_illuminance') %}
-          {% if lux in ['unknown', 'unavailable'] %}
-            {{ is_state('sun.sun', 'above_horizon') }}
-          {% else %}
-            {% set lux = lux | float %}
-            {% set was_on = is_state('binary_sensor.is_bright', 'on') %}
-            {{ lux >= 20 if was_on else lux >= 30 }}
-          {% endif %}
