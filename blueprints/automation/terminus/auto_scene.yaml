@@ -1,0 +1,97 @@
+blueprint:
+  name: 'Auto Scene: Dim / Day Light by darkness sensor'
+  description: >-
+    Applies a "dim" scene or a "day light" scene depending on a darkness
+    binary_sensor, triggered when any of a set of lights turns on or the
+    darkness sensor changes state. Optionally skips while any of a set of
+    TV media players is playing, so a TV-driven scene automation keeps
+    control during playback. Abstracts the "*: Auto Scene" pattern used
+    across LR, MB, Kitchen, and Abi.
+  domain: automation
+  input:
+    lights:
+      name: Lights
+      description: Lights that, when turned on, should trigger scene evaluation.
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    dark_sensor:
+      name: Darkness sensor
+      description: binary_sensor that is "on" when the room should be dim.
+      selector:
+        entity:
+          domain: binary_sensor
+    dim_scene:
+      name: Dim scene
+      selector:
+        entity:
+          domain: scene
+    day_light_scene:
+      name: Day Light scene
+      selector:
+        entity:
+          domain: scene
+    tv_players:
+      name: TV media players (optional)
+      description: >-
+        If any of these are playing, scene evaluation is skipped so a
+        TV Scene automation keeps control. Leave empty to skip this guard
+        entirely (e.g. rooms with no TV).
+      default: []
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
+    delay:
+      name: Delay before evaluating
+      description: >-
+        Wait this long after a light turns on before applying a scene, so
+        the light's own on-transition doesn't fight the scene's state.
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 60
+          unit_of_measurement: seconds
+
+mode: single
+
+variables:
+  lights: !input lights
+  tv_players: !input tv_players
+
+triggers:
+  - trigger: state
+    entity_id: !input lights
+    from: 'off'
+    to: 'on'
+  - trigger: state
+    entity_id: !input dark_sensor
+
+conditions:
+  - condition: template
+    value_template: "{{ expand(lights) | selectattr('state', 'eq', 'on') | list | length > 0 }}"
+  - condition: template
+    value_template: "{{ expand(tv_players) | selectattr('state', 'eq', 'playing') | list | length == 0 }}"
+
+actions:
+  - delay:
+      seconds: !input delay
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input dark_sensor
+            state: 'on'
+        sequence:
+          - action: scene.turn_on
+            target:
+              entity_id: !input dim_scene
+      - conditions:
+          - condition: state
+            entity_id: !input dark_sensor
+            state: 'off'
+        sequence:
+          - action: scene.turn_on
+            target:
+              entity_id: !input day_light_scene

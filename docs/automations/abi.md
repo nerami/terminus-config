@@ -8,6 +8,10 @@ Same pattern as Kitchen's Auto Scene, applied to `light.abi_led_one` /
 `light.abi_led_two`, sharing MB's lux sensor (`binary_sensor.mb_is_dark`)
 since Abi has no illuminance sensor of its own.
 
+Instance of the [Auto Scene blueprint](README.md#auto-scene-blueprint),
+with `tv_players` left empty (Abi has no TV) — `packages/abi.yaml` only
+supplies inputs, not the automation logic.
+
 ```mermaid
 flowchart TD
     T1["trigger: light.abi_led_one / light.abi_led_two off→on"]

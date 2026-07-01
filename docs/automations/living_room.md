@@ -8,6 +8,9 @@ Applies Day Light or Dim when an LR light turns on, or when ambient light
 crosses the `is_dark` hysteresis band — but only while the TV isn't playing,
 so `LR: TV Scene` keeps control during playback.
 
+Instance of the [Auto Scene blueprint](README.md#auto-scene-blueprint) —
+`packages/living_room.yaml` only supplies inputs, not the automation logic.
+
 ```mermaid
 flowchart TD
     T1["trigger: light.lr_living / light.lr_dining off→on"]
@@ -24,10 +27,13 @@ flowchart TD
 
 ### Caveats / recommendations
 
-- **3s delay is a race-avoidance hack**, not a documented debounce — if
-  `is_dark` flips again inside that window, the scene applied may not match
-  the sensor's final state. No caveat currently causes visible symptoms, but
-  worth knowing if scene mismatches with reality are ever reported.
+- **The 3s delay is now a named, configurable blueprint input** (`delay` in
+  [`terminus/auto_scene.yaml`](../../blueprints/automation/terminus/auto_scene.yaml)),
+  not a bare hardcoded number — but it's still a race-avoidance wait, not a
+  true debounce: if `is_dark` flips again inside that window, the scene
+  applied may not match the sensor's final state. No visible symptoms
+  currently, but worth knowing if scene mismatches with reality are ever
+  reported.
 - **`is_dark` has no built-in debounce** on this trigger (unlike
   [`illuminance.yaml`](illuminance.md)'s `for: 10s`), so brief lux flicker
   during transitional weather can cause the scene to reapply more often than

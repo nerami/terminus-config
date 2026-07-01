@@ -9,6 +9,10 @@ light crosses the `is_dark` hysteresis band. Kitchen has no illuminance
 sensor of its own, so this shares LR's (`binary_sensor.lr_is_dark`) — see
 caveats.
 
+Instance of the [Auto Scene blueprint](README.md#auto-scene-blueprint),
+with `tv_players` left empty (Kitchen has no TV) — `packages/kitchen.yaml`
+only supplies inputs, not the automation logic.
+
 ```mermaid
 flowchart TD
     T1["trigger: kitchen_lobby / kitchen_counter / kitchen_led_one / kitchen_led_two off→on"]

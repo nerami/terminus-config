@@ -6,6 +6,39 @@ its trigger → condition → action flow and a caveats/recommendations section.
 Hand-written, not generated — re-check against the package YAML if an
 automation changes.
 
+## Auto Scene blueprint
+
+LR, MB, Kitchen, and Abi's `*: Auto Scene` automations are all instances of
+[`blueprints/automation/terminus/auto_scene.yaml`](../../blueprints/automation/terminus/auto_scene.yaml)
+rather than separate hand-written automations. Each package just supplies
+inputs:
+
+```mermaid
+flowchart TD
+    T1["trigger: any input 'lights' entity off→on"]
+    T2["trigger: input 'dark_sensor' (any change)"]
+    T1 --> C
+    T2 --> C
+    C{"any 'lights' entity on?\nAND no 'tv_players' entity playing (skipped if input empty)"}
+    C -- no --> X["stop"]
+    C -- yes --> D["delay: input 'delay' (default 3s)"]
+    D --> S{"input 'dark_sensor' state"}
+    S -- on --> DIM["scene.turn_on: input 'dim_scene'"]
+    S -- off --> DAY["scene.turn_on: input 'day_light_scene'"]
+```
+
+| Room | `lights` | `dark_sensor` | `tv_players` |
+|---|---|---|---|
+| LR | `lr_living`, `lr_dining` | `lr_is_dark` | `lr_tv`, `lr_tv_hub_cast` |
+| MB | `mb_led_one`, `mb_led_two` | `mb_is_dark` | `mb_tv` |
+| Kitchen | `kitchen_lobby/counter/led_one/led_two` | `lr_is_dark` (borrowed) | — (none) |
+| Abi | `abi_led_one`, `abi_led_two` | `mb_is_dark` (borrowed) | — (none) |
+
+The `tv_players` guard is implemented as a template
+(`selectattr('state', 'eq', 'playing') | list | length == 0`) so an empty
+list — Kitchen and Abi's case — trivially passes, unifying the "has a TV"
+and "has no TV" rooms under one blueprint without a separate code path.
+
 | File | Package |
 |---|---|
 | [illuminance.md](illuminance.md) | `packages/illuminance.yaml` |
@@ -47,7 +80,13 @@ label registry (`light`/`socket`/`lamp`) across all 21 automations above.
    because of conditions (`not TV playing`, the sun window, the
    `time < 22:00` dim branch) — there's no actual mutual exclusion. Loosening
    any one of those guards in a future edit could reintroduce a race where
-   both scenes fire back-to-back.
+   both scenes fire back-to-back. `Auto Scene`'s half of that guard now
+   lives once in the shared
+   [Auto Scene blueprint](README.md#auto-scene-blueprint) (the `tv_players`
+   input) rather than duplicated per room — a fix there fixes it everywhere,
+   but a bug there also breaks it everywhere; `TV Scene`'s half is still
+   separate hand-written logic per room, so the two are not symmetrically
+   guarded even now.
 4. **Illuminance Control and Night Walk own the same four lamp/socket
    switches on disjoint clocks, leaving a blind gap.** `switch.sockets`
    (group: mb/lr/abi/yard lamp sockets) is driven by

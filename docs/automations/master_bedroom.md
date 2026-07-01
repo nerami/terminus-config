@@ -8,6 +8,10 @@ Same pattern as `LR: Auto Scene`, applied to `light.mb_led_one` /
 `light.mb_led_two` and gated on `media_player.mb_tv` (a single entity,
 unlike LR's two media players).
 
+Instance of the [Auto Scene blueprint](README.md#auto-scene-blueprint) —
+`packages/master_bedroom.yaml` only supplies inputs, not the automation
+logic.
+
 ```mermaid
 flowchart TD
     T1["trigger: light.mb_led_one / light.mb_led_two off→on"]
