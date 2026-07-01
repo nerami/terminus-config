@@ -111,20 +111,23 @@ label registry (`light`/`socket`/`lamp`) across all 21 automations above.
    but a bug there also breaks it everywhere; `TV Scene`'s half is still
    separate hand-written logic per room, so the two are not symmetrically
    guarded even now.
-4. **Illuminance Control and Night Walk own the same four lamp/socket
-   switches on disjoint clocks, leaving a blind gap.** `switch.sockets`
-   (group: mb/lr/abi/yard lamp sockets) is driven by
-   [`Sockets: Illuminance Control`](illuminance.md) only during 06:00–22:00.
-   [`Night Walk`](night_walk.md) reactively drives `switch.lr_lamp_socket`
-   only during 00:00–05:00 (triggered by the abi/mb socket switches
-   changing). **05:00–06:00 has no owner** — if it's dark and someone's up
-   early, nothing responds to darkness or presence for these switches until
-   06:00.
-5. **Cosmetic, not functional: Night Walk changes the group's aggregate
-   state as a side effect.** Turning on `abi_desk_lamp_socket` /
-   `mb_lamp_socket` at 2am also flips the `switch.sockets` group entity's
-   state, even though its "owner" automation (Illuminance Control) isn't
-   active at night. No automation reads that group state as a condition, so
+4. **Illuminance Control and Night Walk own the same lamp/socket switches
+   on disjoint clocks, leaving a blind gap.** Each
+   [Illuminance Switch Control](illuminance.md#illuminance-switch-control-blueprint)
+   instance drives its own switch (`lr_lamp_socket`, `mb_lamp_socket`,
+   `abi_desk_lamp_socket`, `yard_string_lights_socket`) only during
+   06:00–22:00. [`Night Walk`](night_walk.md) reactively drives
+   `switch.lr_lamp_socket` only during 00:00–05:00 (triggered by the
+   abi/mb socket switches changing). **05:00–06:00 has no owner** for any
+   of these switches — if it's dark and someone's up early, nothing
+   responds to darkness or presence until 06:00.
+5. **Cosmetic, not functional: Night Walk changes the `switch.sockets`
+   group's aggregate state as a side effect.** Turning on
+   `abi_desk_lamp_socket` / `mb_lamp_socket` at 2am also flips the
+   `switch.sockets` group entity's state (a `platform: group` aggregate
+   kept around for the manual `scene.sockets_off` convenience scene), even
+   though none of the per-switch Illuminance Control instances are active
+   at night. No automation reads that group state as a condition, so
    nothing breaks functionally — just confusing if you inspect
    `switch.sockets` state during Night Walk hours and wonder why it's "on"
    outside the 06:00–22:00 window.
