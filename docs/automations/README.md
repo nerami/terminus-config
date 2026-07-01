@@ -31,15 +31,32 @@ flowchart TD
 |---|---|---|---|
 | LR | `lr_living`, `lr_dining` | `lr_is_dark` | `lr_tv`, `lr_tv_hub_cast` |
 | MB | `mb_led_one`, `mb_led_two` | `mb_is_dark` | `mb_tv` |
-| Kitchen | `kitchen_lobby/counter/led_one/led_two` | `kitchen_is_dark` (alias of `lr_is_dark`) | — (none) |
-| Abi | `abi_led_one`, `abi_led_two` | `abi_is_dark` (alias of `mb_is_dark`) | — (none) |
+| Kitchen | `kitchen_lobby/counter/led_one/led_two` | `kitchen_is_dark` (shares `lr`'s lux input) | — (none) |
+| Abi | `abi_led_one`, `abi_led_two` | `abi_is_dark` (shares `mb`'s lux input) | — (none) |
 
-`kitchen_is_dark` / `abi_is_dark` are template `binary_sensor`s in
-[`light_sensing.yaml`](../../packages/light_sensing.yaml) that mirror
-`lr_is_dark` / `mb_is_dark` 1:1 — Kitchen and Abi still have no illuminance
-sensor of their own, but automations now depend on a room-named entity
-instead of reaching into another room's sensor directly. Swapping in a
-real per-room sensor later is a one-file change in `light_sensing.yaml`.
+## Shared `is_dark` macro
+
+All four `is_dark` sensors — `lr_is_dark`, `mb_is_dark`, `kitchen_is_dark`,
+`abi_is_dark` — are template `binary_sensor`s in
+[`light_sensing.yaml`](../../packages/light_sensing.yaml) built on one
+shared hysteresis macro, `lux_is_dark`, defined in
+[`custom_templates/is_dark.jinja`](../../custom_templates/is_dark.jinja)
+and pulled in via `{% import 'is_dark.jinja' as is_dark %}`. Kitchen/Abi
+call the macro with LR's/MB's illuminance sensor as input (they have none
+of their own) but their *own* entity as the hysteresis memory, so each
+computes its own on/off independently rather than mirroring the other
+room's computed output — same formula, same input reading, one shared
+implementation. Swapping in a real per-room sensor later is a one-line
+change to that `states(...)` argument, no automation edits needed.
+
+Note: Home Assistant's `custom_templates/*.jinja` loader is a Jinja
+`BaseLoader`, not a global-function injector — macros defined there are
+**not** auto-available in every template. Each template that wants
+`lux_is_dark` must explicitly `{% import 'is_dark.jinja' as is_dark %}`
+first (verified against a real HA instance — omitting the import renders
+`'lux_is_dark' is undefined` and the entity goes `unavailable`, both on
+cold boot and after `homeassistant.reload_custom_templates` /
+`template.reload`).
 
 The `tv_players` guard is implemented as a template
 (`selectattr('state', 'eq', 'playing') | list | length == 0`) so an empty

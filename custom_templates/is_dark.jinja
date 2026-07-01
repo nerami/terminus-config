@@ -1,0 +1,16 @@
+{# Shared hysteresis macro for "is dark" binary_sensors.
+
+   Falls back to sun position when the lux sensor is unknown/unavailable.
+   Otherwise applies a hysteresis band around `low`/`high` lux, using
+   `memory_sensor`'s own current state to pick which edge to test against
+   (avoids flapping right at the boundary). #}
+{% macro lux_is_dark(lux_sensor, memory_sensor, low=20, high=30) -%}
+   {%- set lux = states(lux_sensor) -%}
+   {%- if lux in ['unknown', 'unavailable'] -%}
+      {{ is_state('sun.sun', 'below_horizon') }}
+   {%- else -%}
+      {%- set lux = lux | float -%}
+      {%- set was_on = is_state(memory_sensor, 'on') -%}
+      {{ lux < high if was_on else lux < low }}
+   {%- endif -%}
+{%- endmacro %}

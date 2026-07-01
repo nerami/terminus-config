@@ -6,9 +6,10 @@ Source: [`packages/abi.yaml`](../../packages/abi.yaml)
 
 Same pattern as Kitchen's Auto Scene, applied to `light.abi_led_one` /
 `light.abi_led_two`. `binary_sensor.abi_is_dark` (defined in
-[`light_sensing.yaml`](../../packages/light_sensing.yaml)) is a template
-alias of MB's `binary_sensor.mb_is_dark` since Abi has no illuminance
-sensor of its own.
+[`light_sensing.yaml`](../../packages/light_sensing.yaml)) computes its own
+hysteresis via the shared
+[`lux_is_dark` macro](README.md#shared-is_dark-macro), fed MB's lux sensor
+as input since Abi has no illuminance sensor of its own.
 
 Instance of the [Auto Scene blueprint](README.md#auto-scene-blueprint),
 with `tv_players` left empty (Abi has no TV) — `packages/abi.yaml` only
@@ -30,13 +31,12 @@ flowchart TD
 
 ### Caveats / recommendations
 
-- **`binary_sensor.abi_is_dark` is a named alias, not an independent
-  reading** — same coupling caveat as
-  [Kitchen's alias of LR's sensor](kitchen.md#kitchen-auto-scene). Abi's
-  actual light level isn't measured; the alias just gives automations/docs
-  an Abi-named entity to depend on instead of reaching into MB's sensor
-  directly, so a future dedicated Abi lux sensor can be swapped in via
-  `light_sensing.yaml` alone.
+- **`binary_sensor.abi_is_dark` computes its own state from MB's lux
+  reading — it's not an independent measurement.** Same coupling caveat as
+  [Kitchen's sensor sharing LR's lux input](kitchen.md#kitchen-auto-scene).
+  Abi's actual light level isn't measured; a future dedicated Abi lux
+  sensor is a one-line change to the macro call's first argument in
+  `light_sensing.yaml`.
 - **`light.abi_pixoo_light` is intentionally excluded** from both this
   automation and the Abi scenes — it only supports `brightness` (no
   `color_temp`/`hs_color`), so it can't represent Day Light / Dim / Redish /
