@@ -25,7 +25,7 @@ flowchart TD
     S -- off --> DAY["scene.turn_on scene.lr_day_light"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **The 3s delay is now a named, configurable blueprint input** (`delay` in
   [`terminus/auto_scene.yaml`](../../blueprints/automation/terminus/auto_scene.yaml)),
@@ -61,7 +61,7 @@ flowchart TD
     C2 -- no --> X2["stop — Night Walk / 22:00 schedule take over"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **Daytime TV on/off never changes the scene** — by design (LR: Auto Scene
   handles daytime light instead), but worth remembering when testing during
@@ -70,3 +70,9 @@ flowchart TD
   `unavailable`/`unknown`. If the TV entity briefly reports `unavailable`
   before settling to `off`, only the `for: 30s` window protects against a
   spurious trigger — there's no explicit exclusion like `tv_on` has.
+
+### Recommendations
+
+- Add a `not_to: [unavailable, unknown]` guard to the `tv_off` trigger,
+  mirroring `tv_on`'s guard, to fully rule out a spurious fire from a
+  transient `unavailable` state.

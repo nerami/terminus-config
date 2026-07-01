@@ -15,7 +15,7 @@ flowchart TD
     V --> A2["persistent_notification.create (id: cal_&lt;uid&gt;)"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - Only notifies `notify.notifications_norman_r` — Nani has no mobile_app
   target wired in here, unlike the shared presence/lighting automations.
@@ -48,15 +48,14 @@ flowchart TD
     C3 -- yes --> A3["notify.send_message: deleted — uid + recurrence info"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **Relies on the internal `call_service` event bus**, which is a legacy/
   internal HA mechanism, not a documented stable API — a future HA core
   change to how service calls are dispatched (or a switch to `action`-based
   internals) could silently break all three of these without any error
   surfacing. This is the most fragile dependency in the notifications
-  package; if calendar entity state ever exposes create/update/delete
-  events directly, migrating to that would be more future-proof.
+  package.
 - The `entity_id` filter checks both `service_data.entity_id` and
   `target.entity_id` — necessary because callers can address the service
   either way, but it means any future third calling convention (e.g. nested
@@ -64,6 +63,12 @@ flowchart TD
   filter and fail to match.
 - No dedup — if the same create/update call is retried by the caller (e.g.
   a flaky client retry), duplicate notifications would be sent.
+
+### Recommendations
+
+- If calendar entity state ever exposes create/update/delete events
+  directly, migrate these three automations to that instead of the
+  internal `call_service` event bus — it would be more future-proof.
 
 ## Telegram: /remind natural language → Claude
 
@@ -81,21 +86,25 @@ flowchart TD
     A --> R["telegram_bot.send_message: agent's reply.response.speech.plain.speech"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **Hard dependency on an external LLM call** (`conversation.claude_conversation`)
   with no fallback or error branch — if the Anthropic API is down, rate
   limited, or the conversation agent is misconfigured, `reply.response...`
   will fail to resolve and the whole automation errors out with no
   Telegram reply sent to the user at all (they'll just see silence).
-  Consider a `continue_on_error` + fallback "couldn't process that, try
-  again" message on the `conversation.process` step.
 - The prompt hardcodes "Nanis"/"Abi"/"Abril" household vocabulary inline —
   if that mapping needs to change, it only lives in this one template
   string, not any shared config.
 - `mode: parallel, max: 5` — five concurrent `/remind` calls could all hit
   the LLM simultaneously; not a problem functionally, but worth knowing if
   Anthropic API costs/rate limits ever become a concern under bursty usage.
+
+### Recommendations
+
+- Add a `continue_on_error` + fallback "couldn't process that, try again"
+  Telegram message on the `conversation.process` step, so an LLM failure
+  doesn't leave the user staring at silence.
 
 ## Telegram: /remind empty input → usage
 
@@ -110,11 +119,15 @@ flowchart TD
     C -- yes --> A["telegram_bot.send_message: usage + examples"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - This and the natural-language automation both trigger on the exact same
   event and are mutually exclusive only via their opposite length
-  conditions — correct today, but if a third `/remind`-triggered automation
-  is ever added, it must repeat this same length check pattern rather than
-  assuming these two conditions are exhaustive of all possible states
-  (e.g. `args` being undefined rather than empty).
+  conditions — correct today, but fragile if the set of `/remind` handlers
+  ever grows.
+
+### Recommendations
+
+- Any future `/remind`-triggered automation must repeat this same length
+  check pattern rather than assuming these two conditions are exhaustive of
+  all possible states (e.g. `args` being undefined rather than empty).

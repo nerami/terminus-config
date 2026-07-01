@@ -15,11 +15,11 @@ flowchart TD
     T --> A2["switch.turn_off target: label_id: socket"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - Same label-dependency caveat as
-  [`schedule.yaml`'s 10pm shutoff](schedule.md) — relies on the `light` /
-  `socket` labels being correctly assigned.
+  [`schedule.yaml`'s 10pm shutoff](schedule.md#caveats) — relies on the
+  `light` / `socket` labels being correctly assigned.
 - **No time-of-day or `is_dark` gate** — if everyone leaves mid-morning
   with lights on, they turn off immediately regardless of context. This is
   presumably intended (nobody home → no need for lights) but is worth
@@ -39,15 +39,18 @@ flowchart TD
     C -- yes --> A["switch.turn_on target: label_id: lamp"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **Only Norman's phone triggers this** — `device_tracker.nanis_iphone` is
   a member of `group.family_trackers` (used by the "leave" automation
   above) but is not wired into this "arrive" trigger. If Nani gets home
-  alone after dark, no lamps turn on. Likely worth adding
-  `nanis_iphone` to the trigger `entity_id` list, or switching to
-  `group.family_trackers` with an `enter` zone event, to match the
-  symmetry of the "leave" automation.
+  alone after dark, no lamps turn on.
 - Uses `binary_sensor.lr_is_dark` as the darkness gate — same
   single-sensor-drives-everything caveat noted in
-  [`illuminance.yaml`](illuminance.md#caveats--recommendations).
+  [`illuminance.yaml`](illuminance.md#caveats).
+
+### Recommendations
+
+- Add `nanis_iphone` to the trigger `entity_id` list, or switch to
+  `group.family_trackers` with an `enter` zone event, to match the
+  symmetry of the "leave" automation and cover Nani arriving home alone.

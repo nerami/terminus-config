@@ -29,20 +29,25 @@ flowchart TD
     S -- off --> DAY["scene.turn_on scene.abi_day_light"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **`binary_sensor.abi_is_dark` computes its own state from MB's lux
   reading — it's not an independent measurement.** Same coupling caveat as
   [Kitchen's sensor sharing LR's lux input](kitchen.md#kitchen-auto-scene).
-  Abi's actual light level isn't measured; a future dedicated Abi lux
-  sensor is a one-line change to the macro call's first argument in
-  `light_sensing.yaml`.
+  Abi's actual light level isn't measured.
 - **`light.abi_pixoo_light` is intentionally excluded** from both this
   automation and the Abi scenes — it only supports `brightness` (no
   `color_temp`/`hs_color`), so it can't represent Day Light / Dim / Redish /
-  Bluish the way the two LED lights can. If Abi's Pixoo panel should track
-  ambient brightness too, it needs separate handling (e.g. a
-  brightness-only companion action), not inclusion in these scenes.
+  Bluish the way the two LED lights can.
 - **No TV Scene equivalent** — Abi has no `media_player`.
 - Same 3s-delay / undebounced-`is_dark` notes as
   [`LR: Auto Scene`](living_room.md#lr-auto-scene) apply here.
+
+### Recommendations
+
+- Add a dedicated Abi illuminance sensor, same as
+  [Kitchen's recommendation](kitchen.md#recommendations) — a one-line
+  change to the macro call's first argument in `light_sensing.yaml`.
+- If Abi's Pixoo panel should track ambient brightness too, add a separate
+  brightness-only companion action rather than folding it into these
+  color-based scenes.

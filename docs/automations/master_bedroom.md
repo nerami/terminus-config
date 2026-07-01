@@ -26,7 +26,7 @@ flowchart TD
     S -- off --> DAY["scene.turn_on scene.mb_day_light"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - Same 3s-delay and undebounced-`is_dark` notes as
   [`LR: Auto Scene`](living_room.md#lr-auto-scene) apply here.
@@ -53,10 +53,16 @@ flowchart TD
     C2 -- no --> X2["stop — Night Walk / 22:00 schedule take over"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - Same `tv_off` missing-`not_to`-guard note as
   [`LR: TV Scene`](living_room.md#lr-tv-scene) applies here.
 - Single `media_player.mb_tv` entity — if MB ever adds a cast target like
   LR's `lr_tv_hub_cast`, the trigger list here needs to grow to match, or
   TV-on events routed through the second player will be silently ignored.
+
+### Recommendations
+
+- Same `not_to` guard fix recommended for
+  [`LR: TV Scene`](living_room.md#lr-tv-scene) applies to this automation's
+  `tv_off` trigger too.

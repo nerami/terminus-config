@@ -15,7 +15,7 @@ flowchart TD
     C -- yes --> A["switch.turn_on switch.lr_lamp_socket"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - Kitchen is not part of this hallway route — no kitchen lamp/socket
   participates in Night Walk. Reasonable if Kitchen isn't on the path
@@ -38,7 +38,7 @@ flowchart TD
     C2 -- yes --> A["switch.turn_off switch.lr_lamp_socket"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **Correctly avoids the "one-off-kills-both" bug** that a naive mirror
   of `Night Walk` would have — the template condition re-checks both

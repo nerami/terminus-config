@@ -30,7 +30,7 @@ flowchart TD
     S -- off --> DAY["scene.turn_on scene.kitchen_day_light"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **`binary_sensor.kitchen_is_dark` computes its own state from LR's lux
   reading — it's not an independent measurement.** It shares the
@@ -41,10 +41,15 @@ flowchart TD
   is unchanged from before this was named/shared: if Kitchen and LR ever
   diverge in natural light (e.g. Kitchen gets direct afternoon sun that LR
   doesn't), the scene applied to Kitchen still reflects LR's actual light
-  level. A future dedicated Kitchen lux sensor is a one-line change to the
-  macro call's first argument in `light_sensing.yaml`, no automation edits
-  needed.
+  level.
 - **No TV Scene equivalent** — Kitchen has no `media_player`, so there's no
   Redish-on-TV-on automation here, unlike LR/MB.
 - Same 3s-delay / undebounced-`is_dark` notes as
   [`LR: Auto Scene`](living_room.md#lr-auto-scene) apply here.
+
+### Recommendations
+
+- Add a dedicated Kitchen illuminance sensor to remove the LR-borrowing
+  above. Swapping it in is a one-line change to the `lux_is_dark` macro
+  call's first argument in `light_sensing.yaml` — no automation edits
+  needed.

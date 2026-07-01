@@ -21,7 +21,7 @@ flowchart TD
     W -- bright_light --> OFF["switch.turn_off switch.sockets"]
 ```
 
-### Caveats / recommendations
+### Caveats
 
 - **Single sensor drives four rooms.** The gate is `binary_sensor.lr_is_dark`
   only — MB, Abi, and Yard sockets follow the living room's light level, not
