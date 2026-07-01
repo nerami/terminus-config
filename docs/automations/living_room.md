@@ -4,7 +4,7 @@ Source: [`packages/living_room.yaml`](../../packages/living_room.yaml)
 
 ## LR: Auto Scene
 
-Applies Bright Light or Dim when an LR light turns on, or when ambient light
+Applies Bright or Dim when an LR light turns on, or when ambient light
 crosses the `is_dark` hysteresis band — but only while the TV isn't playing,
 so `LR: TV Scene` keeps control during playback.
 
@@ -22,7 +22,7 @@ flowchart TD
     C -- yes --> D["delay 3s"]
     D --> S{"binary_sensor.lr_is_dark"}
     S -- on --> DIM["scene.turn_on scene.lr_dim"]
-    S -- off --> DAY["scene.turn_on scene.lr_bright_light"]
+    S -- off --> DAY["scene.turn_on scene.lr_bright"]
 ```
 
 ### Caveats

@@ -2,7 +2,7 @@ automation:
   - id: '1772400006000'
     alias: 'Abi: Auto Scene'
     description: >-
-      Apply Bright Light or Dim when an Abi light turns on or when
+      Apply Bright or Dim when an Abi light turns on or when
       ambient light crosses the is_dark hysteresis band.
       binary_sensor.abi_is_dark aliases MB's lux sensor since Abi has
       no illuminance sensor of its own — see light_sensing.yaml.
@@ -14,7 +14,7 @@ automation:
           - light.abi_led_two
         dark_sensor: binary_sensor.abi_is_dark
         dim_scene: scene.abi_dim
-        bright_light_scene: scene.abi_bright_light
+        bright_scene: scene.abi_bright
 
 scene:
   - id: '1772400007000'
@@ -44,7 +44,7 @@ scene:
         hs_color: [217, 100]
 
   - id: '1772400009000'
-    name: 'Abi: Bright Light'
+    name: 'Abi: Bright'
     icon: mdi:shield-sun
     entities:
       light.abi_led_one:
