@@ -5,49 +5,17 @@ automation:
       Apply Day Light or Dim when a bedroom light turns on or when
       ambient light crosses the is_dark hysteresis band, unless the
       TV is playing.
-    triggers:
-      - trigger: state
-        entity_id:
+    use_blueprint:
+      path: terminus/auto_scene.yaml
+      input:
+        lights:
           - light.mb_led_one
           - light.mb_led_two
-        from: 'off'
-        to: 'on'
-      - trigger: state
-        entity_id: binary_sensor.mb_is_dark
-    conditions:
-      - condition: or
-        conditions:
-          - condition: state
-            entity_id: light.mb_led_one
-            state: 'on'
-          - condition: state
-            entity_id: light.mb_led_two
-            state: 'on'
-      - condition: not
-        conditions:
-          - condition: state
-            entity_id: media_player.mb_tv
-            state: 'playing'
-    actions:
-      - delay: '00:00:03'
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.mb_is_dark
-                state: 'on'
-            sequence:
-              - action: scene.turn_on
-                target:
-                  entity_id: scene.mb_dim
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.mb_is_dark
-                state: 'off'
-            sequence:
-              - action: scene.turn_on
-                target:
-                  entity_id: scene.mb_day_light
-    mode: single
+        dark_sensor: binary_sensor.mb_is_dark
+        dim_scene: scene.mb_dim
+        day_light_scene: scene.mb_day_light
+        tv_players:
+          - media_player.mb_tv
 
   - id: '1771085036395'
     alias: 'MB: TV Scene'

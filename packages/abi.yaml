@@ -3,46 +3,18 @@ automation:
     alias: 'Abi: Auto Scene'
     description: >-
       Apply Day Light or Dim when an Abi light turns on or when
-      ambient light crosses the is_dark hysteresis band. Shares MB's
-      lux sensor since Abi has no illuminance sensor of its own.
-    triggers:
-      - trigger: state
-        entity_id:
+      ambient light crosses the is_dark hysteresis band.
+      binary_sensor.abi_is_dark aliases MB's lux sensor since Abi has
+      no illuminance sensor of its own — see light_sensing.yaml.
+    use_blueprint:
+      path: terminus/auto_scene.yaml
+      input:
+        lights:
           - light.abi_led_one
           - light.abi_led_two
-        from: 'off'
-        to: 'on'
-      - trigger: state
-        entity_id: binary_sensor.mb_is_dark
-    conditions:
-      - condition: or
-        conditions:
-          - condition: state
-            entity_id: light.abi_led_one
-            state: 'on'
-          - condition: state
-            entity_id: light.abi_led_two
-            state: 'on'
-    actions:
-      - delay: '00:00:03'
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.mb_is_dark
-                state: 'on'
-            sequence:
-              - action: scene.turn_on
-                target:
-                  entity_id: scene.abi_dim
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.mb_is_dark
-                state: 'off'
-            sequence:
-              - action: scene.turn_on
-                target:
-                  entity_id: scene.abi_day_light
-    mode: single
+        dark_sensor: binary_sensor.abi_is_dark
+        dim_scene: scene.abi_dim
+        day_light_scene: scene.abi_day_light
 
 scene:
   - id: '1772400007000'

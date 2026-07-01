@@ -1,0 +1,91 @@
+blueprint:
+  name: 'Illuminance Switch Control'
+  description: >-
+    Turn a switch on when a darkness binary_sensor goes dark, and off when
+    it goes bright, gated to a daily time window and a presence entity.
+    Abstracts the "Sockets: Illuminance Control" pattern so it can be
+    instantiated per room/sensor instead of one automation driving a whole
+    switch group off a single sensor.
+  domain: automation
+  input:
+    dark_sensor:
+      name: Darkness sensor
+      selector:
+        entity:
+          domain: binary_sensor
+    target_switch:
+      name: Target switch
+      selector:
+        entity:
+          domain: switch
+    hold:
+      name: Hold time
+      description: How long the darkness sensor must stay in its new state before acting, to debounce brief flickers.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+    time_after:
+      name: Active window start
+      default: '06:00:00'
+      selector:
+        time:
+    time_before:
+      name: Active window end
+      default: '22:00:00'
+      selector:
+        time:
+    presence_entity:
+      name: Presence entity
+      description: Entity whose state gates whether this automation acts at all.
+      default: group.family_trackers
+      selector:
+        entity:
+    presence_state:
+      name: Required presence state
+      default: home
+      selector:
+        text:
+
+mode: single
+
+triggers:
+  - trigger: state
+    entity_id: !input dark_sensor
+    to: 'on'
+    for:
+      seconds: !input hold
+    id: low_light
+  - trigger: state
+    entity_id: !input dark_sensor
+    to: 'off'
+    for:
+      seconds: !input hold
+    id: bright_light
+
+conditions:
+  - condition: time
+    after: !input time_after
+    before: !input time_before
+  - condition: state
+    entity_id: !input presence_entity
+    state: !input presence_state
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: low_light
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: !input target_switch
+      - conditions:
+          - condition: trigger
+            id: bright_light
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input target_switch

@@ -9,57 +9,55 @@ switch:
       - switch.yard_string_lights_socket
 
 automation:
-  - id: sockets_illuminance_control
-    alias: 'Sockets: Illuminance Control'
+  - id: lr_illuminance_control
+    alias: 'LR: Illuminance Control'
     description: >-
-      Turn Terminus sockets on when the room is dark and off when bright,
-      gated by binary_sensor.lr_is_dark (20/30 lux hysteresis band + sun
-      fallback when the lux sensor is offline). A 10-second hold debounces
-      brief state flickers.
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.lr_is_dark
-        to: 'on'
-        for: '00:00:10'
-        id: low_light
-      - trigger: state
-        entity_id: binary_sensor.lr_is_dark
-        to: 'off'
-        for: '00:00:10'
-        id: bright_light
-    conditions:
-      - condition: time
-        after: '06:00:00'
-        before: '22:00:00'
-      - condition: state
-        entity_id: group.family_trackers
-        state: home
-    actions:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: low_light
-            sequence:
-              - action: switch.turn_on
-                target:
-                  entity_id: switch.sockets
-          - conditions:
-              - condition: trigger
-                id: bright_light
-            sequence:
-              - action: switch.turn_off
-                target:
-                  entity_id: switch.sockets
-    mode: single
+      Turn LR's lamp socket on when the room is dark and off when bright,
+      gated by binary_sensor.lr_is_dark. A 10-second hold debounces brief
+      state flickers.
+    use_blueprint:
+      path: terminus/illuminance_switch_control.yaml
+      input:
+        dark_sensor: binary_sensor.lr_is_dark
+        target_switch: switch.lr_lamp_socket
+
+  - id: mb_illuminance_control
+    alias: 'MB: Illuminance Control'
+    description: >-
+      Turn MB's lamp socket on when the room is dark and off when bright,
+      gated by binary_sensor.mb_is_dark. A 10-second hold debounces brief
+      state flickers.
+    use_blueprint:
+      path: terminus/illuminance_switch_control.yaml
+      input:
+        dark_sensor: binary_sensor.mb_is_dark
+        target_switch: switch.mb_lamp_socket
+
+  - id: abi_illuminance_control
+    alias: 'Abi: Illuminance Control'
+    description: >-
+      Turn Abi's desk lamp socket on when the room is dark and off when
+      bright, gated by binary_sensor.abi_is_dark. A 10-second hold
+      debounces brief state flickers.
+    use_blueprint:
+      path: terminus/illuminance_switch_control.yaml
+      input:
+        dark_sensor: binary_sensor.abi_is_dark
+        target_switch: switch.abi_desk_lamp_socket
+
+  - id: yard_illuminance_control
+    alias: 'Yard: Illuminance Control'
+    description: >-
+      Turn the yard string lights socket on when it's dark and off when
+      bright, gated by binary_sensor.yard_is_dark (pure sun-elevation
+      state — Yard has no illuminance sensor).
+    use_blueprint:
+      path: terminus/illuminance_switch_control.yaml
+      input:
+        dark_sensor: binary_sensor.yard_is_dark
+        target_switch: switch.yard_string_lights_socket
 
 scene:
-  - id: '1771384085759'
-    name: 'Low Lights: Off'
-    icon: mdi:lightbulb-night-outline
-    entities:
-      switch.sockets:
-        state: 'on'
-
   - id: '1771384324468'
     name: 'Sockets: Off'
     icon: mdi:lamps-outline
