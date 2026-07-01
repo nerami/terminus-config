@@ -5,8 +5,10 @@ Source: [`packages/abi.yaml`](../../packages/abi.yaml)
 ## Abi: Auto Scene
 
 Same pattern as Kitchen's Auto Scene, applied to `light.abi_led_one` /
-`light.abi_led_two`, sharing MB's lux sensor (`binary_sensor.mb_is_dark`)
-since Abi has no illuminance sensor of its own.
+`light.abi_led_two`. `binary_sensor.abi_is_dark` (defined in
+[`light_sensing.yaml`](../../packages/light_sensing.yaml)) is a template
+alias of MB's `binary_sensor.mb_is_dark` since Abi has no illuminance
+sensor of its own.
 
 Instance of the [Auto Scene blueprint](README.md#auto-scene-blueprint),
 with `tv_players` left empty (Abi has no TV) — `packages/abi.yaml` only
@@ -15,22 +17,26 @@ supplies inputs, not the automation logic.
 ```mermaid
 flowchart TD
     T1["trigger: light.abi_led_one / light.abi_led_two off→on"]
-    T2["trigger: binary_sensor.mb_is_dark (any change)"]
+    T2["trigger: binary_sensor.abi_is_dark (any change)"]
     T1 --> C
     T2 --> C
     C{"abi_led_one on OR abi_led_two on?"}
     C -- no --> X["stop"]
     C -- yes --> D["delay 3s"]
-    D --> S{"binary_sensor.mb_is_dark"}
+    D --> S{"binary_sensor.abi_is_dark"}
     S -- on --> DIM["scene.turn_on scene.abi_dim"]
     S -- off --> DAY["scene.turn_on scene.abi_day_light"]
 ```
 
 ### Caveats / recommendations
 
-- **Borrows MB's lux sensor**, same coupling caveat as
-  [Kitchen borrowing LR's sensor](kitchen.md#kitchen-auto-scene) — Abi's
-  actual light level isn't measured; it inherits MB's `is_dark` state.
+- **`binary_sensor.abi_is_dark` is a named alias, not an independent
+  reading** — same coupling caveat as
+  [Kitchen's alias of LR's sensor](kitchen.md#kitchen-auto-scene). Abi's
+  actual light level isn't measured; the alias just gives automations/docs
+  an Abi-named entity to depend on instead of reaching into MB's sensor
+  directly, so a future dedicated Abi lux sensor can be swapped in via
+  `light_sensing.yaml` alone.
 - **`light.abi_pixoo_light` is intentionally excluded** from both this
   automation and the Abi scenes — it only supports `brightness` (no
   `color_temp`/`hs_color`), so it can't represent Day Light / Dim / Redish /

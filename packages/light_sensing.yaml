@@ -26,6 +26,18 @@ template:
             {{ lux < 30 if was_on else lux < 20 }}
           {% endif %}
 
+      - name: 'Kitchen: Is Dark'
+        unique_id: kitchen_is_dark
+        icon: mdi:weather-night
+        availability: "{{ states('binary_sensor.lr_is_dark') not in ['unknown', 'unavailable'] }}"
+        state: "{{ is_state('binary_sensor.lr_is_dark', 'on') }}"
+
+      - name: 'Abi: Is Dark'
+        unique_id: abi_is_dark
+        icon: mdi:weather-night
+        availability: "{{ states('binary_sensor.mb_is_dark') not in ['unknown', 'unavailable'] }}"
+        state: "{{ is_state('binary_sensor.mb_is_dark', 'on') }}"
+
       - name: 'Is Bright'
         unique_id: is_bright
         icon: mdi:weather-sunny

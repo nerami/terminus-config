@@ -27,8 +27,10 @@ flowchart TD
   only — MB, Abi, and Yard sockets follow the living room's light level, not
   their own. If LR gets bright while MB/Abi are still dark (or vice versa),
   all sockets switch together anyway. This is a known trade-off shared with
-  the Kitchen/Abi `Auto Scene` automations, which also reuse `lr_is_dark` /
-  `mb_is_dark` in lieu of a per-room sensor.
+  the Kitchen/Abi `Auto Scene` automations, which depend on
+  `kitchen_is_dark`/`abi_is_dark` — template aliases of `lr_is_dark`/
+  `mb_is_dark` defined in `light_sensing.yaml` — in lieu of a per-room
+  sensor.
 - **No action outside 06:00–22:00.** After 22:00 sockets won't auto-turn-on
   even if dark — by design, [`schedule.yaml`](../../packages/schedule.yaml)'s
   10pm shutoff and [`night_walk.yaml`](../../packages/night_walk.yaml) own

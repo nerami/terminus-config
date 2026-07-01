@@ -31,8 +31,15 @@ flowchart TD
 |---|---|---|---|
 | LR | `lr_living`, `lr_dining` | `lr_is_dark` | `lr_tv`, `lr_tv_hub_cast` |
 | MB | `mb_led_one`, `mb_led_two` | `mb_is_dark` | `mb_tv` |
-| Kitchen | `kitchen_lobby/counter/led_one/led_two` | `lr_is_dark` (borrowed) | — (none) |
-| Abi | `abi_led_one`, `abi_led_two` | `mb_is_dark` (borrowed) | — (none) |
+| Kitchen | `kitchen_lobby/counter/led_one/led_two` | `kitchen_is_dark` (alias of `lr_is_dark`) | — (none) |
+| Abi | `abi_led_one`, `abi_led_two` | `abi_is_dark` (alias of `mb_is_dark`) | — (none) |
+
+`kitchen_is_dark` / `abi_is_dark` are template `binary_sensor`s in
+[`light_sensing.yaml`](../../packages/light_sensing.yaml) that mirror
+`lr_is_dark` / `mb_is_dark` 1:1 — Kitchen and Abi still have no illuminance
+sensor of their own, but automations now depend on a room-named entity
+instead of reaching into another room's sensor directly. Swapping in a
+real per-room sensor later is a one-file change in `light_sensing.yaml`.
 
 The `tv_players` guard is implemented as a template
 (`selectattr('state', 'eq', 'playing') | list | length == 0`) so an empty
